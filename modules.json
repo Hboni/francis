@@ -1,0 +1,24 @@
+{
+    "load image": {
+        "type": "primary",
+        "ui": "LoadImage.ui",
+        "connection": {
+            "browse": "modules_fn.browseImage",
+            "apply": "modules_fn.loadImage"}
+    },
+    "erode image":{
+        "type": "secondary",
+        "ui": "ErodeImage.ui",
+        "connection": {
+            "spin": "modules_fn.updateErosion"
+        }
+
+    },
+    "save image":{
+        "type": "secondary",
+        "ui": "SaveImage.ui",
+        "connection": {
+            "button": "modules_fn.saveImage"
+        }
+    }
+}
