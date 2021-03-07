@@ -9,6 +9,7 @@
     "erode image":{
         "type": "secondary",
         "ui": "ErodeImage.ui",
+        "start": "widget.spin.valueChanged.emit(0)",
         "connection": {
             "spin": "modules_fn.updateErosion"
         }
