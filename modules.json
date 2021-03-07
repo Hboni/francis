@@ -19,7 +19,8 @@
         "type": "secondary",
         "ui": "SaveImage.ui",
         "connection": {
-            "button": "modules_fn.saveImage"
+            "browse": "modules_fn.browseSavepath",
+            "apply": "modules_fn.saveImage"
         }
     }
 }

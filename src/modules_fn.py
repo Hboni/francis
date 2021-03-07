@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src import DATA_DIR, IMAGES_STACK
+from src import DATA_DIR, OUT_DIR, IMAGES_STACK
 import os
 import numpy as np
 from src import ui
@@ -15,6 +15,23 @@ def getParentNames(widget):
     """
     return [p.name for p in widget.node.parents]
 
+def browseSavepath(widget):
+    """
+    open a browse window to define the nifti save path
+    """
+    name = getParentNames(widget)[0]
+    filename, extension = QtWidgets.QFileDialog.getSaveFileName(widget, 'Save file',
+                            os.path.join(OUT_DIR, name), filter=".nii.gz")
+    widget.path.setText(filename+extension)
+
+def saveImage(widget):
+    """
+    save the parent image as nifti file at specified path
+    """
+    name = getParentNames(widget)[0]
+    ni_img = nib.Nifti1Image(IMAGES_STACK[name], None)
+    nib.save(ni_img, widget.path.text())
+    print("done")
 
 def browseImage(widget):
     """
