@@ -6,6 +6,9 @@ import os
 import numpy as np
 
 def menuFromDict(acts, activation_function=None, menu=None):
+    """
+    create a menu on right-click, based on 'acts' dictionnary
+    """
     if menu is None:
         menu = QtWidgets.QMenu()
     for a in acts:
@@ -23,11 +26,29 @@ def menuFromDict(acts, activation_function=None, menu=None):
                 connect(act, a)
     return menu
 
-class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = plt.figure(figsize=(width, height), dpi=dpi)
-        self.ax = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
+def deleteLayout(layout):
+    """
+    delete the selected layout
+    """
+    if layout is None:
+        return
+    emptyLayout(layout)
+    layout.deleteLater()
+    QtCore.QObjectCleanupHandler().add(layout)
+
+def emptyLayout(layout):
+    """
+    delete all children (widget and layout) of the selected layout
+    """
+    if layout is None:
+        return
+    while layout.count():
+        item = layout.takeAt(0)
+        widget = item.widget()
+        if widget is not None:
+            widget.deleteLater()
+        else:
+            deleteLayout(item.layout())
 
 
 class MyLabel(QtWidgets.QLabel):
