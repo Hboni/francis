@@ -4,7 +4,7 @@ import os
 import copy
 import json
 import numpy as np
-from src import UI_DIR
+from src import UI_DIR, IMAGES_STACK
 
 class Link(QtWidgets.QGraphicsPathItem):
     def __init__(self, junction1, junction2):
@@ -59,6 +59,14 @@ class Node(QtWidgets.QWidget):
         self.moveAt(QtCore.QPointF(*position))
         self.isSelected = False
 
+    def delete(self):
+        for j in [self.junction_up, self.junction_down]:
+            for l1,_ in j.links:
+                self.graph.scene.removeItem(l1)
+            self.graph.scene.removeItem(j)
+        self.proxy.deleteLater()
+        self.deleteLater()
+
     def select(self):
         self.button.setStyleSheet("QPushButton {font-weight: bold;}")
         self.isSelected = True
@@ -92,10 +100,10 @@ class Node(QtWidgets.QWidget):
     def addToScene(self, scene):
         scene.addItem(self.junction_up)
         scene.addItem(self.junction_down)
-        proxy = QtWidgets.QGraphicsProxyWidget(self.junction_up)
-        proxy.setWidget(self)
-        proxy.setPos(-self.width()/2, 0)
-        proxy.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable | QtWidgets.QGraphicsItem.ItemIsSelectable)
+        self.proxy = QtWidgets.QGraphicsProxyWidget(self.junction_up)
+        self.proxy.setWidget(self)
+        self.proxy.setPos(-self.width()/2, 0)
+        self.proxy.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable | QtWidgets.QGraphicsItem.ItemIsSelectable)
         self.junction_down.setPos(0, self.height())
         self.raise_()
 
@@ -209,7 +217,24 @@ class Graph(QtWidgets.QWidget):
         print('rename')
 
     def deleteBranch(self, parent, childs_only=False):
-        print("delete")
+        """
+        delete node and its children recursively
+        """
+        #delete children if has no other parent
+        for child in parent.childs:
+            child.parents.remove(parent)
+            if len(child.parents) == 0:
+                self.deleteBranch(child)
+        # delete data
+        if parent.name in IMAGES_STACK.keys():
+            del IMAGES_STACK[parent.name]
+        # remove node from parent children
+        for p in parent.parents:
+            p.childs.remove(parent)
+        # delete node and links
+        parent.delete()
+        del self.nodes[parent.name]
+
 
     def addNode(self, type, parents=[]):
         if not isinstance(parents, list):

@@ -13,7 +13,6 @@
         "connection": {
             "spin": "modules_fn.updateErosion"
         }
-
     },
     "save image":{
         "type": "secondary",
@@ -22,5 +21,8 @@
             "browse": "modules_fn.browseSavepath",
             "apply": "modules_fn.saveImage"
         }
+    },
+    "delete": {
+        "type": "secondary"
     }
 }
