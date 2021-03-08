@@ -128,7 +128,6 @@ class Node(QtWidgets.QWidget):
         return childs
 
     def updateCurrentBranch(self):
-        print("updateCurrentBranch")
         self.current_branch = set(self.getChilds())
 
 class Graph(QtWidgets.QWidget):

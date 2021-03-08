@@ -56,6 +56,11 @@ def loadImage(widget):
     widget.visu.addWidget(render)
     IMAGES_STACK[widget.name.text()] = im
 
+
+    qim = QtGui.QImage(im[100].copy(), 150, 150, QtGui.QImage.Format_Indexed8)
+    widget.node.snap.setPixmap(QtGui.QPixmap(qim))
+
+
 def updateErosion(widget):
     """
     compute 3d erosion on the parent image
