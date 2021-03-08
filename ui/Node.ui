@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>116</width>
-    <height>53</height>
+    <height>62</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,9 +39,19 @@
       </widget>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="parameters">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
+       </property>
+      </layout>
+     </item>
+     <item>
       <widget class="QLabel" name="snap">
        <property name="text">
         <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>

@@ -51,10 +51,7 @@ def loadImage(widget):
     and create the rendering widget to put image inside
     """
     im = nib.load(widget.path.text()).get_data().astype(np.uint8)
-    render = ui.MRIrender(im)
-    ui.emptyLayout(widget.visu)
-    widget.visu.addWidget(render)
-    IMAGES_STACK[widget.name.text()] = im
+    IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
 def updateErosion(widget):
@@ -63,13 +60,7 @@ def updateErosion(widget):
     and store the eroded image into IMAGES_STACK dictionnary
     """
     im = core.erode(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
-
-    if widget.visu.itemAt(0) is None:
-        render = ui.MRIrender(im)
-        widget.visu.addWidget(render)
-    else:
-        widget.visu.itemAt(0).widget().updateMRI(im)
-    IMAGES_STACK[widget.name.text()] = im
+    IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
 def updateDilation(widget):
@@ -78,13 +69,7 @@ def updateDilation(widget):
     and store the dilated image into IMAGES_STACK dictionnary
     """
     im = core.dilate(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
-
-    if widget.visu.itemAt(0) is None:
-        render = ui.MRIrender(im)
-        widget.visu.addWidget(render)
-    else:
-        widget.visu.itemAt(0).widget().updateMRI(im)
-    IMAGES_STACK[widget.name.text()] = im
+    IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
 def updateThreshold(widget):
@@ -94,11 +79,5 @@ def updateThreshold(widget):
     """
     im = core.applyThreshold(IMAGES_STACK[getParentNames(widget)[0]],
                              widget.spin.value(), widget.reversed.isChecked())
-
-    if widget.visu.itemAt(0) is None:
-        render = ui.MRIrender(im)
-        widget.visu.addWidget(render)
-    else:
-        widget.visu.itemAt(0).widget().updateMRI(im)
-    IMAGES_STACK[widget.name.text()] = im
+    IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()

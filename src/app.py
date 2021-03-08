@@ -50,31 +50,32 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def activateNode(self, node):
         parameters = self.modules[node.type]
-        widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
-        widget.name.setText(node.name)
-        widget.type.setText(node.type)
-        widget.node = node
 
-        # connect buttons to functions
-        def conn(w, function):
-            w = widget.__dict__[w]
-            if isinstance(w, QtWidgets.QPushButton):
-                w.clicked.connect(lambda: eval(function)(widget))
-            elif isinstance(w, (QtWidgets.QDial, QtWidgets.QSpinBox)):
-                w.valueChanged.connect(lambda: eval(function)(widget))
-            elif isinstance(w, (QtWidgets.QCheckBox)):
-                w.stateChanged.connect(lambda: eval(function)(widget))
-        for b, f in parameters["connection"].items():
-            conn(b, f)
+        if node.parameters.itemAt(0) is None:
+            widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
+            widget.node = node
 
-        # start functions
-        if "start" in parameters.keys():
-            eval(parameters['start'])
+            # connect buttons to functions
+            def conn(w, function):
+                w = widget.__dict__[w]
+                if isinstance(w, QtWidgets.QPushButton):
+                    w.clicked.connect(lambda: eval(function)(widget))
+                elif isinstance(w, (QtWidgets.QDial, QtWidgets.QSpinBox)):
+                    w.valueChanged.connect(lambda: eval(function)(widget))
+                elif isinstance(w, (QtWidgets.QCheckBox)):
+                    w.stateChanged.connect(lambda: eval(function)(widget))
+            for b, f in parameters["connection"].items():
+                conn(b, f)
 
-        # restore widget settings
-        self.restoreSettings(widget)
+            # start functions
+            if "start" in parameters.keys():
+                eval(parameters['start'])
+            node.parameters.addWidget(widget)
 
-        # add widget to window
-        win = QtWidgets.QMainWindow(self)
-        win.setCentralWidget(widget)
-        win.show()
+        else:
+            # hide/show parameters widget
+            widget = node.parameters.itemAt(0).widget()
+            if widget.isHidden():
+                widget.show()
+            else:
+                widget.hide()
