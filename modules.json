@@ -22,7 +22,15 @@
             "spin": "modules_fn.updateDilation"
         }
     },
-
+    "threshold image":{
+        "type": "secondary",
+        "ui": "ThresholdImage.ui",
+        "start": "widget.spin.valueChanged.emit(0)",
+        "connection": {
+            "spin": "modules_fn.updateThreshold",
+            "reversed": "modules_fn.updateThreshold"
+        }
+    },
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",

@@ -57,6 +57,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 w.clicked.connect(lambda: eval(function)(widget))
             elif isinstance(w, (QtWidgets.QDial, QtWidgets.QSpinBox)):
                 w.valueChanged.connect(lambda: eval(function)(widget))
+            elif isinstance(w, (QtWidgets.QCheckBox)):
+                w.stateChanged.connect(lambda: eval(function)(widget))
         for b, f in parameters["connection"].items():
             conn(b, f)
 

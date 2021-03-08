@@ -73,9 +73,24 @@ def updateErosion(widget):
 def updateDilation(widget):
     """
     compute 3d dilation on the parent image
-    and store the eroded image into IMAGES_STACK dictionnary
+    and store the dilated image into IMAGES_STACK dictionnary
     """
     im = core.dilate(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
+
+    if widget.visu.itemAt(0) is None:
+        render = ui.MRIrender(im)
+        widget.visu.addWidget(render)
+    else:
+        widget.visu.itemAt(0).widget().updateMRI(im)
+    IMAGES_STACK[widget.name.text()] = im
+
+def updateThreshold(widget):
+    """
+    compute 3d thresholding on the parent image
+    and store the thresholded image into IMAGES_STACK dictionnary
+    """
+    im = core.applyThreshold(IMAGES_STACK[getParentNames(widget)[0]],
+                             widget.spin.value(), widget.reversed.isChecked())
 
     if widget.visu.itemAt(0) is None:
         render = ui.MRIrender(im)
