@@ -23,7 +23,7 @@ jobs:
       with:
         python-version: 3.8
     - name: Install lib dependencies
-      run: sudo apt-get install xvbf
+      run: sudo apt-get install xvfb
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
