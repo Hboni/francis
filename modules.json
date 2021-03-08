@@ -14,6 +14,15 @@
             "spin": "modules_fn.updateErosion"
         }
     },
+    "dilate image":{
+        "type": "secondary",
+        "ui": "DilateImage.ui",
+        "start": "widget.spin.valueChanged.emit(0)",
+        "connection": {
+            "spin": "modules_fn.updateDilation"
+        }
+    },
+
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",

@@ -69,3 +69,17 @@ def updateErosion(widget):
     else:
         widget.visu.itemAt(0).widget().updateMRI(im)
     IMAGES_STACK[widget.name.text()] = im
+
+def updateDilation(widget):
+    """
+    compute 3d dilation on the parent image
+    and store the eroded image into IMAGES_STACK dictionnary
+    """
+    im = core.dilate(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
+
+    if widget.visu.itemAt(0) is None:
+        render = ui.MRIrender(im)
+        widget.visu.addWidget(render)
+    else:
+        widget.visu.itemAt(0).widget().updateMRI(im)
+    IMAGES_STACK[widget.name.text()] = im
