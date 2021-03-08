@@ -58,6 +58,10 @@ class Node(QtWidgets.QWidget):
         self.junction_down = Junction(self)
         self.moveAt(QtCore.QPointF(*position))
         self.isSelected = False
+        self.snap.wheelEvent = self._wheelEvent
+
+        self.current_slice = None
+
 
     def delete(self):
         for j in [self.junction_up, self.junction_down]:
@@ -74,6 +78,14 @@ class Node(QtWidgets.QWidget):
     def unselect(self):
         self.button.setStyleSheet("QPushButton {font-weight: normal;}")
         self.isSelected = False
+
+    def _wheelEvent(self, event):
+        step = 1
+        if event.angleDelta().y() > 0:
+            self.current_slice += step
+        else:
+            self.current_slice -= step
+        self.updateSnap()
 
     def _mousePressEvent(self, event=None):
         if event.button() == QtCore.Qt.RightButton:
@@ -129,6 +141,26 @@ class Node(QtWidgets.QWidget):
 
     def updateCurrentBranch(self):
         self.current_branch = set(self.getChilds())
+
+    def updateSnap(self, sync=True):
+        im = IMAGES_STACK[self.name]
+        shape = im.shape[0]
+        if self.current_slice is None:
+            self.current_slice = int(shape / 2)
+        elif self.current_slice < 0:
+            self.current_slice = 0
+        elif self.current_slice >= shape:
+            self.current_slice = shape-1
+        qim = QtGui.QImage(im[self.current_slice].copy(), 256, 256, QtGui.QImage.Format_Indexed8)
+        self.snap.setPixmap(QtGui.QPixmap(qim))
+        self.snap.update()
+
+        if sync:
+            for node in self.childs+self.parents:
+                if node.current_slice != self.current_slice:
+                    node.current_slice = self.current_slice
+                    node.updateSnap(sync)
+
 
 class Graph(QtWidgets.QWidget):
     nodeClicked = QtCore.pyqtSignal(Node)

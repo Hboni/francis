@@ -11,11 +11,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi(os.path.join(UI_DIR, "Home.ui"), self)
-        self.graph = Graph(self)
-        self.setCentralWidget(self.graph)
-        self.initModules()
-        self.graph.nodeClicked.connect(self.activateNode)
         self.settings = {}
+        self.initUI()
+
+    def initUI(self):
+        self.initModules()
+        self.graph = Graph(self)
+        self.graph.nodeClicked.connect(self.activateNode)
+        self.graph.addNode("load image")
+        self.setCentralWidget(self.graph)
+
 
     def initModules(self):
         # load modules settings

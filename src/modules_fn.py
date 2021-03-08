@@ -55,11 +55,7 @@ def loadImage(widget):
     ui.emptyLayout(widget.visu)
     widget.visu.addWidget(render)
     IMAGES_STACK[widget.name.text()] = im
-
-
-    qim = QtGui.QImage(im[100].copy(), 150, 150, QtGui.QImage.Format_Indexed8)
-    widget.node.snap.setPixmap(QtGui.QPixmap(qim))
-
+    widget.node.updateSnap()
 
 def updateErosion(widget):
     """
@@ -74,6 +70,7 @@ def updateErosion(widget):
     else:
         widget.visu.itemAt(0).widget().updateMRI(im)
     IMAGES_STACK[widget.name.text()] = im
+    widget.node.updateSnap()
 
 def updateDilation(widget):
     """
@@ -88,6 +85,7 @@ def updateDilation(widget):
     else:
         widget.visu.itemAt(0).widget().updateMRI(im)
     IMAGES_STACK[widget.name.text()] = im
+    widget.node.updateSnap()
 
 def updateThreshold(widget):
     """
@@ -103,3 +101,4 @@ def updateThreshold(widget):
     else:
         widget.visu.itemAt(0).widget().updateMRI(im)
     IMAGES_STACK[widget.name.text()] = im
+    widget.node.updateSnap()
