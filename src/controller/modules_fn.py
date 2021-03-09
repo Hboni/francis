@@ -2,12 +2,9 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from src import DATA_DIR, OUT_DIR, IMAGES_STACK
 import os
 import numpy as np
-from src import ui
 import nibabel as nib
 import copy
-from src import core
-
-
+from src.model import core
 
 def getParentNames(widget):
     """
@@ -39,11 +36,10 @@ def browseImage(widget):
     then update path in the corresponding QLineEdit
     """
     global DATA_DIR
-    dialog = QtWidgets.QFileDialog(widget)
-    filename, _ = dialog.getOpenFileName(widget, "Select a file...", DATA_DIR)
+    dialog = QtWidgets.QFileDialog()
+    filename, _ = dialog.getOpenFileName(widget.parent().parent(), "Select a file...", DATA_DIR)
     DATA_DIR = os.path.dirname(filename)
     widget.path.setText(filename)
-
 
 def loadImage(widget):
     """

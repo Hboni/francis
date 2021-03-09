@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src.ui import menuFromDict
+from src.view import ui
 import os
 import copy
 import json
@@ -80,12 +80,13 @@ class Node(QtWidgets.QWidget):
         self.isSelected = False
 
     def _wheelEvent(self, event):
-        step = 1
-        if event.angleDelta().y() > 0:
-            self.current_slice += step
-        else:
-            self.current_slice -= step
-        self.updateSnap()
+        if self.current_slice is not None:
+            step = 1
+            if event.angleDelta().y() > 0:
+                self.current_slice += step
+            else:
+                self.current_slice -= step
+            self.updateSnap()
 
     def _mousePressEvent(self, event=None):
         if event.button() == QtCore.Qt.RightButton:
@@ -144,17 +145,17 @@ class Node(QtWidgets.QWidget):
 
     def updateSnap(self, sync=True):
         im = IMAGES_STACK[self.name]
-        shape = im.shape[0]
+        s1, s2, s3 = im.shape
         if self.current_slice is None:
-            self.current_slice = int(shape / 2)
+            self.current_slice = int(s1 / 2)
         elif self.current_slice < 0:
             self.current_slice = 0
-        elif self.current_slice >= shape:
-            self.current_slice = shape-1
-        qim = QtGui.QImage(im[self.current_slice].copy(), 256, 256, QtGui.QImage.Format_Indexed8)
+        elif self.current_slice >= s1:
+            self.current_slice = s1-1
+        qim = QtGui.QImage(im[self.current_slice].copy(),
+                           s2, s3, QtGui.QImage.Format_Indexed8)
         self.snap.setPixmap(QtGui.QPixmap(qim))
         self.snap.update()
-
         if sync:
             for node in self.childs+self.parents:
                 if node.current_slice != self.current_slice:
@@ -239,7 +240,7 @@ class Graph(QtWidgets.QWidget):
                 self.deleteBranch(node, childs_only=True)
             else:
                 self.addNode(action.text(), nodes)
-        menu = menuFromDict(acts, activation_function=activate)
+        menu = ui.menuFromDict(acts, activation_function=activate)
         pos = QtGui.QCursor.pos()
         self._mouse_position = self.view.mapToScene(self.view.mapFromGlobal(pos))
         menu.exec_(QtGui.QCursor.pos())
@@ -284,10 +285,9 @@ class Graph(QtWidgets.QWidget):
         for i, parent in enumerate(parents):
             self.bind(parent, node)
             if i == 0:
-                node.moveAt(parent.pos()+QtCore.QPointF(150*len(parent.childs), 100))
+                node.moveAt(parent.pos()+QtCore.QPointF(300, len(parent.childs)*350))
             parent.childs.append(node)
         if len(parents) == 0:
             node.moveAt(self._mouse_position+QtCore.QPoint(node.width()/2, 0))
         self.nodes[name] = node
-        print(self.nodes)
         return node
