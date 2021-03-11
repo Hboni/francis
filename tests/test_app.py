@@ -1,7 +1,7 @@
 # Test of basic application usage
 
 import pytest
-from src.app import MainWindow
+from src.view.app import MainWindow
 from PyQt5 import QtCore
 
 
