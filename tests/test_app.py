@@ -1,9 +1,23 @@
 # Test of basic application usage
 
-from src.app import MainWindow
+import pytest
+from src.view.app import MainWindow
+from PyQt5 import QtCore
 
 
-def test_francis_launch(qtbot):
-    win = MainWindow()
-    win.show()
-    qtbot.addWidget(win)
+@pytest.fixture
+def francis():
+    # Launch Francis
+    return MainWindow()
+
+
+def test_francis_launch(qtbot, francis):
+    # win = MainWindow()
+    # win.show()
+    qtbot.addWidget(francis)
+
+
+def test_load_image(qtbot, francis):
+    # win = MainWindow()
+    qtbot.addWidget(francis)
+    qtbot.mouseClick(francis, QtCore.Qt.RightButton)
