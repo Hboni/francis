@@ -25,8 +25,10 @@ def saveImage(widget):
     """
     save the parent image as nifti file at specified path
     """
-    name = getParentNames(widget)[0]
-    ni_img = nib.Nifti1Image(IMAGES_STACK[name], None)
+    parent_name = getParentNames(widget)[0]
+    if parent_name not in IMAGES_STACK.keys():
+        return print("'{}' not in image stack".format(parent_name))
+    ni_img = nib.Nifti1Image(IMAGES_STACK[parent_name], None)
     nib.save(ni_img, widget.path.text())
     print("done")
 
@@ -47,6 +49,9 @@ def loadImage(widget):
     and create the rendering widget to put image inside
     """
     im = nib.load(widget.path.text()).get_data().astype(np.uint8)
+    print("image description:\nshape: {0}\ndtype: {1}\nunique values: {2}".format(im.shape, im.dtype, np.unique(im)))
+    if len(im.shape) != 3:
+        return "for now loaded images must be of size 3"
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
@@ -55,7 +60,10 @@ def updateErosion(widget):
     compute 3d erosion on the parent image
     and store the eroded image into IMAGES_STACK dictionnary
     """
-    im = core.erode(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
+    parent_name = getParentNames(widget)[0]
+    if parent_name not in IMAGES_STACK.keys():
+        return print("'{}' not in image stack".format(parent_name))
+    im = core.erode(IMAGES_STACK[parent_name], widget.spin.value())
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
@@ -64,7 +72,10 @@ def updateDilation(widget):
     compute 3d dilation on the parent image
     and store the dilated image into IMAGES_STACK dictionnary
     """
-    im = core.dilate(IMAGES_STACK[getParentNames(widget)[0]], widget.spin.value())
+    parent_name = getParentNames(widget)[0]
+    if parent_name not in IMAGES_STACK.keys():
+        return print("'{}' not in image stack".format(parent_name))
+    im = core.dilate(IMAGES_STACK[parent_name], widget.spin.value())
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
@@ -73,7 +84,10 @@ def updateThreshold(widget):
     compute 3d thresholding on the parent image
     and store the thresholded image into IMAGES_STACK dictionnary
     """
-    im = core.applyThreshold(IMAGES_STACK[getParentNames(widget)[0]],
+    parent_name = getParentNames(widget)[0]
+    if parent_name not in IMAGES_STACK.keys():
+        return print("'{}' not in image stack".format(parent_name))
+    im = core.applyThreshold(IMAGES_STACK[parent_name],
                              widget.spin.value(), widget.reversed.isChecked())
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()

@@ -16,11 +16,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def initUI(self):
         self.initModules()
         self.graph = Graph(self)
-        self.graph.addNode("load image")
         self.graph.nodeClicked.connect(self.showHideParameters)
         self.setCentralWidget(self.graph)
 
+        save_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+S'), self)
+        save_sc.activated.connect(self.guisave)
+
+        restore_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+R'), self)
+        restore_sc.activated.connect(self.guirestore)
+
     def initModules(self):
+        """
+        load json to create module and right-clic menu
+        """
         # load modules settings
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), 'rb'))
         # initalize right-clic-menu
@@ -32,19 +40,23 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.menu[v].append(k)
 
+    def guirestore(self):
+        # restore graph architecture
+        graph_settings_path = os.path.join(CONFIG_DIR, 'graph.json')
+        if os.path.isfile(graph_settings_path):
+            with open(graph_settings_path, 'r') as infile:
+                settings = json.load(infile)
+                self.graph.restoreGraph(settings)
 
-    def restoreSettings(self, widget):
-        name = widget.name.text()
-        if name not in self.settings.keys():
-            return
-        for k, v in self.settings[name]:
-            print(k, v)
-
-    def storeSettings(self, widget):
-        name = widget.name.text()
-        self.settings[name] = {}
+    def guisave(self):
+        # save graph architecture
+        with open(os.path.join(CONFIG_DIR, 'graph.json'), 'w') as outfile:
+            json.dump(self.graph.settings, outfile, sort_keys=False, indent=4)
 
     def showHideParameters(self, node):
+        """
+        show or hide node parameters and node button is clicked
+        """
         if node.parameters.itemAt(0) is not None:
             widget = node.parameters.itemAt(0).widget()
             if widget.isHidden():
