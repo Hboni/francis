@@ -5,6 +5,7 @@ import copy
 import json
 import numpy as np
 from src import UI_DIR, IMAGES_STACK
+import pandas as pd
 
 class Link(QtWidgets.QGraphicsPathItem):
     def __init__(self, junction1, junction2):
@@ -144,6 +145,8 @@ class Node(QtWidgets.QWidget):
         self.current_branch = set(self.getChilds())
 
     def updateSnap(self, sync=True):
+        if self.name not in IMAGES_STACK.keys():
+            return
         im = IMAGES_STACK[self.name]
         s1, s2, s3 = im.shape
         if self.current_slice is None:
@@ -154,6 +157,7 @@ class Node(QtWidgets.QWidget):
             self.current_slice = s1-1
         qim = QtGui.QImage(im[self.current_slice].copy(),
                            s2, s3, QtGui.QImage.Format_Indexed8)
+        # qim.setColorTable([QtGui.qRgb(0, 0, 0)]*50+[QtGui.qRgb(255,255,255)]*50+[QtGui.qRgb(255, 0, 0)]*50)
         self.snap.setPixmap(QtGui.QPixmap(qim))
         self.snap.update()
         if sync:
@@ -179,6 +183,7 @@ class Graph(QtWidgets.QWidget):
         self.holdCtrl = False
         self._mouse_position = QtCore.QPoint(0,0)
         self.nodes = {}
+        self.settings = {}
 
 
     def clearSelection(self):
@@ -205,7 +210,6 @@ class Graph(QtWidgets.QWidget):
         return super(Graph, self).eventFilter(obj, event)
 
     def bind(self, parent, child):
-        print("bind", parent, child)
         self.scene.addItem(Link(parent.junction_down, child.junction_up))
 
     def getUniqueName(self, name):
@@ -267,10 +271,16 @@ class Graph(QtWidgets.QWidget):
         parent.delete()
         del self.nodes[parent.name]
 
+    def restoreGraph(self, settings):
+        for k, values in settings.items():
+            self.addNode(**values)
 
     def addNode(self, type, parents=[]):
         if not isinstance(parents, list):
             parents = [parents]
+        for i, parent in enumerate(parents):
+            if isinstance(parent, str):
+                parents[i] = self.nodes[parent]
         name = self.getUniqueName(type)
         node = Node(self, type, name, parents)
         node.addToScene(self.scene)
@@ -290,4 +300,5 @@ class Graph(QtWidgets.QWidget):
         if len(parents) == 0:
             node.moveAt(self._mouse_position+QtCore.QPoint(node.width()/2, 0))
         self.nodes[name] = node
+        self.settings[name] = {'type': type, 'parents': [p.name for p in parents]}
         return node

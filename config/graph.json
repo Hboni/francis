@@ -1,0 +1,12 @@
+{
+    "load image": {
+        "type": "load image",
+        "parents": []
+    },
+    "erode image": {
+        "type": "erode image",
+        "parents": [
+            "load image"
+        ]
+    }
+}
