@@ -3,17 +3,10 @@
 
 name: Python application
 
-on:
-  push:
-    branches: 
-      - main
-      - '*'
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
-  build:
-
+  ubuntu-tests:
     runs-on: ubuntu-20.04
 
     steps:
@@ -32,6 +25,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-qt pytest-xvfb
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Test with pytest
+      run: |
+        pytest
+  
+  windows-tests:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-qt pytest-xvfb
+        pip install -r requirements.txt
     - name: Test with pytest
       run: |
         pytest
