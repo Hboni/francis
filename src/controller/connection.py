@@ -18,7 +18,7 @@ class Connector:
             # connect buttons to functions
             def conn(w, function):
                 w = widget.__dict__[w]
-                if isinstance(w, QtWidgets.QPushButton):
+                if isinstance(w, (QtWidgets.QPushButton, QtWidgets.QToolButton)):
                     w.clicked.connect(lambda: eval(function)(widget))
                 elif isinstance(w, (QtWidgets.QDial, QtWidgets.QSpinBox)):
                     w.valueChanged.connect(lambda: eval(function)(widget))

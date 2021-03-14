@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>231</width>
+    <width>380</width>
     <height>96</height>
    </rect>
   </property>
@@ -19,19 +19,25 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>image</string>
+        <widget class="QLineEdit" name="path">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="dragEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>path to image...</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="path"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="browse">
+        <widget class="QToolButton" name="browse">
          <property name="text">
-          <string>browse</string>
+          <string>...</string>
          </property>
         </widget>
        </item>
