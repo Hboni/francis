@@ -48,9 +48,13 @@ def dilate(im, size, round_shape=False):
     return dilated
 
 def applyThreshold(im, threshold, reverse=False):
-    mask = np.zeros_like(im)
+    """
+    return a binary image
+    im: ndarray
+    threshold:  int or float:   pixel value
+    """
     if reverse:
-        mask[im < threshold] = 255
+        mask = im < threshold
     else:
-        mask[im > threshold] = 255
-    return mask
+        mask = im > threshold
+    return mask.astype(np.uint8)*255
