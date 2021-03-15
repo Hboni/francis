@@ -28,7 +28,7 @@
        <item>
         <widget class="QSpinBox" name="spin">
          <property name="minimum">
-          <number>1</number>
+          <number>0</number>
          </property>
         </widget>
        </item>
