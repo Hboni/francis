@@ -31,6 +31,29 @@ Launch the application
 - nibabel
 - pandas
 
+
+# How to contribute
+
+To contribute to this project, you must clone this repository on you Windows or Ubuntu computer (other linux distros are not tested).
+```
+git clone https://github.com/Hboni/francis.git
+```
+
+It is recommended to use a python virtualenv to install dependencies:
+```
+cd francis
+pip3 install virtualenv
+python3 -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+To develop in this project, it is also recommended to use [pre-commit](https://pre-commit.com/).
+```
+pip install pre-commit
+```
+
 # Known issues
 
 As Francis uses PyQt5 for its interface, it happens that on linux some library are missing, it can be needed to install them. (only tested on recent ubuntu)
