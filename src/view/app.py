@@ -7,6 +7,9 @@ import json
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    """
+    main window where widgets and menu are displayed
+    """
     def __init__(self):
         super().__init__()
         uic.loadUi(os.path.join(UI_DIR, "Home.ui"), self)
@@ -14,6 +17,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.initUI()
 
     def initUI(self):
+        """
+        initialize graph and basic connections/shortcuts
+        """
         self.initModules()
         self.graph = Graph(self)
         self.graph.nodeClicked.connect(self.showHideParameters)
@@ -41,6 +47,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.menu[v].append(k)
 
     def guirestore(self):
+        """
+        restore graph architecture and node settings
+        """
         # restore graph architecture
         graph_settings_path = os.path.join(CONFIG_DIR, 'graph.json')
         if os.path.isfile(graph_settings_path):
@@ -49,13 +58,21 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.graph.restoreGraph(settings)
 
     def guisave(self):
+        """
+        save graph architecture and node settings
+        """
         # save graph architecture
         with open(os.path.join(CONFIG_DIR, 'graph.json'), 'w') as outfile:
             json.dump(self.graph.settings, outfile, sort_keys=False, indent=4)
 
     def showHideParameters(self, node):
         """
-        show or hide node parameters and node button is clicked
+        show or hide node parameters
+
+        Parameters
+        ----------
+        node: graph.Node
+            the node from Graph that contains parameters
         """
         if node.parameters.itemAt(0) is not None:
             widget = node.parameters.itemAt(0).widget()

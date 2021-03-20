@@ -8,6 +8,20 @@ import numpy as np
 def menuFromDict(acts, activation_function=None, menu=None):
     """
     create a menu on right-click, based on 'acts' dictionnary
+
+    Parameters
+    ----------
+    acts: list or dict
+        actions to insert in menu
+    activation_function: function, optionnal
+        function that takes a QAction as argument and apply the requested action
+    menu: QMenu, optionnal
+        menu to fill
+
+    Return
+    ------
+    menu: QMenu
+
     """
     if menu is None:
         menu = QtWidgets.QMenu()
@@ -29,6 +43,11 @@ def menuFromDict(acts, activation_function=None, menu=None):
 def deleteLayout(layout):
     """
     delete the selected layout
+
+    Parameters
+    ----------
+    layout: QLayout
+
     """
     if layout is None:
         return
@@ -39,6 +58,10 @@ def deleteLayout(layout):
 def emptyLayout(layout):
     """
     delete all children (widget and layout) of the selected layout
+
+    Parameters
+    ----------
+    layout: QLayout
     """
     if layout is None:
         return
@@ -51,6 +74,7 @@ def emptyLayout(layout):
             deleteLayout(item.layout())
 
 
+"""
 class MyLabel(QtWidgets.QLabel):
     cursorMoved = QtCore.pyqtSignal()
     def __init__(self):
@@ -161,3 +185,4 @@ class MRIrender(QtWidgets.QWidget):
         pixmap = QtGui.QPixmap(qim)
         label = self.__dict__['view{}'.format(axis+1)].itemAt(0).widget()
         label.setPixmap(pixmap)
+"""

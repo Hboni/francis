@@ -5,10 +5,26 @@ from src.controller import modules_fn
 
 class Connector:
     def connectViewToModel(self, window):
+        """
+        connect the view to the model functions
+
+        Parameters
+        ----------
+        window: MainWindow
+
+        """
         self.window = window
         self.window.graph.nodeClicked.connect(self.activateNode)
 
     def activateNode(self, node):
+        """
+        apply connection between node widgets and model
+
+        Parameters
+        ----------
+        node: graph.Node
+
+        """
         parameters = self.window.modules[node.type]
 
         if node.parameters.itemAt(0) is None:
