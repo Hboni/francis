@@ -4,10 +4,22 @@ import numpy as np
 
 def erode(im, size, round_shape=True):
     """
-    return an eroded image
-    im: 2d or 3d array
-    size:   int:    generate an element of size (size*2+1)
-    round_shape: str:    if True the elemnt is ball or disk
+    Apply morphological erosion on the input image
+
+    Parameters
+    ----------
+    im: 2d/3d numpy array
+    size: int
+        Generate an element of size (size*2+1)
+    round_shape: str, default=True
+        If True the element is ball (3d) or disk (2d),
+        else the element is cube (3d) or square (2d)
+
+    Returns
+    -------
+    eroded: 2d/3d numpy array
+        Eroded input image with same size as im
+
     """
     if size == 0:
         return im
@@ -27,10 +39,22 @@ def erode(im, size, round_shape=True):
 
 def dilate(im, size, round_shape=True):
     """
-    return a dilated image
-    im: 2d or 3d array
-    round_shape: str:    if True the elemnt is ball or disk
-    size:   int:    generate an element of size (size*2+1)
+    Apply morphological dilation on the input image
+
+    Parameters
+    ----------
+    im: 2d/3d numpy array
+    size: int
+        Generate an element of size (size*2+1)
+    round_shape: str, default=True
+        If True the element is ball (3d) or disk (2d),
+        else the element is cube (3d) or square (2d)
+
+    Returns
+    -------
+    dilated: 2d/3d numpy array
+        Dilated input image with same size as im
+
     """
     if size == 0:
         return im
@@ -49,9 +73,21 @@ def dilate(im, size, round_shape=True):
 
 def applyThreshold(im, threshold, reverse=False):
     """
-    return a binary image
-    im: ndarray
-    threshold:  int or float:   pixel value
+    Apply binary threshold on the input image
+
+    Parameters
+    ----------
+    im: 2d/3d numpy array
+    threshold: float
+        Pixel value, image=1 above threshold, image=0 below threshold
+    reverse: bool, default=False
+        If True invert 0 and 1 in output
+
+    Returns
+    -------
+    mask: 2d/3d numpy array
+        Binarized input image with same size as im
+
     """
     if reverse:
         mask = im < threshold
