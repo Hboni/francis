@@ -25,7 +25,7 @@ def erode(im, size, round_shape=True):
     eroded = morphology.erosion(im, selem)
     return eroded
 
-def dilate(im, size, round_shape=False):
+def dilate(im, size, round_shape=True):
     """
     return a dilated image
     im: 2d or 3d array
