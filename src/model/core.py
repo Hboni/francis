@@ -57,4 +57,4 @@ def applyThreshold(im, threshold, reverse=False):
         mask = im < threshold
     else:
         mask = im > threshold
-    return mask.astype(np.uint8)*255
+    return mask.astype(np.uint8)
