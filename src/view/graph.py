@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src.view import ui
+from src.view import ui, CMAP
 import os
 import copy
 import json
@@ -62,6 +62,7 @@ class Node(QtWidgets.QWidget):
         self.snap.wheelEvent = self._wheelEvent
 
         self.current_slice = None
+        self.cmap = None
 
 
     def delete(self):
@@ -157,7 +158,10 @@ class Node(QtWidgets.QWidget):
             self.current_slice = s1-1
         qim = QtGui.QImage(im[self.current_slice].copy(),
                            s2, s3, QtGui.QImage.Format_Indexed8)
-        # qim.setColorTable([QtGui.qRgb(0, 0, 0)]*50+[QtGui.qRgb(255,255,255)]*50+[QtGui.qRgb(255, 0, 0)]*50)
+
+        if self.cmap is not None:
+            qim.setColorTable(CMAP[self.cmap])
+
         self.snap.setPixmap(QtGui.QPixmap(qim))
         self.snap.update()
         if sync:

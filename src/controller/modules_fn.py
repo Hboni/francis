@@ -92,4 +92,5 @@ def updateThreshold(widget):
     im = core.applyThreshold(IMAGES_STACK[parent_name],
                              widget.spin.value(), widget.reversed.isChecked())
     IMAGES_STACK[widget.node.name] = im
+    widget.node.cmap = 'binary'
     widget.node.updateSnap()
