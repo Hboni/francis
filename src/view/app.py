@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5 import QtWidgets, uic, QtGui
 from src.view.graph import Graph
-from src import MAIN_DIR, UI_DIR, DATA_DIR, CONFIG_DIR
-import sys
+from src import UI_DIR, CONFIG_DIR
 import os
 import json
 

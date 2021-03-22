@@ -134,6 +134,8 @@ class Node(QtWidgets.QWidget):
         self.current_slice = None
         self.cmap = None
 
+        self._state = None
+
     def delete(self):
         """
         delete itself and all related graphic items (links and junctions)
@@ -263,7 +265,9 @@ class Node(QtWidgets.QWidget):
 
         x, y = self.getHookPositions()[0]
         self.proxy.setPos(-x, -y)
-        self.proxy.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable | QtWidgets.QGraphicsItem.ItemIsSelectable)
+        self.proxy.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable |
+                            QtWidgets.QGraphicsItem.ItemIsSelectable |
+                            QtWidgets.QGraphicsItem.ItemIsFocusable)
         self.raise_()
 
     def getHookPositions(self):
