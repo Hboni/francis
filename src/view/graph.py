@@ -18,9 +18,24 @@ class Link(QtWidgets.QGraphicsPathItem):
     def __init__(self, junction1, junction2):
         super().__init__()
         self.j1, self.j2 = junction1, junction2
-        self._path = QtGui.QPainterPath()
-        self._path.moveTo(self.j1.pos())
-        self._path.lineTo(self.j2.pos())
+
+        # create arrow with specific color and size
+        arrow_size, line_width = 5, 2
+        arrow_color = QtGui.QColor(0, 150, 0)
+        arrow_pts = [QtCore.QPoint(0, 0),
+                     QtCore.QPoint(-arrow_size, arrow_size),
+                     QtCore.QPoint(-arrow_size, -arrow_size)]
+        self.j2.setPolygon(QtGui.QPolygonF(arrow_pts))
+        self.j2.setBrush(QtGui.QBrush(arrow_color))
+        self.j2.setPen(QtGui.QPen(arrow_color))
+        self.setPen(QtGui.QPen(arrow_color, line_width))
+
+        # set curve point positions
+        self._path = QtGui.QPainterPath(self.j1.pos())
+        self._path.cubicTo(0, 0, 0, 0, 0, 0)
+        self.updateElement(0, self.j1.pos())
+        self.updateElement(1, self.j2.pos())
+
         self.j1.links.append((self, 0))
         self.j2.links.append((self, 1))
         self.setPath(self._path)
@@ -37,11 +52,17 @@ class Link(QtWidgets.QGraphicsPathItem):
             new position for the end of line
 
         """
-        self._path.setElementPositionAt(index, pos.x(), pos.y())
+        n = 50
+        if index == 0:
+            self._path.setElementPositionAt(0, pos.x(), pos.y())
+            self._path.setElementPositionAt(1, pos.x()+n, pos.y())
+        if index == 1:
+            self._path.setElementPositionAt(2, pos.x()-n, pos.y())
+            self._path.setElementPositionAt(3, pos.x(), pos.y())
         self.setPath(self._path)
 
 
-class Junction(QtWidgets.QGraphicsEllipseItem):
+class Junction(QtWidgets.QGraphicsPolygonItem):
     """
     graphic movable point associated to a node
 
@@ -52,11 +73,10 @@ class Junction(QtWidgets.QGraphicsEllipseItem):
 
     """
     def __init__(self, node):
-        rad = 0
-        super(Junction, self).__init__(-rad, -rad, 2*rad, 2*rad)
+        super(Junction, self).__init__()
         self.node = node
         self.links = []
-        self.setZValue(1)
+        self.setZValue(0)
         self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
         self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -67,7 +87,7 @@ class Junction(QtWidgets.QGraphicsEllipseItem):
         if change == QtWidgets.QGraphicsItem.ItemPositionChange:
             for link, index in self.links:
                 link.updateElement(index, value.toPoint())
-        return QtWidgets.QGraphicsEllipseItem.itemChange(self, change, value)
+        return QtWidgets.QGraphicsPolygonItem.itemChange(self, change, value)
 
 
 class Node(QtWidgets.QWidget):
@@ -107,6 +127,7 @@ class Node(QtWidgets.QWidget):
         self.parents = parents
         self.junction_in = Junction(self)
         self.junction_out = Junction(self)
+
         self.moveAt(QtCore.QPointF(*position))
         self.isSelected = False
 
