@@ -20,7 +20,7 @@ class MainWindow(QtWidgets.QMainWindow):
         initialize graph and basic connections/shortcuts
         """
         self.initModules()
-        self.graph = Graph(self)
+        self.graph = Graph(self, 'horizontal')
         self.graph.nodeClicked.connect(self.showHideParameters)
         self.setCentralWidget(self.graph)
 
