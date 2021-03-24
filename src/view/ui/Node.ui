@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>116</width>
-    <height>62</height>
+    <width>185</width>
+    <height>70</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,13 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2">
+    <layout class="QVBoxLayout" name="vbox">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
      <item>
       <widget class="QPushButton" name="button">
        <property name="text">
@@ -40,6 +46,9 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="parameters">
+       <property name="spacing">
+        <number>7</number>
+       </property>
        <property name="sizeConstraint">
         <enum>QLayout::SetNoConstraint</enum>
        </property>

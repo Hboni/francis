@@ -19,22 +19,9 @@ class Link(QtWidgets.QGraphicsPathItem):
         super().__init__()
         self.j1, self.j2 = junction1, junction2
         self.setZValue(-1)
-
-        # create arrow with specific color and size
-        arrow_size, line_width = 5, 2
-        arrow_color = QtGui.QColor(0, 150, 0)
-        if self.j1.node.graph.direction == 'horizontal':
-            arrow_pts = [QtCore.QPoint(0, 0),
-                         QtCore.QPoint(-arrow_size, arrow_size),
-                         QtCore.QPoint(-arrow_size, -arrow_size)]
-        if self.j1.node.graph.direction == 'vertical':
-            arrow_pts = [QtCore.QPoint(0, 0),
-                         QtCore.QPoint(-arrow_size, -arrow_size),
-                         QtCore.QPoint(arrow_size, -arrow_size)]
-        self.j2.setPolygon(QtGui.QPolygonF(arrow_pts))
-        self.j2.setBrush(QtGui.QBrush(arrow_color))
-        self.j2.setPen(QtGui.QPen(arrow_color))
-        self.setPen(QtGui.QPen(arrow_color, line_width))
+        line_width = 2
+        color = QtGui.QColor(0, 150, 0)
+        self.setPen(QtGui.QPen(color, line_width))
 
         # set curve point positions
         self._path = QtGui.QPainterPath(self.j1.pos())
@@ -45,6 +32,9 @@ class Link(QtWidgets.QGraphicsPathItem):
         self.j1.links.append((self, 0))
         self.j2.links.append((self, 1))
         self.setPath(self._path)
+
+        self.j1.updateLinkPos()
+        self.j2.updateLinkPos()
 
     def updateElement(self, index, pos):
         """
@@ -75,33 +65,43 @@ class Link(QtWidgets.QGraphicsPathItem):
 
 class Junction(QtWidgets.QGraphicsPolygonItem):
     """
-    graphic movable point associated to a node
+    graphic point
 
     Parameters
     ----------
     node: Node
-        parent node with which it will move
 
     """
-    def __init__(self, node):
-        super(Junction, self).__init__()
+    def __init__(self, node, hide=False):
+        super(Junction, self).__init__(node.handle)
         self.node = node
+        if not hide:
+            self.initShape()
+
         self.links = []
         self.setZValue(1)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemSendsGeometryChanges)
 
-    def itemChange(self, change, value):
-        """
-        called function when click and move the junction
-        """
-        if change == QtWidgets.QGraphicsItem.ItemPositionChange:
-            for link, index in self.links:
-                link.updateElement(index, value.toPoint())
-        return QtWidgets.QGraphicsPolygonItem.itemChange(self, change, value)
+    def initShape(self):
+        size = 5
+        color = QtGui.QColor(0, 150, 0)
+        if self.node.graph.direction == 'horizontal':
+            points = [QtCore.QPoint(0, 0),
+                      QtCore.QPoint(-size, size),
+                      QtCore.QPoint(-size, -size)]
+        if self.node.graph.direction == 'vertical':
+            points = [QtCore.QPoint(0, 0),
+                      QtCore.QPoint(-size, -size),
+                      QtCore.QPoint(size, -size)]
+        self.setPolygon(QtGui.QPolygonF(points))
+        self.setBrush(QtGui.QBrush(color))
+        self.setPen(QtGui.QPen(color))
+
+    def updateLinkPos(self):
+        for link, index in self.links:
+            link.updateElement(index, self.node.handle.pos()+self.pos())
 
 
-class Node(QtWidgets.QWidget):
+class Node(ui.QViewWidget):
     """
     movable widget inside the graph associated to a pipeline's step
 
@@ -121,55 +121,72 @@ class Node(QtWidgets.QWidget):
     rightClicked = QtCore.pyqtSignal(int)
 
     def __init__(self, graph, type, name, parents=[], position=(0, 0)):
-        super().__init__()
+        super().__init__(os.path.join(UI_DIR, "Node.ui"))
         self.graph = graph
         self.type = type
         self.name = name
-        uic.loadUi(os.path.join(UI_DIR, "Node.ui"), self)
-
         self.button.setText(name)
-        self.button.mousePressEvent = self._mousePressEvent
-        self.button.mouseMoveEvent = self._mouseMoveEvent
         self.snap.wheelEvent = self.snapWheelEvent
+
+        self.positionChanged.connect(self.moveChilds)
 
         self.current_branch = []
         self.childs = []
         self.parents = parents
-        self.junction_in = Junction(self)
-        self.junction_out = Junction(self)
-
-        self.moveAt(QtCore.QPointF(*position))
-        self.isSelected = False
-
         self.current_slice = None
         self.cmap = None
+        self.junctions = []
 
-        self._state = None
+    def moveChilds(self):
+        if self.graph.holdShift:
+            if self.state == 'pressed':
+                self.state = 'isMoving'
+                self.updateCurrentBranch()
+            if self.state == 'isMoving':
+                delta = self.handle.pos() - self.current_position
+                self.current_position = self.handle.pos()
+                for child in self.current_branch:
+                    child.moveBy(delta.x(), delta.y())
+
+    def mousePressEvent(self, event=None):
+        self.handle.setSelected(True)
+
+    def mouseReleaseEvent(self, event=None):
+        if not self.graph.holdCtrl:
+            self.handle.setSelected(False)
+
+    def addJunction(self, type):
+        junction = Junction(self, hide=type == 'out')
+        self.positionChanged.connect(junction.updateLinkPos)
+        self.sizeChanged.connect(lambda: junction.setPos(*self.getJunctionRelativePosition(type)))
+        self.sizeChanged.connect(junction.updateLinkPos)
+        self.sizeChanged.emit()
+        self.junctions.append(junction)
+        return junction
+
+    def getJunctionRelativePosition(self, type='out'):
+        if self.graph.direction == 'horizontal':  # left to right
+            if type == 'out':
+                return self.width(), self.height()/2
+            elif type == 'in':
+                return 0, self.height()/2
+        elif self.graph.direction == 'vertical':  # top to bottom
+            if type == 'out':
+                return self.width()/2, self.height()
+            elif type == 'in':
+                return self.width()/2, 0
 
     def delete(self):
         """
         delete itself and all related graphic items (links and junctions)
         """
-        for j in [self.junction_in, self.junction_out]:
+        for j in self.junctions:
             for l1, _ in j.links:
                 self.graph.scene.removeItem(l1)
             self.graph.scene.removeItem(j)
+        self.graph.scene.removeItem(self.handle)
         self.proxy.deleteLater()
         self.deleteLater()
-
-    def select(self):
-        """
-        set node as selected (bold)
-        """
-        self.button.setStyleSheet("QPushButton {font-weight: bold;}")
-        self.isSelected = True
-
-    def unselect(self):
-        """
-        set node as unselected (normal)
-        """
-        self.button.setStyleSheet("QPushButton {font-weight: normal;}")
-        self.isSelected = False
 
     def snapWheelEvent(self, event):
         """
@@ -188,6 +205,7 @@ class Node(QtWidgets.QWidget):
         disable graphics view scrolling when entering node
         """
         self.graph.setEnabledScroll(False)
+        self.graph.focus = self
         return super(Node, self).enterEvent(event)
 
     def leaveEvent(self, event):
@@ -195,16 +213,12 @@ class Node(QtWidgets.QWidget):
         enable graphics view scrolling when leaving node
         """
         self.graph.setEnabledScroll(True)
+        self.graph.focus = None
         return super(Node, self).leaveEvent(event)
 
-    def getChilds(self, recursive=True):
+    def getChilds(self):
         """
         get all children
-
-        Parameters
-        ----------
-        recursive: bool, default=True
-            if True return children and thier children recursively
 
         Return
         ------
@@ -213,7 +227,7 @@ class Node(QtWidgets.QWidget):
         """
         childs = self.childs
         for child in self.childs:
-            childs += child.getChilds(recursive)
+            childs += child.getChilds()
         return childs
 
     def updateCurrentBranch(self):
@@ -259,117 +273,6 @@ class Node(QtWidgets.QWidget):
                     node.current_slice = self.current_slice
                     node.updateSnap(sync)
 
-    # ------------------------- Node interaction ------------------------------#
-    def _mousePressEvent(self, event=None):
-        """
-        set interaction with node button to move node or open node parameters
-        """
-        if event.button() == QtCore.Qt.RightButton:
-            self.rightClicked.emit(1)
-        elif event.button() == QtCore.Qt.LeftButton:
-            self._state = 'pressed'
-            self._prev_screenPos = event.screenPos()
-            self._init_screenPos = event.screenPos() - self.junction_in.pos()
-            self.updateCurrentBranch()
-            return QtWidgets.QPushButton.mousePressEvent(self.button, event)
-
-    def _mouseMoveEvent(self, event=None):
-        """
-        move node and its children if shift is holded
-        """
-        self._state = 'moved'
-        if self.graph.holdShift:
-            self.move(event.screenPos()-self._prev_screenPos, recursive=True)
-        else:
-            self.moveAt(event.screenPos()-self._init_screenPos)
-        self._prev_screenPos = event.screenPos()
-        return QtWidgets.QPushButton.mouseMoveEvent(self.button, event)
-
-    def addToScene(self, scene):
-        """
-        add it and its items (link and junction) to the graphic scene
-
-        Parameters
-        ----------
-        scene: QtWidgets.QGraphicsScene
-        """
-        scene.addItem(self.junction_in)
-        scene.addItem(self.junction_out)
-        self.proxy = QtWidgets.QGraphicsProxyWidget(self.junction_in)
-        self.proxy.setWidget(self)
-
-        x, y = self.getHookPositions()[0]
-        self.proxy.setPos(-x, -y)
-        self.proxy.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable |
-                            QtWidgets.QGraphicsItem.ItemIsSelectable |
-                            QtWidgets.QGraphicsItem.ItemIsFocusable)
-        self.raise_()
-
-    def getHookPositions(self):
-        """
-        get relative position of junctions
-
-        Return
-        ------
-        in_pos, out_pos: tuple of float
-            position of the input and output junctions
-        """
-        if self.graph.direction == 'horizontal':  # left to right
-            out_pos = (self.width(), self.height()/2)
-            in_pos = (0, self.height()/2)
-        elif self.graph.direction == 'vertical':  # top to bottom
-            out_pos = (self.width()/2, self.height())
-            in_pos = (self.width()/2, 0)
-        return in_pos, out_pos
-
-    def resizeEvent(self, event):
-        """
-        update junction positions when node widget is resized
-        """
-        (x_up, y_up), (x_down, y_down) = self.getHookPositions()
-        self.proxy.setPos(-x_up, -y_up)
-        self.junction_out.setPos(self.pos().x()+x_down-x_up, self.pos().y()+y_down-y_up)
-
-    def pos(self):
-        """
-        get position of the node
-
-        Return
-        ------
-        result: QPointF
-            position of the input junction point associated to the node
-        """
-        return self.junction_in.pos()
-
-    def moveAt(self, pos):
-        """
-        move node at specific position
-
-        Parameters
-        ----------
-        pos: QtCore.QPointF
-
-        """
-        (x_up, y_up), (x_down, y_down) = self.getHookPositions()
-        self.junction_in.setPos(pos)
-        self.junction_out.setPos(pos.x()+x_down-x_up, pos.y()+y_down-y_up)
-
-    def move(self, deltapos, recursive=False):
-        """
-        move node of delta from current position
-
-        parameters
-        ----------
-        deltapos: QtCore.QPointF
-        recursive: bool, default=True
-            move also all its children nodes
-
-        """
-        self.moveAt(self.pos()+deltapos)
-        if recursive:
-            for node in self.current_branch:
-                node.move(deltapos, recursive=False)
-
 
 class Graph(QtWidgets.QWidget):
     """
@@ -404,6 +307,21 @@ class Graph(QtWidgets.QWidget):
         self._mouse_position = QtCore.QPoint(0, 0)
         self.nodes = {}
         self.settings = {}
+        self.focus = None
+
+    def bind(self, parent, child):
+        """
+        create a link between a parent and a child node
+
+        Parameters
+        ----------
+        parent, child: Node
+            nodes to visually bind
+        """
+        jout = parent.addJunction('out')
+        jin = child.addJunction('in')
+        link = Link(jout, jin)
+        self.scene.addItem(link)
 
     def setEnabledScroll(self, enable_scroll=True):
         """
@@ -424,49 +342,26 @@ class Graph(QtWidgets.QWidget):
         ------
         result: list of Node
         """
-        return [n for n in self.nodes.values() if n.isSelected]
-
-    def clearSelection(self):
-        """
-        unselect all selected nodes (with ctrl+click shortcut)
-        """
-        for node in self.nodes.values():
-            node.unselect()
+        return [n for n in self.nodes.values() if n.handle.isSelected()]
 
     def eventFilter(self, obj, event):
         """
         manage keyboard shortcut and mouse events on graph view
         """
         if obj == self:
-            if event.type() == QtCore.QEvent.MouseButtonPress:
-                if event.button() == QtCore.Qt.LeftButton:
-                    self.clearSelection()
-            elif event.type() == QtCore.QEvent.Wheel:
+            if event.type() == QtCore.QEvent.Wheel:
                 return True
             elif event.type() == QtCore.QEvent.KeyPress:
                 if event.key() == QtCore.Qt.Key_Shift:
                     self.holdShift = True
                 elif event.key() == QtCore.Qt.Key_Control:
                     self.holdCtrl = True
-                elif event.key() == QtCore.Qt.Key_Escape:
-                    self.clearSelection()
             elif event.type() == QtCore.QEvent.KeyRelease:
                 if event.key() == QtCore.Qt.Key_Shift:
                     self.holdShift = False
                 elif event.key() == QtCore.Qt.Key_Control:
                     self.holdCtrl = False
         return super(Graph, self).eventFilter(obj, event)
-
-    def bind(self, parent, child):
-        """
-        create a link between a parent and a child node
-
-        Parameters
-        ----------
-        parent, child: Node
-            nodes to visually bind
-        """
-        self.scene.addItem(Link(parent.junction_out, child.junction_in))
 
     def getUniqueName(self, name):
         """
@@ -502,6 +397,7 @@ class Graph(QtWidgets.QWidget):
             else open a menu with secondary actions (erosion, ...)
 
         """
+        node = self.focus
         if node is None:
             acts = self.mainwin.menu['primary']
             nodes = []
@@ -585,28 +481,31 @@ class Graph(QtWidgets.QWidget):
         node = Node(self, type, name, parents)
         node.addToScene(self.scene)
 
-        def emitNodeClick():
-            if self.holdCtrl:
-                node.select()
-            elif node._state == 'pressed':
-                self.nodeClicked.emit(node)
-
-        node.button.clicked.connect(emitNodeClick)
+        node.button.clicked.connect(lambda: self.nodeClicked.emit(node))
         node.rightClicked.connect(lambda: self.openMenu(node))
-        for i, parent in enumerate(parents):
-            self.bind(parent, node)
-            if i == 0:
-                if self.direction == 'horizontal':
-                    node.moveAt(parent.pos()+QtCore.QPointF(300, len(parent.childs)*350))
-                elif self.direction == 'vertical':
-                    node.moveAt(parent.pos()+QtCore.QPointF(len(parent.childs)*300, 450))
 
-            parent.childs.append(node)
         if len(parents) == 0:
-            node.moveAt(self._mouse_position+QtCore.QPoint(node.width()/2, 0))
+            x, y = self._mouse_position.x(), self._mouse_position.y()
+            node.moveBy(x, y)
+        else:
+            child_pos = None
+            parent_pos = None
+            for i, parent in enumerate(parents):
+                self.bind(parent, node)
+                if len(parent.childs) > 0:
+                    pos = parent.childs[-1].handle.pos()
+                    if child_pos is None or pos.x() > child_pos.x():
+                        child_pos = pos
+                pos = parent.handle.pos()
+                if parent_pos is None or pos.x() > parent_pos.x():
+                    parent_pos = pos
+                parent.childs.append(node)
+
+            if child_pos is None or parent_pos.x() >= child_pos.x():
+                node.moveBy(parent_pos.x()+300, parent_pos.y())
+            else:
+                node.moveBy(child_pos.x(), child_pos.y()+400)
+
         self.nodes[name] = node
         self.settings[name] = {'type': type, 'parents': [p.name for p in parents]}
         return node
-
-    def renameNode(self, node):
-        print('rename')
