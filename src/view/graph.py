@@ -129,6 +129,7 @@ class Node(ui.QViewWidget):
         self.snap.wheelEvent = self.snapWheelEvent
 
         self.positionChanged.connect(self.moveChilds)
+        self.sizeChanged.connect(self.updateSnap)
 
         self.current_branch = []
         self.childs = []
@@ -260,10 +261,17 @@ class Node(ui.QViewWidget):
         qim = QtGui.QImage(im[self.current_slice].copy(),
                            s2, s3, QtGui.QImage.Format_Indexed8)
 
+        # set color map
         if self.cmap is not None:
             qim.setColorTable(CMAP[self.cmap])
 
-        self.snap.setPixmap(QtGui.QPixmap(qim))
+        # scale pixmap to qlabel size
+        pixmap = QtGui.QPixmap(qim)
+        pixmap = pixmap.scaled(self.snap.width(), self.snap.width(),
+                               QtCore.Qt.KeepAspectRatio,
+                               QtCore.Qt.FastTransformation)
+
+        self.snap.setPixmap(pixmap)
         self.snap.update()
 
         # synchronize parents and children

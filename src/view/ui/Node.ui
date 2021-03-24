@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>185</width>
-    <height>70</height>
+    <width>200</width>
+    <height>48</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,6 +56,18 @@
      </item>
      <item>
       <widget class="QLabel" name="snap">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>198</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -63,6 +75,19 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
