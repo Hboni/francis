@@ -3,6 +3,7 @@ from src.view import ui, CMAP
 import os
 import copy
 from src import UI_DIR, IMAGES_STACK
+import numpy as np
 
 
 class Link(QtWidgets.QGraphicsPathItem):
@@ -135,7 +136,8 @@ class Node(ui.QViewWidget):
         self.childs = []
         self.parents = parents
         self.current_slice = None
-        self.cmap = None
+        self.cmap = 'scaled'
+        self.ctable = None
         self.junctions = []
 
     def moveChilds(self):
@@ -237,6 +239,26 @@ class Node(ui.QViewWidget):
         """
         self.current_branch = set(self.getChilds())
 
+    def getScaledColorTable(self, im):
+        """
+        compute the color table scaled between min and max of image pixel values
+
+        Parameters
+        ----------
+        im: 2d/ 3d numpy array
+
+        Return
+        ------
+        ctable: list of qRgb
+            list of all colors associated to a pixel value
+            first color for pixel=0, second color for pixel=1, ...
+
+        """
+        if self.ctable is None:
+            values = np.linspace(0, 255, np.max(im)-np.min(im)+1).astype(int)
+            self.ctable = [QtGui.qRgb(i, i, i) for i in values]
+        return self.ctable
+
     def updateSnap(self, sync=True):
         """
         update image slice in snap view
@@ -262,7 +284,9 @@ class Node(ui.QViewWidget):
                            s2, s3, QtGui.QImage.Format_Indexed8)
 
         # set color map
-        if self.cmap is not None:
+        if self.cmap == 'scaled':
+            qim.setColorTable(self.getScaledColorTable(im))
+        elif self.cmap is not None:
             qim.setColorTable(CMAP[self.cmap])
 
         # scale pixmap to qlabel size
