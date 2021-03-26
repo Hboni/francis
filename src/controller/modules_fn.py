@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets
-from src import OUT_DIR, IMAGES_STACK
 import os
 import numpy as np
 import nibabel as nib
 from src.model import core
+from src import DATA_DIR, OUT_DIR, IMAGES_STACK
+DATA_DIR
 
 
 def getParentNames(widget):
@@ -112,5 +113,21 @@ def addImages(widget):
         if parent_name not in IMAGES_STACK.keys():
             return print("'{}' not in image stack".format(parent_name))
     im = core.addImages([IMAGES_STACK[parent_name] for parent_name in parent_names])
+    IMAGES_STACK[widget.node.name] = im
+    widget.node.updateSnap()
+
+
+def substractImages(widget):
+    """
+    compute substraction of all input images from the reference image
+    """
+    parent_names = getParentNames(widget)
+    for parent_name in parent_names:
+        if parent_name not in IMAGES_STACK.keys():
+            return print("'{}' not in image stack".format(parent_name))
+    ref_parent_name = widget.reference.currentText()
+    parent_names.remove(ref_parent_name)
+    im = core.substractImages(IMAGES_STACK[ref_parent_name],
+                              [IMAGES_STACK[parent_name] for parent_name in parent_names])
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()

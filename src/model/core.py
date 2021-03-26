@@ -115,3 +115,24 @@ def addImages(ims):
     for im in ims[1:]:
         im_sum += im
     return im_sum
+
+
+def substractImages(ref_im, ims):
+    """
+    apply substraction of set of images to a reference image
+
+    Parameters
+    ----------
+    ref_im: 2d/ 3d numpy array
+        the reference image index from which we want to subtract other images
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_sub: 2d/3d numpy array
+
+    """
+    im_sub = copy.copy(ref_im)
+    for im in ims:
+        im_sub -= im
+    return im_sub
