@@ -2,6 +2,7 @@ from skimage import morphology
 import copy
 import numpy as np
 
+
 def erode(im, size, round_shape=True):
     """
     Apply morphological erosion on the input image
@@ -37,6 +38,7 @@ def erode(im, size, round_shape=True):
     eroded = morphology.erosion(im, selem)
     return eroded
 
+
 def dilate(im, size, round_shape=True):
     """
     Apply morphological dilation on the input image
@@ -71,6 +73,7 @@ def dilate(im, size, round_shape=True):
     dilated = morphology.dilation(im, selem)
     return dilated
 
+
 def applyThreshold(im, threshold, reverse=False):
     """
     Apply binary threshold on the input image
@@ -94,3 +97,21 @@ def applyThreshold(im, threshold, reverse=False):
     else:
         mask = im > threshold
     return mask.astype(np.uint8)
+
+
+def addImages(ims):
+    """
+    apply sum to each pixel of all input images
+
+    Parameters
+    ----------
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_sum: 2d/3d numpy array
+    """
+    im_sum = copy.copy(ims[0])
+    for im in ims[1:]:
+        im_sum += im
+    return im_sum

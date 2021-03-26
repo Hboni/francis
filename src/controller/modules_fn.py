@@ -1,10 +1,10 @@
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src import DATA_DIR, OUT_DIR, IMAGES_STACK
+from PyQt5 import QtWidgets
+from src import OUT_DIR, IMAGES_STACK
 import os
 import numpy as np
 import nibabel as nib
-import copy
 from src.model import core
+
 
 def getParentNames(widget):
     """
@@ -12,15 +12,17 @@ def getParentNames(widget):
     """
     return [p.name for p in widget.node.parents]
 
+
 def browseSavepath(widget):
     """
     open a browse window to define the nifti save path
     """
     name = getParentNames(widget)[0]
     filename, extension = QtWidgets.QFileDialog.getSaveFileName(widget.parent().parent(), 'Save file',
-                            os.path.join(OUT_DIR, name), filter=".nii.gz")
+                                                                os.path.join(OUT_DIR, name), filter=".nii.gz")
     widget.path.setText(filename+extension)
     widget.path.setToolTip(filename+extension)
+
 
 def saveImage(widget):
     """
@@ -32,6 +34,7 @@ def saveImage(widget):
     ni_img = nib.Nifti1Image(IMAGES_STACK[parent_name], None)
     nib.save(ni_img, widget.path.text())
     print("done")
+
 
 def browseImage(widget):
     """
@@ -45,6 +48,7 @@ def browseImage(widget):
     widget.path.setText(filename)
     widget.path.setToolTip(filename)
 
+
 def loadImage(widget):
     """
     load nifti file, store inside the IMAGES_STACK dictionnary
@@ -56,6 +60,7 @@ def loadImage(widget):
         return "for now loaded images must be of size 3"
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
+
 
 def updateErosion(widget):
     """
@@ -69,6 +74,7 @@ def updateErosion(widget):
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
 
+
 def updateDilation(widget):
     """
     compute 3d dilation on the parent image
@@ -80,6 +86,7 @@ def updateDilation(widget):
     im = core.dilate(IMAGES_STACK[parent_name], widget.spin.value())
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
+
 
 def updateThreshold(widget):
     """
@@ -93,4 +100,17 @@ def updateThreshold(widget):
                              widget.spin.value(), widget.reversed.isChecked())
     IMAGES_STACK[widget.node.name] = im
     widget.node.cmap = 'binary'
+    widget.node.updateSnap()
+
+
+def addImages(widget):
+    """
+    compute addition of all input images
+    """
+    parent_names = getParentNames(widget)
+    for parent_name in parent_names:
+        if parent_name not in IMAGES_STACK.keys():
+            return print("'{}' not in image stack".format(parent_name))
+    im = core.addImages([IMAGES_STACK[parent_name] for parent_name in parent_names])
+    IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()

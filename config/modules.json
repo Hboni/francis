@@ -31,6 +31,13 @@
             "reversed": "modules_fn.updateThreshold"
         }
     },
+    "add images":{
+        "type": "secondary",
+        "ui": "AddImages.ui",
+        "connection": {
+            "apply": "modules_fn.addImages"
+        }
+    },
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",
