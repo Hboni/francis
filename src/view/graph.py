@@ -98,7 +98,7 @@ class Junction(QtWidgets.QGraphicsPolygonItem):
 
     def updateLinkPos(self):
         for link, index in self.links:
-            link.updateElement(index, self.node.handle.pos()+self.pos())
+            link.updateElement(index, self.node.pos()+self.pos())
 
 
 class Node(ui.QViewWidget):
@@ -144,8 +144,8 @@ class Node(ui.QViewWidget):
                 self.state = 'isMoving'
                 self.updateCurrentBranch()
             if self.state == 'isMoving':
-                delta = self.handle.pos() - self.current_position
-                self.current_position = self.handle.pos()
+                delta = self.pos() - self.current_position
+                self.current_position = self.pos()
                 for child in self.current_branch:
                     child.moveBy(delta.x(), delta.y())
 
@@ -501,10 +501,10 @@ class Graph(QtWidgets.QWidget):
             for i, parent in enumerate(parents):
                 self.bind(parent, node)
                 if len(parent.childs) > 0:
-                    pos = parent.childs[-1].handle.pos()
+                    pos = parent.childs[-1].pos()
                     if child_pos is None or pos.x() > child_pos.x():
                         child_pos = pos
-                pos = parent.handle.pos()
+                pos = parent.pos()
                 if parent_pos is None or pos.x() > parent_pos.x():
                     parent_pos = pos
                 parent.childs.append(node)

@@ -96,6 +96,10 @@ class QViewWidget(QtWidgets.QWidget):
         self.handle = self.RectItem(self)
         self.handle.setPen(QtGui.QPen(QtCore.Qt.transparent))
 
+        # initialize self function from handle functions
+        self.moveBy = self.handle.moveBy
+        self.pos = self.handle.pos
+
         self.proxy = QtWidgets.QGraphicsProxyWidget(self.handle)
         self.proxy.setWidget(self)
 
@@ -140,6 +144,3 @@ class QViewWidget(QtWidgets.QWidget):
         self.sizeChanged.connect(lambda: self.handle.setRect(QtCore.QRectF(self.geometry().adjusted(*handle_size))))
         self.sizeChanged.emit()
         scene.addItem(self.handle)
-
-    def moveBy(self, dx, dy):
-        self.handle.moveBy(dx, dy)
