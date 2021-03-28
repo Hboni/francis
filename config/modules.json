@@ -47,6 +47,13 @@
             "apply": "modules_fn.substractImages"
         }
     },
+    "multiply images":{
+        "type": "secondary",
+        "ui": "MultiplyImages.ui",
+        "connection": {
+            "apply": "modules_fn.multiplyImages"
+        }
+    },
 
     "save image":{
         "type": "secondary",

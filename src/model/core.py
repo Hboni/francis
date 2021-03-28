@@ -136,3 +136,21 @@ def substractImages(ref_im, ims):
     for im in ims:
         im_sub -= im
     return im_sub
+
+
+def multiplyImages(ims):
+    """
+    apply multiplication to each pixel of all input images
+
+    Parameters
+    ----------
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_mult: 2d/3d numpy array
+    """
+    im_mult = copy.copy(ims[0])
+    for im in ims[1:]:
+        im_mult *= im
+    return im_mult

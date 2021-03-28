@@ -131,3 +131,16 @@ def substractImages(widget):
                               [IMAGES_STACK[parent_name] for parent_name in parent_names])
     IMAGES_STACK[widget.node.name] = im
     widget.node.updateSnap()
+
+
+def multiplyImages(widget):
+    """
+    compute multiplication of all input images
+    """
+    parent_names = getParentNames(widget)
+    for parent_name in parent_names:
+        if parent_name not in IMAGES_STACK.keys():
+            return print("'{}' not in image stack".format(parent_name))
+    im = core.multiplyImages([IMAGES_STACK[parent_name] for parent_name in parent_names])
+    IMAGES_STACK[widget.node.name] = im
+    widget.node.updateSnap()
