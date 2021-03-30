@@ -2,7 +2,8 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from src.view import ui, CMAP
 import os
 import copy
-from src import UI_DIR, IMAGES_STACK
+from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
+import numpy as np
 
 
 class Link(QtWidgets.QGraphicsPathItem):
@@ -135,7 +136,8 @@ class Node(ui.QViewWidget):
         self.childs = []
         self.parents = parents
         self.current_slice = None
-        self.cmap = None
+        self.cmap = 'classic'
+        self.ctable = None
         self.junctions = []
 
     def moveChilds(self):
@@ -237,6 +239,26 @@ class Node(ui.QViewWidget):
         """
         self.current_branch = set(self.getChilds())
 
+    def getScaledColorTable(self, im):
+        """
+        compute the color table scaled between min and max of image pixel values
+
+        Parameters
+        ----------
+        im: 2d/ 3d numpy array
+
+        Return
+        ------
+        ctable: list of qRgb
+            list of all colors associated to a pixel value
+            first color for pixel=0, second color for pixel=1, ...
+
+        """
+        if self.ctable is None:
+            values = np.linspace(0, 255, int(np.nanmax(im)-np.nanmin(im)+1)).astype(int)
+            self.ctable = [QtGui.qRgb(i, i, i) for i in values]
+        return self.ctable
+
     def updateSnap(self, sync=True):
         """
         update image slice in snap view
@@ -250,6 +272,7 @@ class Node(ui.QViewWidget):
         """
         if self.name not in IMAGES_STACK.keys():
             return
+
         im = IMAGES_STACK[self.name]
         s1, s2, s3 = im.shape
         if self.current_slice is None:
@@ -258,12 +281,9 @@ class Node(ui.QViewWidget):
             self.current_slice = 0
         elif self.current_slice >= s1:
             self.current_slice = s1-1
-        qim = QtGui.QImage(im[self.current_slice].copy(),
-                           s2, s3, QtGui.QImage.Format_Indexed8)
 
-        # set color map
-        if self.cmap is not None:
-            qim.setColorTable(CMAP[self.cmap])
+        qim = QtGui.QImage(im[self.current_slice].copy(), s2, s3, QtGui.QImage.Format_Indexed8)
+        qim.setColorTable(CMAP[self.cmap])
 
         # scale pixmap to qlabel size
         pixmap = QtGui.QPixmap(qim)
@@ -448,6 +468,7 @@ class Graph(QtWidgets.QWidget):
                 self.deleteBranch(child)
         # delete data
         if parent.name in IMAGES_STACK.keys():
+            del _IMAGES_STACK[parent.name]
             del IMAGES_STACK[parent.name]
         # remove node from parent children
         for p in parent.parents:

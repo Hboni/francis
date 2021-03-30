@@ -31,6 +31,36 @@
             "reversed": "modules_fn.updateThreshold"
         }
     },
+    "add images":{
+        "type": "secondary",
+        "ui": "AddImages.ui",
+        "connection": {
+            "apply": "modules_fn.addImages"
+        }
+    },
+    "substract images":{
+        "type": "secondary",
+        "ui": "SubstractImages.ui",
+        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
+        "connection": {
+            "reference": "modules_fn.substractImages",
+            "apply": "modules_fn.substractImages"
+        }
+    },
+    "multiply images":{
+        "type": "secondary",
+        "ui": "MultiplyImages.ui",
+        "connection": {
+            "apply": "modules_fn.multiplyImages"
+        }
+    },
+    "divide images":{
+        "type": "secondary",
+        "ui": "DivideImages.ui",
+        "connection": {
+            "apply": "modules_fn.divideImages"
+        }
+    },
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",

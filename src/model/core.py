@@ -1,6 +1,8 @@
 from skimage import morphology
 import copy
 import numpy as np
+from src.utils import getMinimumDtype
+
 
 def erode(im, size, round_shape=True):
     """
@@ -37,6 +39,7 @@ def erode(im, size, round_shape=True):
     eroded = morphology.erosion(im, selem)
     return eroded
 
+
 def dilate(im, size, round_shape=True):
     """
     Apply morphological dilation on the input image
@@ -71,6 +74,7 @@ def dilate(im, size, round_shape=True):
     dilated = morphology.dilation(im, selem)
     return dilated
 
+
 def applyThreshold(im, threshold, reverse=False):
     """
     Apply binary threshold on the input image
@@ -94,3 +98,83 @@ def applyThreshold(im, threshold, reverse=False):
     else:
         mask = im > threshold
     return mask.astype(np.uint8)
+
+
+def addImages(ims):
+    """
+    apply sum to each pixel of all input images
+
+    Parameters
+    ----------
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_sum: 2d/3d numpy array
+    """
+    im_sum = ims[0].astype(float)
+    for im in ims[1:]:
+        im_sum += im.astype(float)
+    im_sum = im_sum.astype(getMinimumDtype(im_sum))
+    return im_sum
+
+
+def substractImages(ref_im, ims):
+    """
+    apply substraction of set of images to a reference image
+
+    Parameters
+    ----------
+    ref_im: 2d/ 3d numpy array
+        the reference image index from which we want to subtract other images
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_sub: 2d/3d numpy array
+
+    """
+
+    im_sub = ref_im.astype(float)
+    for im in ims:
+        im_sub -= im.astype(float)
+    im_sub = im_sub.astype(getMinimumDtype(im_sub))
+    return im_sub
+
+
+def multiplyImages(ims):
+    """
+    apply multiplication to each pixel of all input images
+
+    Parameters
+    ----------
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_mult: 2d/3d numpy array
+    """
+    im_mult = ims[0].astype(float)
+    for im in ims[1:]:
+        im_mult *= im.astype(float)
+    im_mult = im_mult.astype(getMinimumDtype(im_mult))
+    return im_mult
+
+
+def divideImages(ims):
+    """
+    apply division to each pixel of all input images
+
+    Parameters
+    ----------
+    ims: list of 2d/ 3d numpy array
+
+    Return
+    ------
+    im_div: 2d/3d numpy array
+    """
+    im_div = copy.copy(ims[0]).astype(float)
+    for im in ims[1:]:
+        im_div /= im.astype(float)
+    im_div = im_div.astype(getMinimumDtype(im_div))
+    return im_div

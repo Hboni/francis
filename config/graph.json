@@ -3,37 +3,8 @@
         "type": "load image",
         "parents": []
     },
-    "erode image": {
-        "type": "erode image",
-        "parents": [
-            "load image"
-        ]
-    },
-    "dilate image": {
-        "type": "dilate image",
-        "parents": [
-            "erode image"
-        ]
-    },
-    "threshold image": {
-        "type": "threshold image",
-        "parents": [
-            "erode image"
-        ]
-    },
-    "erode image_1": {
-        "type": "erode image",
-        "parents": [
-            "erode image",
-            "dilate image"
-        ]
-    },
-    "dilate image_1": {
-        "type": "dilate image",
-        "parents": [
-            "erode image",
-            "erode image_1",
-            "load image"
-        ]
+    "load image_1": {
+        "type": "load image",
+        "parents": []
     }
 }
