@@ -54,7 +54,13 @@
             "apply": "modules_fn.multiplyImages"
         }
     },
-
+    "divide images":{
+        "type": "secondary",
+        "ui": "DivideImages.ui",
+        "connection": {
+            "apply": "modules_fn.divideImages"
+        }
+    },
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",

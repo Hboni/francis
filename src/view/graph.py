@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from src.view import ui, CMAP
 import os
 import copy
-from src import UI_DIR, IMAGES_STACK
+from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
 import numpy as np
 
 
@@ -136,7 +136,7 @@ class Node(ui.QViewWidget):
         self.childs = []
         self.parents = parents
         self.current_slice = None
-        self.cmap = 'scaled'
+        self.cmap = 'classic'
         self.ctable = None
         self.junctions = []
 
@@ -255,7 +255,7 @@ class Node(ui.QViewWidget):
 
         """
         if self.ctable is None:
-            values = np.linspace(0, 255, np.max(im)-np.min(im)+1).astype(int)
+            values = np.linspace(0, 255, int(np.nanmax(im)-np.nanmin(im)+1)).astype(int)
             self.ctable = [QtGui.qRgb(i, i, i) for i in values]
         return self.ctable
 
@@ -272,6 +272,7 @@ class Node(ui.QViewWidget):
         """
         if self.name not in IMAGES_STACK.keys():
             return
+
         im = IMAGES_STACK[self.name]
         s1, s2, s3 = im.shape
         if self.current_slice is None:
@@ -280,14 +281,9 @@ class Node(ui.QViewWidget):
             self.current_slice = 0
         elif self.current_slice >= s1:
             self.current_slice = s1-1
-        qim = QtGui.QImage(im[self.current_slice].copy(),
-                           s2, s3, QtGui.QImage.Format_Indexed8)
 
-        # set color map
-        if self.cmap == 'scaled':
-            qim.setColorTable(self.getScaledColorTable(im))
-        elif self.cmap is not None:
-            qim.setColorTable(CMAP[self.cmap])
+        qim = QtGui.QImage(im[self.current_slice].copy(), s2, s3, QtGui.QImage.Format_Indexed8)
+        qim.setColorTable(CMAP[self.cmap])
 
         # scale pixmap to qlabel size
         pixmap = QtGui.QPixmap(qim)
@@ -472,6 +468,7 @@ class Graph(QtWidgets.QWidget):
                 self.deleteBranch(child)
         # delete data
         if parent.name in IMAGES_STACK.keys():
+            del _IMAGES_STACK[parent.name]
             del IMAGES_STACK[parent.name]
         # remove node from parent children
         for p in parent.parents:
