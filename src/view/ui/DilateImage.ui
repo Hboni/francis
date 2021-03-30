@@ -27,8 +27,14 @@
        </item>
        <item>
         <widget class="QSpinBox" name="spin">
+         <property name="keyboardTracking">
+          <bool>false</bool>
+         </property>
          <property name="minimum">
           <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>1000</number>
          </property>
         </widget>
        </item>

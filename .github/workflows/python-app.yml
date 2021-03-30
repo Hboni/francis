@@ -28,7 +28,7 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-  
+
   windows-tests:
     runs-on: windows-latest
 

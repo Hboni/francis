@@ -4,38 +4,74 @@
 
 Francis is a friendly image analysis interface system.
 
-# Features
+## Features
 
-It allows pipeline creation with simple image analysis processes (erosion, threshold, ...). 
+It allows pipeline creation with simple image analysis processes
+(erosion, threshold, ...).
 
-You can import _nifti_ data into Francis to make some basics operations and save the result.
+You can import _nifti_ data into Francis to make some basics operations
+and save the result.
 
-# How to use
+## How to use
 
 Clone this repository
 
-    git clone git@github.com:Hboni/francis.git
-    
+```bash
+git clone git@github.com:Hboni/francis.git
+```
+
 Install python requirements
 
-    pip install -r ./requirements.txt
-    
+```bash
+pip install -r ./requirements.txt
+```
+
 Launch the application
 
-    python ./main.py
+```bash
+python ./main.py
+```
 
-# Requirements
+## Requirements
 
 - PyQt5
 - scikit-image
 - nibabel
 - pandas
 
-# Known issues
+## How to contribute
 
-As Francis uses PyQt5 for its interface, it happens that on linux some library are missing, it can be needed to install them. (only tested on recent ubuntu)
+To contribute to this project, you must clone this repository on you Windows
+or Ubuntu computer (other linux distros are not tested).
+
+```bash
+git clone https://github.com/Hboni/francis.git
+```
+
+It is recommended to use a python virtualenv to install dependencies:
+
+```bash
+cd francis
+pip3 install virtualenv
+python3 -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+To develop in this project, it is also recommended to use [pre-commit](https://pre-commit.com/).
+
+```bash
+pip install pre-commit
+```
+
+## Known issues
+
+As Francis uses PyQt5 for its interface, it happens that on linux some library
+are missing, it can be needed to install them. (only tested on recent ubuntu)
 
 For debian:
 
-    sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
-    
+```bash
+sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+```
