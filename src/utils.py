@@ -1,4 +1,6 @@
 import numpy as np
+import copy
+from src import _IMAGES_STACK, IMAGES_STACK
 
 
 def getMinimumDtype(arr):
@@ -17,3 +19,37 @@ def getMinimumDtype(arr):
                np.uint32, np.int32, np.float32, np.uint64, np.int64, np.float64]:
         if np.array_equal(arr, arr.astype(dt), equal_nan=True):
             return dt
+
+
+def storeImage(im, name):
+    """
+    store raw image and (0, 255)-scaled image, 0 is nan values
+
+    Parameters
+    ----------
+    im: numpy.array
+    name: str
+    """
+    _IMAGES_STACK[name] = im
+
+    #
+    if im.dtype != np.float64:
+        im_c = im.astype(np.float64)
+    else:
+        im_c = copy.copy(im)
+    im_c[np.isinf(im_c)] = np.nan
+
+    # scale image in range (1, 255)
+    mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
+    if mini == maxi:
+        mini = 0
+        if maxi < 1:
+            maxi = 1
+    im_c = (im_c - mini) / (maxi - mini) * 254 + 1
+
+    # set 0 as nan values
+    im_c[np.isnan(im_c)] = 0
+
+    # convert and store
+    im_c = im_c.astype(np.uint8)
+    IMAGES_STACK[name] = im_c

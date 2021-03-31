@@ -1,5 +1,4 @@
 from skimage import morphology
-import copy
 import numpy as np
 from src.utils import getMinimumDtype
 
@@ -161,20 +160,22 @@ def multiplyImages(ims):
     return im_mult
 
 
-def divideImages(ims):
+def divideImages(ref_im, ims):
     """
-    apply division to each pixel of all input images
+    apply division of set of images to a reference image
 
     Parameters
     ----------
+    ref_im: 2d/ 3d numpy array
+        the reference image index from which we want to divide other images
     ims: list of 2d/ 3d numpy array
 
     Return
     ------
     im_div: 2d/3d numpy array
     """
-    im_div = copy.copy(ims[0]).astype(float)
-    for im in ims[1:]:
+    im_div = ref_im.astype(float)
+    for im in ims:
         im_div /= im.astype(float)
     im_div = im_div.astype(getMinimumDtype(im_div))
     return im_div

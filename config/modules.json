@@ -57,7 +57,9 @@
     "divide images":{
         "type": "secondary",
         "ui": "DivideImages.ui",
+        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
+            "reference": "modules_fn.substractImages",
             "apply": "modules_fn.divideImages"
         }
     },

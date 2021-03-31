@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>180</width>
-    <height>88</height>
+    <width>149</width>
+    <height>61</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,9 +16,6 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <widget class="QComboBox" name="reference"/>
-     </item>
      <item>
       <widget class="QPushButton" name="apply">
        <property name="text">

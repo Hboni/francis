@@ -137,7 +137,7 @@ class Node(ui.QViewWidget):
         self.childs = []
         self.parents = parents
         self.current_slice = None
-        self.cmap = 'classic'
+        self.cmap = 'rednan'
         self.ctable = None
         self.snap_axis = 0
         self.junctions = []

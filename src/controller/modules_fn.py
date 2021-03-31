@@ -1,38 +1,10 @@
 from PyQt5 import QtWidgets
 import os
-import numpy as np
 import nibabel as nib
 from src.model import core
-from src import DATA_DIR, OUT_DIR, IMAGES_STACK, _IMAGES_STACK
+from src import DATA_DIR, OUT_DIR, _IMAGES_STACK
+from src.utils import storeImage
 DATA_DIR
-
-
-def storeImage(im, name):
-    """
-    store raw image and (0, 255)-scaled image, 0 is nan values
-
-    Parameters
-    ----------
-    im: numpy.array
-    name: str
-    """
-    _IMAGES_STACK[name] = im
-    im_c = im.astype(np.float64)
-
-    # scale image in range (1, 255)
-    mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
-    if mini == maxi:
-        mini = 0
-        if maxi <= 0:
-            maxi = 1
-    im_c = (im_c - mini) / (maxi - mini) * 254 + 1
-
-    # set 0 as nan values
-    im_c[np.isnan(im_c)] = 0
-
-    # convert and store
-    im_c = im_c.astype(np.uint8)
-    IMAGES_STACK[name] = im_c
 
 
 def getParentNames(widget):
@@ -180,6 +152,9 @@ def divideImages(widget):
     for parent_name in parent_names:
         if parent_name not in _IMAGES_STACK.keys():
             return print("'{}' not in image stack".format(parent_name))
-    im = core.divideImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    ref_parent_name = widget.reference.currentText()
+    parent_names.remove(ref_parent_name)
+    im = core.divideImages(_IMAGES_STACK[ref_parent_name],
+                           [_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
     widget.node.updateSnap()
