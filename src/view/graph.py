@@ -128,6 +128,7 @@ class Node(ui.QViewWidget):
         self.name = name
         self.button.setText(name)
         self.snap.wheelEvent = self.snapWheelEvent
+        self.snap.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
 
         self.positionChanged.connect(self.moveChilds)
         self.sizeChanged.connect(self.updateSnap)
@@ -138,6 +139,7 @@ class Node(ui.QViewWidget):
         self.current_slice = None
         self.cmap = 'classic'
         self.ctable = None
+        self.snap_axis = 0
         self.junctions = []
 
     def moveChilds(self):
@@ -202,6 +204,16 @@ class Node(ui.QViewWidget):
             else:
                 self.current_slice -= step
             self.updateSnap()
+
+    def snapMouseDoubleClickEvent(self, event):
+        """
+        update image axis on double click above image view
+        """
+        if self.snap_axis == 2:
+            self.snap_axis = 0
+        else:
+            self.snap_axis += 1
+        self.updateSnap()
 
     def enterEvent(self, event):
         """
@@ -274,17 +286,29 @@ class Node(ui.QViewWidget):
             return
 
         im = IMAGES_STACK[self.name]
-        s1, s2, s3 = im.shape
+        s = im.shape[self.snap_axis]
 
+        # set current slice
         if self.current_slice is None:
-            self.current_slice = int(s1 / 2)
+            self.current_slice = int(s / 2)
         elif self.current_slice < 0:
             self.current_slice = 0
-        elif self.current_slice >= s1:
-            self.current_slice = s1-1
+        elif self.current_slice >= s:
+            self.current_slice = s-1
 
-        qim = QtGui.QImage(im[self.current_slice].copy(), s3, s2, s3, QtGui.QImage.Format_Indexed8)
+        # snap axis slice
+        if self.snap_axis == 0:
+            im_slice = im[self.current_slice].copy()
+            _, h, w = im.shape
+        elif self.snap_axis == 1:
+            im_slice = im[:, self.current_slice].copy()
+            h, _, w = im.shape
+        elif self.snap_axis == 2:
+            im_slice = im[:, :, self.current_slice].copy()
+            h, w, _ = im.shape
 
+        # define qimage
+        qim = QtGui.QImage(im_slice, w, h, w, QtGui.QImage.Format_Indexed8)
         qim.setColorTable(CMAP[self.cmap])
 
         # scale pixmap to qlabel size
@@ -301,6 +325,9 @@ class Node(ui.QViewWidget):
             for node in self.childs+self.parents:
                 if node.current_slice != self.current_slice:
                     node.current_slice = self.current_slice
+                    node.updateSnap(sync)
+                elif node.snap_axis != self.snap_axis:
+                    node.snap_axis = self.snap_axis
                     node.updateSnap(sync)
 
 
