@@ -27,6 +27,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="reference">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;input image from which we want to substract other images&lt;/p&gt;&lt;p&gt;(reference - im1 - im2 ...)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="editable">
           <bool>false</bool>
          </property>
