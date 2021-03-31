@@ -115,7 +115,7 @@ def addImages(widget):
         except ValueError as e:
             return print(e)
         ref_parent_name = widget.reference.currentText()
-        im = core.substractImages(_IMAGES_STACK[ref_parent_name], value=value)
+        im = core.addImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
@@ -159,7 +159,7 @@ def multiplyImages(widget):
         except ValueError as e:
             return print(e)
         ref_parent_name = widget.reference.currentText()
-        im = core.divideImages(_IMAGES_STACK[ref_parent_name], value=value)
+        im = core.multiplyImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
