@@ -275,6 +275,7 @@ class Node(ui.QViewWidget):
 
         im = IMAGES_STACK[self.name]
         s1, s2, s3 = im.shape
+
         if self.current_slice is None:
             self.current_slice = int(s1 / 2)
         elif self.current_slice < 0:
@@ -282,7 +283,8 @@ class Node(ui.QViewWidget):
         elif self.current_slice >= s1:
             self.current_slice = s1-1
 
-        qim = QtGui.QImage(im[self.current_slice].copy(), s2, s3, QtGui.QImage.Format_Indexed8)
+        qim = QtGui.QImage(im[self.current_slice].copy(), s3, s2, s3, QtGui.QImage.Format_Indexed8)
+
         qim.setColorTable(CMAP[self.cmap])
 
         # scale pixmap to qlabel size

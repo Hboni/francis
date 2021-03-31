@@ -84,7 +84,6 @@ def loadImage(widget):
     and create the rendering widget to put image inside
     """
     im = nib.load(widget.path.text()).get_data()
-    # print("image description:\nshape: {0}\ndtype: {1}\nunique values: {2}".format(im.shape, im.dtype, np.unique(im)))
     if len(im.shape) != 3:
         return "for now loaded images must be of size 3"
     storeImage(im, widget.node.name)
