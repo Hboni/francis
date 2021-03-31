@@ -55,7 +55,10 @@ def loadImage(widget):
     load nifti file, store inside the image stack dictionnaries
     and create the rendering widget to put image inside
     """
-    im = nib.load(widget.path.text()).get_data()
+    try:
+        im = nib.load(widget.path.text()).get_data()
+    except (nib.filebasedimages.ImageFileError, FileNotFoundError) as e:
+        return print(e)
     if len(im.shape) != 3:
         return "for now loaded images must be of size 3"
     storeImage(im, widget.node.name)
@@ -109,8 +112,8 @@ def addImages(widget):
     if widget.singleValue.isChecked():
         try:
             value = float(widget.value.text())
-        except ValueError:
-            return print("addition value ERROR")
+        except ValueError as e:
+            return print(e)
         ref_parent_name = widget.reference.currentText()
         im = core.substractImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
@@ -131,8 +134,8 @@ def substractImages(widget):
     if widget.singleValue.isChecked():
         try:
             value = float(widget.value.text())
-        except ValueError:
-            return print("substract value ERROR")
+        except ValueError as e:
+            return print(e)
         im = core.substractImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
         parent_names = getParentNames(widget)
@@ -153,8 +156,8 @@ def multiplyImages(widget):
     if widget.singleValue.isChecked():
         try:
             value = float(widget.value.text())
-        except ValueError:
-            return print("multiply value ERROR")
+        except ValueError as e:
+            return print(e)
         ref_parent_name = widget.reference.currentText()
         im = core.divideImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
@@ -175,8 +178,8 @@ def divideImages(widget):
     if widget.singleValue.isChecked():
         try:
             value = float(widget.value.text())
-        except ValueError:
-            return print("divide value ERROR")
+        except ValueError as e:
+            return print(e)
         im = core.divideImages(_IMAGES_STACK[ref_parent_name], value=value)
     else:
         parent_names = getParentNames(widget)
