@@ -249,8 +249,9 @@ class Node(ui.QViewWidget):
         """
         update pixel value and position labels when clicking snap view
         """
-
         # set ratio between image and qpixmap
+        if self.name not in _IMAGES_STACK:
+            return
         ratio = _IMAGES_STACK[self.name].shape[int(self.snap_axis == 0)] / self.snap.width()
         # get click position
         click_pos = np.array([event.pos().y(), event.pos().x()])
@@ -328,7 +329,7 @@ class Node(ui.QViewWidget):
             to the current slice recursively
 
         """
-        if self.name not in IMAGES_STACK.keys():
+        if self.name not in IMAGES_STACK:
             return
 
         im = IMAGES_STACK[self.name]
@@ -482,9 +483,8 @@ class Graph(QtWidgets.QWidget):
 
         """
         i = 1
-        names = self.nodes.keys()
         new_name = copy.copy(name)
-        while new_name in names:
+        while new_name in self.nodes:
             new_name = "{0}_{1}".format(name, i)
             i += 1
         return new_name
@@ -542,7 +542,7 @@ class Graph(QtWidgets.QWidget):
             if len(child.parents) == 0:
                 self.deleteBranch(child)
         # delete data
-        if parent.name in IMAGES_STACK.keys():
+        if parent.name in IMAGES_STACK:
             del _IMAGES_STACK[parent.name]
             del IMAGES_STACK[parent.name]
         # remove node from parent children

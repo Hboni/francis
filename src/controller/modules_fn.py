@@ -30,7 +30,7 @@ def saveImage(widget):
     save the parent image as nifti file at specified path
     """
     parent_name = getParentNames(widget)[0]
-    if parent_name not in _IMAGES_STACK.keys():
+    if parent_name not in _IMAGES_STACK:
         return print("'{}' not in image stack".format(parent_name))
     ni_img = nib.Nifti1Image(_IMAGES_STACK[parent_name], None)
     nib.save(ni_img, widget.path.text())
@@ -71,7 +71,7 @@ def updateErosion(widget):
     and store the eroded image into image stack dictionnaries
     """
     parent_name = getParentNames(widget)[0]
-    if parent_name not in _IMAGES_STACK.keys():
+    if parent_name not in _IMAGES_STACK:
         return print("'{}' not in image stack".format(parent_name))
     im = core.erode(_IMAGES_STACK[parent_name], widget.spin.value())
     storeImage(im, widget.node.name)
@@ -84,7 +84,7 @@ def updateDilation(widget):
     and store the dilated image into image stack dictionnaries
     """
     parent_name = getParentNames(widget)[0]
-    if parent_name not in _IMAGES_STACK.keys():
+    if parent_name not in _IMAGES_STACK:
         return print("'{}' not in image stack".format(parent_name))
     im = core.dilate(_IMAGES_STACK[parent_name], widget.spin.value())
     storeImage(im, widget.node.name)
@@ -97,7 +97,7 @@ def updateThreshold(widget):
     and store the thresholded image into image stack dictionnaries
     """
     parent_name = getParentNames(widget)[0]
-    if parent_name not in _IMAGES_STACK.keys():
+    if parent_name not in _IMAGES_STACK:
         return print("'{}' not in image stack".format(parent_name))
     im = core.applyThreshold(_IMAGES_STACK[parent_name],
                              widget.spin.value(), widget.reversed.isChecked())
@@ -119,7 +119,7 @@ def addImages(widget):
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK.keys():
+            if parent_name not in _IMAGES_STACK:
                 return print("'{}' not in image stack".format(parent_name))
         im = core.addImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
@@ -140,7 +140,7 @@ def substractImages(widget):
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK.keys():
+            if parent_name not in _IMAGES_STACK:
                 return print("'{}' not in image stack".format(parent_name))
         parent_names.remove(ref_parent_name)
         im = core.substractImages(_IMAGES_STACK[ref_parent_name],
@@ -163,7 +163,7 @@ def multiplyImages(widget):
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK.keys():
+            if parent_name not in _IMAGES_STACK:
                 return print("'{}' not in image stack".format(parent_name))
         im = core.multiplyImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
@@ -184,7 +184,7 @@ def divideImages(widget):
     else:
         parent_names = getParentNames(widget)
         for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK.keys():
+            if parent_name not in _IMAGES_STACK:
                 return print("'{}' not in image stack".format(parent_name))
         parent_names.remove(ref_parent_name)
         im = core.divideImages(_IMAGES_STACK[ref_parent_name],

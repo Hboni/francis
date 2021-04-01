@@ -40,7 +40,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menu = {}
         for k, values in self.modules.items():
             v = values['type']
-            if v not in self.menu.keys():
+            if v not in self.menu:
                 self.menu[v] = [k]
             else:
                 self.menu[v].append(k)
