@@ -55,7 +55,10 @@ def loadImage(widget):
     load nifti file, store inside the image stack dictionnaries
     and create the rendering widget to put image inside
     """
-    im = nib.load(widget.path.text()).get_data()
+    try:
+        im = nib.load(widget.path.text()).get_data()
+    except (nib.filebasedimages.ImageFileError, FileNotFoundError) as e:
+        return print(e)
     if len(im.shape) != 3:
         return "for now loaded images must be of size 3"
     storeImage(im, widget.node.name)
@@ -106,11 +109,19 @@ def addImages(widget):
     """
     compute addition of all input images
     """
-    parent_names = getParentNames(widget)
-    for parent_name in parent_names:
-        if parent_name not in _IMAGES_STACK.keys():
-            return print("'{}' not in image stack".format(parent_name))
-    im = core.addImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    if widget.singleValue.isChecked():
+        try:
+            value = float(widget.value.text())
+        except ValueError as e:
+            return print(e)
+        ref_parent_name = widget.reference.currentText()
+        im = core.addImages([_IMAGES_STACK[ref_parent_name]], value=value)
+    else:
+        parent_names = getParentNames(widget)
+        for parent_name in parent_names:
+            if parent_name not in _IMAGES_STACK.keys():
+                return print("'{}' not in image stack".format(parent_name))
+        im = core.addImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
     widget.node.updateSnap()
 
@@ -119,14 +130,21 @@ def substractImages(widget):
     """
     compute substraction of all input images from the reference image
     """
-    parent_names = getParentNames(widget)
-    for parent_name in parent_names:
-        if parent_name not in _IMAGES_STACK.keys():
-            return print("'{}' not in image stack".format(parent_name))
     ref_parent_name = widget.reference.currentText()
-    parent_names.remove(ref_parent_name)
-    im = core.substractImages(_IMAGES_STACK[ref_parent_name],
-                              [_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    if widget.singleValue.isChecked():
+        try:
+            value = float(widget.value.text())
+        except ValueError as e:
+            return print(e)
+        im = core.substractImages(_IMAGES_STACK[ref_parent_name], value=value)
+    else:
+        parent_names = getParentNames(widget)
+        for parent_name in parent_names:
+            if parent_name not in _IMAGES_STACK.keys():
+                return print("'{}' not in image stack".format(parent_name))
+        parent_names.remove(ref_parent_name)
+        im = core.substractImages(_IMAGES_STACK[ref_parent_name],
+                                  [_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
     widget.node.updateSnap()
 
@@ -135,11 +153,19 @@ def multiplyImages(widget):
     """
     compute multiplication of all input images
     """
-    parent_names = getParentNames(widget)
-    for parent_name in parent_names:
-        if parent_name not in _IMAGES_STACK.keys():
-            return print("'{}' not in image stack".format(parent_name))
-    im = core.multiplyImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    if widget.singleValue.isChecked():
+        try:
+            value = float(widget.value.text())
+        except ValueError as e:
+            return print(e)
+        ref_parent_name = widget.reference.currentText()
+        im = core.multiplyImages([_IMAGES_STACK[ref_parent_name]], value=value)
+    else:
+        parent_names = getParentNames(widget)
+        for parent_name in parent_names:
+            if parent_name not in _IMAGES_STACK.keys():
+                return print("'{}' not in image stack".format(parent_name))
+        im = core.multiplyImages([_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
     widget.node.updateSnap()
 
@@ -148,13 +174,20 @@ def divideImages(widget):
     """
     compute division of all input images
     """
-    parent_names = getParentNames(widget)
-    for parent_name in parent_names:
-        if parent_name not in _IMAGES_STACK.keys():
-            return print("'{}' not in image stack".format(parent_name))
     ref_parent_name = widget.reference.currentText()
-    parent_names.remove(ref_parent_name)
-    im = core.divideImages(_IMAGES_STACK[ref_parent_name],
-                           [_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    if widget.singleValue.isChecked():
+        try:
+            value = float(widget.value.text())
+        except ValueError as e:
+            return print(e)
+        im = core.divideImages(_IMAGES_STACK[ref_parent_name], value=value)
+    else:
+        parent_names = getParentNames(widget)
+        for parent_name in parent_names:
+            if parent_name not in _IMAGES_STACK.keys():
+                return print("'{}' not in image stack".format(parent_name))
+        parent_names.remove(ref_parent_name)
+        im = core.divideImages(_IMAGES_STACK[ref_parent_name],
+                               [_IMAGES_STACK[parent_name] for parent_name in parent_names])
     storeImage(im, widget.node.name)
     widget.node.updateSnap()

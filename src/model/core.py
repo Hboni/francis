@@ -99,34 +99,39 @@ def applyThreshold(im, threshold, reverse=False):
     return mask.astype(np.uint8)
 
 
-def addImages(ims):
+def addImages(ims, value=None):
     """
     apply sum to each pixel of all input images
 
     Parameters
     ----------
     ims: list of 2d/ 3d numpy array
+    value: float or None, default=None
 
     Return
     ------
     im_sum: 2d/3d numpy array
     """
     im_sum = ims[0].astype(float)
-    for im in ims[1:]:
-        im_sum += im.astype(float)
+    if value is None:
+        im_sum += value
+    else:
+        for im in ims[1:]:
+            im_sum += im.astype(float)
     im_sum = im_sum.astype(getMinimumDtype(im_sum))
     return im_sum
 
 
-def substractImages(ref_im, ims):
+def substractImages(ref_im, ims=[], value=None):
     """
-    apply substraction of set of images to a reference image
+    apply substraction of set of images or a single value to a reference image
 
     Parameters
     ----------
     ref_im: 2d/ 3d numpy array
         the reference image index from which we want to subtract other images
     ims: list of 2d/ 3d numpy array
+    value: float or None, default=None
 
     Return
     ------
@@ -135,47 +140,58 @@ def substractImages(ref_im, ims):
     """
 
     im_sub = ref_im.astype(float)
-    for im in ims:
-        im_sub -= im.astype(float)
+    if value is not None:
+        im_sub -= value
+    else:
+        for im in ims:
+            im_sub -= im.astype(float)
     im_sub = im_sub.astype(getMinimumDtype(im_sub))
     return im_sub
 
 
-def multiplyImages(ims):
+def multiplyImages(ims, value=None):
     """
     apply multiplication to each pixel of all input images
 
     Parameters
     ----------
     ims: list of 2d/ 3d numpy array
+    value: float or None, default=None
 
     Return
     ------
     im_mult: 2d/3d numpy array
     """
     im_mult = ims[0].astype(float)
-    for im in ims[1:]:
-        im_mult *= im.astype(float)
+    if value is not None:
+        im_mult *= value
+    else:
+        for im in ims[1:]:
+            im_mult *= im.astype(float)
     im_mult = im_mult.astype(getMinimumDtype(im_mult))
     return im_mult
 
 
-def divideImages(ref_im, ims):
+def divideImages(ref_im, ims=[], value=None):
     """
-    apply division of set of images to a reference image
+    apply division of set of images or a single value to a reference image
 
     Parameters
     ----------
     ref_im: 2d/ 3d numpy array
         the reference image index from which we want to divide other images
-    ims: list of 2d/ 3d numpy array
+    ims: list of 2d/ 3d numpy array, default=[]
+    value: float or None, default=None
 
     Return
     ------
     im_div: 2d/3d numpy array
     """
     im_div = ref_im.astype(float)
-    for im in ims:
-        im_div /= im.astype(float)
+    if value is None:
+        for im in ims:
+            im_div /= im.astype(float)
+    else:
+        im_div /= value
     im_div = im_div.astype(getMinimumDtype(im_div))
     return im_div

@@ -34,6 +34,7 @@
     "add images":{
         "type": "secondary",
         "ui": "AddImages.ui",
+        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
             "apply": "modules_fn.addImages"
         }
@@ -50,6 +51,7 @@
     "multiply images":{
         "type": "secondary",
         "ui": "MultiplyImages.ui",
+        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
             "apply": "modules_fn.multiplyImages"
         }
@@ -59,7 +61,6 @@
         "ui": "DivideImages.ui",
         "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
-            "reference": "modules_fn.substractImages",
             "apply": "modules_fn.divideImages"
         }
     },

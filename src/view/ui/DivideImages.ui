@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>180</width>
-    <height>88</height>
+    <width>244</width>
+    <height>121</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,46 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QComboBox" name="reference"/>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>reference</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="reference">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;input image from which we want to divide other images&lt;/p&gt;&lt;p&gt;(reference / im1 / im2 ...)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="singleValue">
+         <property name="text">
+          <string>divide by value:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="value">
+         <property name="text">
+          <string>1</string>
+         </property>
+         <property name="placeholderText">
+          <string>value...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
       <widget class="QPushButton" name="apply">

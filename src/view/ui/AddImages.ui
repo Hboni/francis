@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>149</width>
-    <height>61</height>
+    <width>244</width>
+    <height>121</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,6 +16,45 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>reference</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="reference">
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="singleValue">
+         <property name="text">
+          <string>add value:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="value">
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="placeholderText">
+          <string>value...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
      <item>
       <widget class="QPushButton" name="apply">
        <property name="text">

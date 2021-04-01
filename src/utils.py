@@ -5,6 +5,7 @@ from src import _IMAGES_STACK, IMAGES_STACK
 
 def getMinimumDtype(arr):
     """
+    This function is temporary and not optimized at all
     This function find the minimal dtype of an array of type float or int
 
     Parameters
