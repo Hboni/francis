@@ -129,6 +129,7 @@ class Node(ui.QViewWidget):
         self.button.setText(name)
         self.snap.wheelEvent = self.snapWheelEvent
         self.snap.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
+        self.snap.mousePressEvent = self.snapMousePressEvent
 
         self.positionChanged.connect(self.moveChilds)
         self.sizeChanged.connect(self.updateSnap)
@@ -143,6 +144,9 @@ class Node(ui.QViewWidget):
         self.junctions = []
 
     def moveChilds(self):
+        """
+        if shift is holded, move node childs with it
+        """
         if self.graph.holdShift:
             if self.state == 'pressed':
                 self.state = 'isMoving'
@@ -161,6 +165,19 @@ class Node(ui.QViewWidget):
             self.handle.setSelected(False)
 
     def addJunction(self, type):
+        """
+        create a junction to fix link
+
+        Parameters
+        ----------
+        type: {'out', 'in'}
+            type of junction, if 'out' the junction will be hidden
+            the type influence the relative position of the junction in the node
+
+        Return
+        ------
+        junction: Junction
+        """
         junction = Junction(self, hide=type == 'out')
         self.positionChanged.connect(junction.updateLinkPos)
         self.sizeChanged.connect(lambda: junction.setPos(*self.getJunctionRelativePosition(type)))
@@ -170,6 +187,19 @@ class Node(ui.QViewWidget):
         return junction
 
     def getJunctionRelativePosition(self, type='out'):
+        """
+        get the relative position of the junction in the node
+
+        Parameters
+        ----------
+        type: {'out', 'in'}, default='out'
+            type of the node
+
+        Return
+        ------
+        x, y: two floats
+            relative position of the junction
+        """
         if self.graph.direction == 'horizontal':  # left to right
             if type == 'out':
                 return self.width(), self.height()/2
@@ -214,6 +244,22 @@ class Node(ui.QViewWidget):
         else:
             self.snap_axis += 1
         self.updateSnap()
+
+    def snapMousePressEvent(self, event):
+        """
+        update pixel value and position labels when clicking snap view
+        """
+
+        # set ratio between image and qpixmap
+        ratio = _IMAGES_STACK[self.name].shape[int(self.snap_axis == 0)] / self.snap.width()
+        # get click position
+        click_pos = np.array([event.pos().y(), event.pos().x()])
+        # define position in image
+        true_pos = np.rint(click_pos * ratio).astype(int)
+        x, y, z = np.insert(true_pos, self.snap_axis, self.current_slice)
+        # update labels with pixel value and position
+        self.value.setText(str(_IMAGES_STACK[self.name][x, y, z]))
+        self.position.setText("{0} {1} {2}".format(x, y, z))
 
     def enterEvent(self, event):
         """
