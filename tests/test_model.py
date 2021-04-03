@@ -63,3 +63,31 @@ def test_threshold(grey_scale):
     assert np.sum(core.applyThreshold(grey_scale, 5) > 0) == 4*10
     assert np.sum(core.applyThreshold(grey_scale, 4, True) > 0) == 4*10
     assert np.sum(core.applyThreshold(grey_scale, 7, True) > 0) == 7*10
+
+
+def test_add_value(cube, square):
+    assert np.max(core.addImages([square], value=2)) == np.max(square) + 2
+    assert np.max(core.addImages([square], value=0)) == np.max(square)
+    assert np.max(core.addImages([cube], value=2)) == np.max(cube) + 2
+    assert np.max(core.addImages([cube], value=0)) == np.max(cube)
+
+
+def test_add_image(cube, square):
+    assert np.sum(core.addImages([square, square])) == 2 * np.sum(square)
+    assert np.sum(core.addImages([square, square, square, square])) == 4 * np.sum(square)
+    assert np.sum(core.addImages([cube, cube])) == 2 * np.sum(cube)
+    assert np.sum(core.addImages([cube, cube, cube, cube])) == 4 * np.sum(cube)
+
+
+def test_subtract_value(cube, square):
+    assert np.max(core.substractImages(square, value=2)) == np.max(square) - 2
+    assert np.max(core.substractImages(square, value=0)) == np.max(square)
+    assert np.max(core.substractImages(cube, value=2)) == np.max(cube) - 2
+    assert np.max(core.substractImages(cube, value=0)) == np.max(cube)
+
+
+def test_subtract_image(cube, square):
+    assert np.sum(core.substractImages(square, [square])) == 0
+    assert np.sum(core.substractImages(square, [square, square, square])) == -2 * np.sum(square)
+    assert np.sum(core.substractImages(cube, [cube])) == 0
+    assert np.sum(core.substractImages(cube, [cube, cube, cube])) == -2 * np.sum(cube)
