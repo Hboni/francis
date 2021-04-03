@@ -87,7 +87,26 @@ def test_subtract_value(cube, square):
 
 
 def test_subtract_image(cube, square):
-    assert np.sum(core.substractImages(square, [square])) == 0
-    assert np.sum(core.substractImages(square, [square, square, square])) == -2 * np.sum(square)
-    assert np.sum(core.substractImages(cube, [cube])) == 0
-    assert np.sum(core.substractImages(cube, [cube, cube, cube])) == -2 * np.sum(cube)
+    assert np.sum(core.substractImages(square, ims=[square])) == 0
+    assert np.sum(core.substractImages(square, ims=[square, square, square])) == -2 * np.sum(square)
+    assert np.sum(core.substractImages(cube, ims=[cube])) == 0
+    assert np.sum(core.substractImages(cube, ims=[cube, cube, cube])) == -2 * np.sum(cube)
+
+
+def test_multiply_value(cube, square):
+    assert np.max(core.multiplyImages([square], 5)) == 5
+    assert np.min(core.multiplyImages([square], -4)) == -4
+    assert np.max(core.multiplyImages([square], 0)) == 0
+    assert np.max(core.multiplyImages([cube], 5)) == 5
+    assert np.min(core.multiplyImages([cube], -4)) == -4
+    assert np.max(core.multiplyImages([cube], 0)) == 0
+
+
+def test_multiply_image(cube, square):
+    self_multiply = core.multiplyImages([square, square])
+    assert np.array_equal(self_multiply, square)
+
+
+def test_divide_value(cube, square):
+    assert np.max(core.divideImages(square, value=2)) == 0.5
+    assert np.min(core.divideImages(square, value=-2)) == -0.5
