@@ -40,10 +40,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menu = {}
         for k, values in self.modules.items():
             v = values['type']
-            if v not in self.menu.keys():
-                self.menu[v] = [k]
-            else:
+            if v in self.menu:
                 self.menu[v].append(k)
+
+            else:
+                self.menu[v] = [k]
 
     def guirestore(self):
         """

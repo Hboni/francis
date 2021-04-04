@@ -34,18 +34,14 @@ def storeImage(im, name):
     _IMAGES_STACK[name] = im
 
     #
-    if im.dtype != np.float64:
-        im_c = im.astype(np.float64)
-    else:
-        im_c = copy.copy(im)
+    im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
     im_c[np.isinf(im_c)] = np.nan
 
     # scale image in range (1, 255)
     mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
     if mini == maxi:
         mini = 0
-        if maxi < 1:
-            maxi = 1
+        maxi = max(maxi, 1)
     im_c = (im_c - mini) / (maxi - mini) * 254 + 1
 
     # set 0 as nan values
