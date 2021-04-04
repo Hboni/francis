@@ -130,9 +130,11 @@ class Node(ui.QViewWidget):
         self.snap.wheelEvent = self.snapWheelEvent
         self.snap.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
         self.snap.mousePressEvent = self.snapMousePressEvent
+        self.snap.setVisible(False)
 
         self.positionChanged.connect(self.moveChilds)
         self.sizeChanged.connect(self.updateSnap)
+        self.sizeChanged.connect(self.updateHeight)
 
         self.current_branch = []
         self.childs = []
@@ -142,6 +144,12 @@ class Node(ui.QViewWidget):
         self.ctable = None
         self.snap_axis = 0
         self.junctions = []
+
+    def updateHeight(self):
+        """
+        resize widget to its minimum height
+        """
+        self.resize(self.width(), self.minimumHeight())
 
     def moveChilds(self):
         """
@@ -331,6 +339,7 @@ class Node(ui.QViewWidget):
         """
         if self.name not in IMAGES_STACK:
             return
+        self.snap.setVisible(True)
 
         im = IMAGES_STACK[self.name]
         s = im.shape[self.snap_axis]
@@ -587,6 +596,9 @@ class Graph(QtWidgets.QWidget):
 
         node.button.clicked.connect(lambda: self.nodeClicked.emit(node))
         node.rightClicked.connect(lambda: self.openMenu(node))
+
+        # resize widget in order to update widget minimum height
+        node.button.clicked.connect(lambda: node.resize(node.width(), node.height()+1))
 
         if len(parents) == 0:
             x, y = self._mouse_position.x(), self._mouse_position.y()
