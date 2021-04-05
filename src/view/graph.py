@@ -267,7 +267,7 @@ class Node(ui.QViewWidget):
         true_pos = np.rint(click_pos * ratio).astype(int)
         x, y, z = np.insert(true_pos, self.snap_axis, self.current_slice)
         # update labels with pixel value and position
-        self.value.setText(str(_IMAGES_STACK[self.name][x, y, z]))
+        self.value.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
         self.position.setText("{0} {1} {2}".format(x, y, z))
 
     def enterEvent(self, event):
