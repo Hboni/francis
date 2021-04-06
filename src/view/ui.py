@@ -22,12 +22,12 @@ def menuFromDict(acts, activation_function=None, menu=None):
     if menu is None:
         menu = QtWidgets.QMenu()
     for a, subacts in acts.items():
-        if len(subacts) == 0:
+        if not subacts:
             act = menu.addAction(a)
             if activation_function is not None:
-                def connect(action, s):
+                def connect(action):
                     action.triggered.connect(lambda: activation_function(action))
-                connect(act, a)
+                connect(act)
         else:
             submenu = menu.addMenu(a)
             menuFromDict(subacts, activation_function, submenu)

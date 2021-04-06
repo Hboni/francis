@@ -548,7 +548,7 @@ class Graph(QtWidgets.QWidget):
         # delete children if has no other parent
         for child in parent.childs:
             child.parents.remove(parent)
-            if len(child.parents) == 0:
+            if not child.parents:
                 self.deleteBranch(child)
         # delete data
         if parent.name in IMAGES_STACK:
@@ -600,7 +600,7 @@ class Graph(QtWidgets.QWidget):
         # resize widget in order to update widget minimum height
         node.button.clicked.connect(lambda: node.resize(node.width(), node.height()+1))
 
-        if len(parents) == 0:
+        if not parents:
             x, y = self._mouse_position.x(), self._mouse_position.y()
             node.moveBy(x, y)
         else:

@@ -63,7 +63,7 @@ def dict_from_list(liste):
     ------
     result: dict
     """
-    if len(liste) == 0:
+    if not liste:
         return {}
     elif len(liste) == 1:
         return {liste[0]: {}}
