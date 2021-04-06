@@ -95,7 +95,7 @@ def addImages(ims, value=None):
     im_sum: 2d/3d numpy array
     """
     im_sum = ims[0].astype(float)
-    if value is None:
+    if value is not None:
         im_sum += value
     else:
         for im in ims[1:]:
