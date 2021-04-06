@@ -49,3 +49,21 @@ def storeImage(im, name):
     # convert and store
     im_c = im_c.astype(np.uint8)
     IMAGES_STACK[name] = im_c
+
+
+def dictFromList(liste):
+    """
+    convert a list of element into a one-branch dictionnary
+
+    Parameters
+    ----------
+    liste: list
+
+    Return
+    ------
+    result: dict
+    """
+    d = {}
+    if len(liste) > 1:
+        d = dictFromList(liste[1:])
+    return {liste[0]: d}

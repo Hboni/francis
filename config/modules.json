@@ -6,24 +6,9 @@
             "browse": "modules_fn.browseImage",
             "apply": "modules_fn.loadImage"}
     },
-    "erode image":{
-        "type": "secondary",
-        "ui": "ErodeImage.ui",
-        "start": "widget.spin.valueChanged.emit(0)",
-        "connection": {
-            "spin": "modules_fn.updateErosion"
-        }
-    },
-    "dilate image":{
-        "type": "secondary",
-        "ui": "DilateImage.ui",
-        "start": "widget.spin.valueChanged.emit(0)",
-        "connection": {
-            "spin": "modules_fn.updateDilation"
-        }
-    },
     "threshold image":{
         "type": "secondary",
+        "menu": "thresholding",
         "ui": "ThresholdImage.ui",
         "start": "widget.spin.valueChanged.emit(0)",
         "connection": {
@@ -33,6 +18,7 @@
     },
     "add images":{
         "type": "secondary",
+        "menu": "operation",
         "ui": "AddImages.ui",
         "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
@@ -41,6 +27,7 @@
     },
     "substract images":{
         "type": "secondary",
+        "menu": "operation",
         "ui": "SubstractImages.ui",
         "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
@@ -50,6 +37,7 @@
     },
     "multiply images":{
         "type": "secondary",
+        "menu": "operation",
         "ui": "MultiplyImages.ui",
         "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
@@ -58,10 +46,29 @@
     },
     "divide images":{
         "type": "secondary",
+        "menu": "operation",
         "ui": "DivideImages.ui",
         "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
         "connection": {
             "apply": "modules_fn.divideImages"
+        }
+    },
+    "erode image":{
+        "type": "secondary",
+        "menu": "morpho/basics",
+        "ui": "ErodeImage.ui",
+        "start": "widget.spin.valueChanged.emit(0)",
+        "connection": {
+            "spin": "modules_fn.updateErosion"
+        }
+    },
+    "dilate image":{
+        "type": "secondary",
+        "menu": "morpho/basics",
+        "ui": "DilateImage.ui",
+        "start": "widget.spin.valueChanged.emit(0)",
+        "connection": {
+            "spin": "modules_fn.updateDilation"
         }
     },
     "save image":{
