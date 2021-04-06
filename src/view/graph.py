@@ -129,9 +129,12 @@ class Node(ui.QViewWidget):
         self.button.setText(name)
         self.snap.wheelEvent = self.snapWheelEvent
         self.snap.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
+        self.snap.mousePressEvent = self.snapMousePressEvent
+        self.snap.setVisible(False)
 
         self.positionChanged.connect(self.moveChilds)
         self.sizeChanged.connect(self.updateSnap)
+        self.sizeChanged.connect(self.updateHeight)
 
         self.current_branch = []
         self.childs = []
@@ -142,7 +145,16 @@ class Node(ui.QViewWidget):
         self.snap_axis = 0
         self.junctions = []
 
+    def updateHeight(self):
+        """
+        resize widget to its minimum height
+        """
+        self.resize(self.width(), self.minimumHeight())
+
     def moveChilds(self):
+        """
+        if shift is holded, move node childs with it
+        """
         if self.graph.holdShift:
             if self.state == 'pressed':
                 self.state = 'isMoving'
@@ -161,6 +173,19 @@ class Node(ui.QViewWidget):
             self.handle.setSelected(False)
 
     def addJunction(self, type):
+        """
+        create a junction to fix link
+
+        Parameters
+        ----------
+        type: {'out', 'in'}
+            type of junction, if 'out' the junction will be hidden
+            the type influence the relative position of the junction in the node
+
+        Return
+        ------
+        junction: Junction
+        """
         junction = Junction(self, hide=type == 'out')
         self.positionChanged.connect(junction.updateLinkPos)
         self.sizeChanged.connect(lambda: junction.setPos(*self.getJunctionRelativePosition(type)))
@@ -170,6 +195,19 @@ class Node(ui.QViewWidget):
         return junction
 
     def getJunctionRelativePosition(self, type='out'):
+        """
+        get the relative position of the junction in the node
+
+        Parameters
+        ----------
+        type: {'out', 'in'}, default='out'
+            type of the node
+
+        Return
+        ------
+        x, y: two floats
+            relative position of the junction
+        """
         if self.graph.direction == 'horizontal':  # left to right
             if type == 'out':
                 return self.width(), self.height()/2
@@ -214,6 +252,23 @@ class Node(ui.QViewWidget):
         else:
             self.snap_axis += 1
         self.updateSnap()
+
+    def snapMousePressEvent(self, event):
+        """
+        update pixel value and position labels when clicking snap view
+        """
+        # set ratio between image and qpixmap
+        if self.name not in _IMAGES_STACK:
+            return
+        ratio = _IMAGES_STACK[self.name].shape[int(self.snap_axis == 0)] / self.snap.width()
+        # get click position
+        click_pos = np.array([event.pos().y(), event.pos().x()])
+        # define position in image
+        true_pos = np.rint(click_pos * ratio).astype(int)
+        x, y, z = np.insert(true_pos, self.snap_axis, self.current_slice)
+        # update labels with pixel value and position
+        self.value.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
+        self.position.setText("{0} {1} {2}".format(x, y, z))
 
     def enterEvent(self, event):
         """
@@ -282,8 +337,9 @@ class Node(ui.QViewWidget):
             to the current slice recursively
 
         """
-        if self.name not in IMAGES_STACK.keys():
+        if self.name not in IMAGES_STACK:
             return
+        self.snap.setVisible(True)
 
         im = IMAGES_STACK[self.name]
         s = im.shape[self.snap_axis]
@@ -436,9 +492,8 @@ class Graph(QtWidgets.QWidget):
 
         """
         i = 1
-        names = self.nodes.keys()
         new_name = copy.copy(name)
-        while new_name in names:
+        while new_name in self.nodes:
             new_name = "{0}_{1}".format(name, i)
             i += 1
         return new_name
@@ -496,7 +551,7 @@ class Graph(QtWidgets.QWidget):
             if len(child.parents) == 0:
                 self.deleteBranch(child)
         # delete data
-        if parent.name in IMAGES_STACK.keys():
+        if parent.name in IMAGES_STACK:
             del _IMAGES_STACK[parent.name]
             del IMAGES_STACK[parent.name]
         # remove node from parent children
@@ -541,6 +596,9 @@ class Graph(QtWidgets.QWidget):
 
         node.button.clicked.connect(lambda: self.nodeClicked.emit(node))
         node.rightClicked.connect(lambda: self.openMenu(node))
+
+        # resize widget in order to update widget minimum height
+        node.button.clicked.connect(lambda: node.resize(node.width(), node.height()+1))
 
         if len(parents) == 0:
             x, y = self._mouse_position.x(), self._mouse_position.y()

@@ -86,11 +86,8 @@ class QViewWidget(QtWidgets.QWidget):
 
     def initUI(self):
         # add size grip
-        sizeGrip = QtWidgets.QSizeGrip(self)
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(sizeGrip, 0, QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
-        self.vbox.addLayout(layout)
+        self.sizeGrip = QtWidgets.QSizeGrip(self)
+        self.hbox.addWidget(self.sizeGrip)
 
         # create handle to move widget
         self.handle = self.RectItem(self)

@@ -18,25 +18,17 @@ def erode(im, size, round_shape=True):
 
     Returns
     -------
-    eroded: 2d/3d numpy array
+    result: 2d/3d numpy array
         Eroded input image with same size as im
 
     """
     if size == 0:
         return im
     if len(im.shape) == 3:
-        if round_shape:
-            selem = morphology.ball(size)
-        else:
-            selem = morphology.cube(size*2+1)
+        selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
     elif len(im.shape) == 2:
-        if round_shape:
-            selem = morphology.disk(size)
-        else:
-            selem = morphology.square(size*2+1)
-
-    eroded = morphology.erosion(im, selem)
-    return eroded
+        selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
+    return morphology.erosion(im, selem)
 
 
 def dilate(im, size, round_shape=True):
@@ -54,24 +46,17 @@ def dilate(im, size, round_shape=True):
 
     Returns
     -------
-    dilated: 2d/3d numpy array
+    result: 2d/3d numpy array
         Dilated input image with same size as im
 
     """
     if size == 0:
         return im
     if len(im.shape) == 3:
-        if round_shape:
-            selem = morphology.ball(size)
-        else:
-            selem = morphology.cube(size*2+1)
+        selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
     elif len(im.shape) == 2:
-        if round_shape:
-            selem = morphology.disk(size)
-        else:
-            selem = morphology.square(size*2+1)
-    dilated = morphology.dilation(im, selem)
-    return dilated
+        selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
+    return morphology.dilation(im, selem)
 
 
 def applyThreshold(im, threshold, reverse=False):
@@ -92,10 +77,7 @@ def applyThreshold(im, threshold, reverse=False):
         Binarized input image with same size as im
 
     """
-    if reverse:
-        mask = im < threshold
-    else:
-        mask = im > threshold
+    mask = im < threshold if reverse else im > threshold
     return mask.astype(np.uint8)
 
 
