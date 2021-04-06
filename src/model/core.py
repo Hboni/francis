@@ -18,7 +18,7 @@ def erode(im, size, round_shape=True):
 
     Returns
     -------
-    eroded: 2d/3d numpy array
+    result: 2d/3d numpy array
         Eroded input image with same size as im
 
     """
@@ -27,11 +27,7 @@ def erode(im, size, round_shape=True):
     if len(im.shape) == 3:
         selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
     elif len(im.shape) == 2:
-        if round_shape:
-            selem = morphology.disk(size)
-        else:
-            selem = morphology.square(size*2+1)
-
+        selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
     return morphology.erosion(im, selem)
 
 
@@ -50,7 +46,7 @@ def dilate(im, size, round_shape=True):
 
     Returns
     -------
-    dilated: 2d/3d numpy array
+    result: 2d/3d numpy array
         Dilated input image with same size as im
 
     """
@@ -59,10 +55,7 @@ def dilate(im, size, round_shape=True):
     if len(im.shape) == 3:
         selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
     elif len(im.shape) == 2:
-        if round_shape:
-            selem = morphology.disk(size)
-        else:
-            selem = morphology.square(size*2+1)
+        selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
     return morphology.dilation(im, selem)
 
 
@@ -102,7 +95,7 @@ def addImages(ims, value=None):
     im_sum: 2d/3d numpy array
     """
     im_sum = ims[0].astype(float)
-    if value is None:
+    if value is not None:
         im_sum += value
     else:
         for im in ims[1:]:

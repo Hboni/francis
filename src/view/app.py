@@ -42,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow):
             v = values['type']
             if v in self.menu:
                 self.menu[v].append(k)
+            else:
+                self.menu[v] = [k]
 
             else:
                 self.menu[v] = [k]

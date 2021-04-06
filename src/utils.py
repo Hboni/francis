@@ -31,9 +31,9 @@ def storeImage(im, name):
     im: numpy.array
     name: str
     """
+    # initialize
     _IMAGES_STACK[name] = im
 
-    #
     im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
     im_c[np.isinf(im_c)] = np.nan
 

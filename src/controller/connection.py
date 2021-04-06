@@ -46,6 +46,6 @@ class Connector:
                 conn(b, f)
 
             # start functions
-            if "start" in parameters.keys():
+            if "start" in parameters:
                 eval(parameters['start'])
             node.parameters.addWidget(widget)
