@@ -44,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if 'menu' in values:
                 lst += values['menu'].split('/')
             lst.append(k)
-            self.menu = mergedeep.merge(self.menu, utils.dictFromList(lst))
+            self.menu = mergedeep.merge(self.menu, utils.dict_from_list(lst))
 
     def guirestore(self):
         """
