@@ -53,7 +53,7 @@ def storeImage(im, name):
 
 def dict_from_list(liste):
     """
-    convert a list of element into a one-branch dictionnary
+    convert a list of elements into a one-branch dictionary
 
     Parameters
     ----------
