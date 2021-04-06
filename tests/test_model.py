@@ -63,3 +63,50 @@ def test_threshold(grey_scale):
     assert np.sum(core.applyThreshold(grey_scale, 5) > 0) == 4*10
     assert np.sum(core.applyThreshold(grey_scale, 4, True) > 0) == 4*10
     assert np.sum(core.applyThreshold(grey_scale, 7, True) > 0) == 7*10
+
+
+def test_add_value(cube, square):
+    assert np.max(core.addImages([square], value=2)) == np.max(square) + 2
+    assert np.max(core.addImages([square], value=0)) == np.max(square)
+    assert np.max(core.addImages([cube], value=2)) == np.max(cube) + 2
+    assert np.max(core.addImages([cube], value=0)) == np.max(cube)
+
+
+def test_add_image(cube, square):
+    assert np.sum(core.addImages([square, square])) == 2 * np.sum(square)
+    assert np.sum(core.addImages([square, square, square, square])) == 4 * np.sum(square)
+    assert np.sum(core.addImages([cube, cube])) == 2 * np.sum(cube)
+    assert np.sum(core.addImages([cube, cube, cube, cube])) == 4 * np.sum(cube)
+
+
+def test_subtract_value(cube, square):
+    assert np.max(core.substractImages(square, value=2)) == np.max(square) - 2
+    assert np.max(core.substractImages(square, value=0)) == np.max(square)
+    assert np.max(core.substractImages(cube, value=2)) == np.max(cube) - 2
+    assert np.max(core.substractImages(cube, value=0)) == np.max(cube)
+
+
+def test_subtract_image(cube, square):
+    assert np.sum(core.substractImages(square, ims=[square])) == 0
+    assert np.sum(core.substractImages(square, ims=[square, square, square])) == -2 * np.sum(square)
+    assert np.sum(core.substractImages(cube, ims=[cube])) == 0
+    assert np.sum(core.substractImages(cube, ims=[cube, cube, cube])) == -2 * np.sum(cube)
+
+
+def test_multiply_value(cube, square):
+    assert np.max(core.multiplyImages([square], 5)) == 5
+    assert np.min(core.multiplyImages([square], -4)) == -4
+    assert np.max(core.multiplyImages([square], 0)) == 0
+    assert np.max(core.multiplyImages([cube], 5)) == 5
+    assert np.min(core.multiplyImages([cube], -4)) == -4
+    assert np.max(core.multiplyImages([cube], 0)) == 0
+
+
+def test_multiply_image(cube, square):
+    self_multiply = core.multiplyImages([square, square])
+    assert np.array_equal(self_multiply, square)
+
+
+def test_divide_value(cube, square):
+    assert np.max(core.divideImages(square, value=2)) == 0.5
+    assert np.min(core.divideImages(square, value=-2)) == -0.5
