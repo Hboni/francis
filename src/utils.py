@@ -51,21 +51,18 @@ def storeImage(im, name):
     IMAGES_STACK[name] = im_c
 
 
-def dict_from_list(liste):
+def dict_from_list(dict_to_complete, element_list):
     """
     convert a list of elements into a one-branch dictionary
 
     Parameters
     ----------
-    liste: list
+    dict_to_complete
+    element_list: list
 
-    Return
-    ------
-    result: dict
     """
-    if not liste:
-        return {}
-    elif len(liste) == 1:
-        return {liste[0]: {}}
-    elif len(liste) > 1:
-        return {liste[0]: dict_from_list(liste[1:])}
+    if element_list:
+        element = element_list.pop(0)
+        dict_to_complete.setdefault(element, {})
+    if element_list:
+        dict_from_list(dict_to_complete.get(element), element_list)

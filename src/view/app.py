@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, uic, QtGui
 from src.view.graph import Graph
 from src import UI_DIR, CONFIG_DIR, utils
-import mergedeep
 import os
 import json
 
@@ -37,6 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         # load modules settings
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), 'rb'))
+
         # initalize right-clic-menu
         self.menu = {}
         for k, values in self.modules.items():
@@ -44,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if 'menu' in values:
                 lst += values['menu'].split('/')
             lst.append(k)
-            self.menu = mergedeep.merge(self.menu, utils.dict_from_list(lst))
+            utils.dict_from_list(self.menu, lst)
 
     def guirestore(self):
         """
