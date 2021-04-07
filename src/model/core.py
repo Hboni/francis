@@ -1,6 +1,6 @@
 from skimage import morphology
 import numpy as np
-from src.utils import getMinimumDtype
+from src.utils import get_minimum_dtype
 
 
 def erode(im, size, round_shape=True):
@@ -59,7 +59,7 @@ def dilate(im, size, round_shape=True):
     return morphology.dilation(im, selem)
 
 
-def applyThreshold(im, threshold, reverse=False):
+def apply_threshold(im, threshold, reverse=False):
     """
     Apply binary threshold on the input image
 
@@ -81,7 +81,7 @@ def applyThreshold(im, threshold, reverse=False):
     return mask.astype(np.uint8)
 
 
-def addImages(ims, value=None):
+def add_images(ims, value=None):
     """
     apply sum to each pixel of all input images
 
@@ -100,11 +100,11 @@ def addImages(ims, value=None):
     else:
         for im in ims[1:]:
             im_sum += im.astype(float)
-    im_sum = im_sum.astype(getMinimumDtype(im_sum))
+    im_sum = im_sum.astype(get_minimum_dtype(im_sum))
     return im_sum
 
 
-def substractImages(ref_im, ims=[], value=None):
+def substract_images(ref_im, ims=[], value=None):
     """
     apply substraction of set of images or a single value to a reference image
 
@@ -127,11 +127,11 @@ def substractImages(ref_im, ims=[], value=None):
     else:
         for im in ims:
             im_sub -= im.astype(float)
-    im_sub = im_sub.astype(getMinimumDtype(im_sub))
+    im_sub = im_sub.astype(get_minimum_dtype(im_sub))
     return im_sub
 
 
-def multiplyImages(ims, value=None):
+def multiply_images(ims, value=None):
     """
     apply multiplication to each pixel of all input images
 
@@ -150,11 +150,11 @@ def multiplyImages(ims, value=None):
     else:
         for im in ims[1:]:
             im_mult *= im.astype(float)
-    im_mult = im_mult.astype(getMinimumDtype(im_mult))
+    im_mult = im_mult.astype(get_minimum_dtype(im_mult))
     return im_mult
 
 
-def divideImages(ref_im, ims=[], value=None):
+def divide_images(ref_im, ims=[], value=None):
     """
     apply division of set of images or a single value to a reference image
 
@@ -175,5 +175,5 @@ def divideImages(ref_im, ims=[], value=None):
             im_div /= im.astype(float)
     else:
         im_div /= value
-    im_div = im_div.astype(getMinimumDtype(im_div))
+    im_div = im_div.astype(get_minimum_dtype(im_div))
     return im_div

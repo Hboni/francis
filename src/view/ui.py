@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 
 
-def menuFromDict(acts, activation_function=None, menu=None):
+def menu_from_dict(acts, activation_function=None, menu=None):
     """
     create a menu on right-click, based on 'acts' dictionnary
 
@@ -30,11 +30,11 @@ def menuFromDict(acts, activation_function=None, menu=None):
                 connect(act)
         else:
             submenu = menu.addMenu(a)
-            menuFromDict(subacts, activation_function, submenu)
+            menu_from_dict(subacts, activation_function, submenu)
     return menu
 
 
-def deleteLayout(layout):
+def delete_layout(layout):
     """
     delete the selected layout
 
@@ -45,12 +45,12 @@ def deleteLayout(layout):
     """
     if layout is None:
         return
-    emptyLayout(layout)
+    empty_layout(layout)
     layout.deleteLater()
     QtCore.QObjectCleanupHandler().add(layout)
 
 
-def emptyLayout(layout):
+def empty_layout(layout):
     """
     delete all children (widget and layout) of the selected layout
 
@@ -66,7 +66,7 @@ def emptyLayout(layout):
         if widget is not None:
             widget.deleteLater()
         else:
-            deleteLayout(item.layout())
+            delete_layout(item.layout())
 
 
 class QViewWidget(QtWidgets.QWidget):

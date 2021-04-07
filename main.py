@@ -1,6 +1,6 @@
 from src.view.app import MainWindow
 from src.controller.connection import Connector
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5 import QtWidgets
 import sys
 
 if __name__ == "__main__":
@@ -8,5 +8,5 @@ if __name__ == "__main__":
     win = MainWindow()
     win.show()
     conn = Connector()
-    conn.connectViewToModel(win)
+    conn.connect_view_to_model(win)
     app.exec()

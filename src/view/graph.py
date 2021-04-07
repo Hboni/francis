@@ -529,7 +529,7 @@ class Graph(QtWidgets.QWidget):
                 self.deleteBranch(node, childs_only=True)
             else:
                 self.addNode(action.text(), nodes)
-        menu = ui.menuFromDict(acts, activation_function=activate)
+        menu = ui.menu_from_dict(acts, activation_function=activate)
         pos = QtGui.QCursor.pos()
         self._mouse_position = self.view.mapToScene(self.view.mapFromGlobal(pos))
         menu.exec_(QtGui.QCursor.pos())

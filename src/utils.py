@@ -3,7 +3,7 @@ import copy
 from src import _IMAGES_STACK, IMAGES_STACK
 
 
-def getMinimumDtype(arr):
+def get_minimum_dtype(arr):
     """
     This function is temporary and not optimized at all
     This function find the minimal dtype of an array of type float or int
@@ -22,7 +22,7 @@ def getMinimumDtype(arr):
             return dt
 
 
-def storeImage(im, name):
+def store_image(im, name):
     """
     store raw image and (0, 255)-scaled image, 0 is nan values
 

@@ -3,8 +3,8 @@
         "type": "primary",
         "ui": "LoadImage.ui",
         "connection": {
-            "browse": "modules_fn.browseImage",
-            "apply": "modules_fn.loadImage"}
+            "browse": "modules_fn.browse_image",
+            "apply": "modules_fn.load_image"}
     },
     "threshold image":{
         "type": "secondary",
@@ -12,45 +12,48 @@
         "ui": "ThresholdImage.ui",
         "start": "widget.spin.valueChanged.emit(0)",
         "connection": {
-            "spin": "modules_fn.updateThreshold",
-            "reversed": "modules_fn.updateThreshold"
+            "spin": "modules_fn.update_threshold",
+            "reversed": "modules_fn.update_threshold"
         }
     },
     "add images":{
         "type": "secondary",
         "menu": "operation",
         "ui": "AddImages.ui",
-        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
+        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
         "connection": {
-            "apply": "modules_fn.addImages"
+            "reference": "modules_fn.add_images",
+            "apply": "modules_fn.add_images"
         }
     },
     "substract images":{
         "type": "secondary",
         "menu": "operation",
         "ui": "SubstractImages.ui",
-        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
+        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
         "connection": {
-            "reference": "modules_fn.substractImages",
-            "apply": "modules_fn.substractImages"
+            "reference": "modules_fn.substract_images",
+            "apply": "modules_fn.substract_images"
         }
     },
     "multiply images":{
         "type": "secondary",
         "menu": "operation",
         "ui": "MultiplyImages.ui",
-        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
+        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
         "connection": {
-            "apply": "modules_fn.multiplyImages"
+            "reference": "modules_fn.multiply_images",
+            "apply": "modules_fn.multiply_images"
         }
     },
     "divide images":{
         "type": "secondary",
         "menu": "operation",
         "ui": "DivideImages.ui",
-        "start": "widget.reference.addItems(modules_fn.getParentNames(widget))",
+        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
         "connection": {
-            "apply": "modules_fn.divideImages"
+            "reference": "modules_fn.divide_images",
+            "apply": "modules_fn.divide_images"
         }
     },
     "erode image":{
@@ -59,7 +62,7 @@
         "ui": "ErodeImage.ui",
         "start": "widget.spin.valueChanged.emit(0)",
         "connection": {
-            "spin": "modules_fn.updateErosion"
+            "spin": "modules_fn.update_erosion"
         }
     },
     "dilate image":{
@@ -68,15 +71,15 @@
         "ui": "DilateImage.ui",
         "start": "widget.spin.valueChanged.emit(0)",
         "connection": {
-            "spin": "modules_fn.updateDilation"
+            "spin": "modules_fn.update_dilation"
         }
     },
     "save image":{
         "type": "secondary",
         "ui": "SaveImage.ui",
         "connection": {
-            "browse": "modules_fn.browseSavepath",
-            "apply": "modules_fn.saveImage"
+            "browse": "modules_fn.browse_savepath",
+            "apply": "modules_fn.save_image"
         }
     },
     "delete": {

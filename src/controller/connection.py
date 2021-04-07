@@ -6,7 +6,7 @@ modules_fn  # avoid pre-commit to fail, modules_fn is used inside eval()
 
 
 class Connector:
-    def connectViewToModel(self, window):
+    def connect_view_to_model(self, window):
         """
         connect the view to the model functions
 
@@ -16,9 +16,9 @@ class Connector:
 
         """
         self.window = window
-        self.window.graph.nodeClicked.connect(self.activateNode)
+        self.window.graph.nodeClicked.connect(self.activate_node)
 
-    def activateNode(self, node):
+    def activate_node(self, node):
         """
         apply connection between node widgets and model
 
