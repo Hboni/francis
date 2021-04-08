@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src.view import ui, CMAP
+from src.view import ui, CMAP, GRAPH_PARAMETERS
 import os
 import copy
 from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
@@ -16,13 +16,13 @@ class Link(QtWidgets.QGraphicsPathItem):
         the two points to link
 
     """
-    def __init__(self, junction1, junction2):
+    def __init__(self, junction1, junction2, lineWidth=2, lineColor=QtGui.QColor(0, 150, 0), degree=30):
         super().__init__()
+        self.degree = degree
+
         self.j1, self.j2 = junction1, junction2
         self.setZValue(-1)
-        line_width = 2
-        color = QtGui.QColor(0, 150, 0)
-        self.setPen(QtGui.QPen(color, line_width))
+        self.setPen(QtGui.QPen(lineColor, lineWidth))
 
         # set curve point positions
         self._path = QtGui.QPainterPath(self.j1.pos())
@@ -50,9 +50,9 @@ class Link(QtWidgets.QGraphicsPathItem):
 
         """
         if self.j1.node.graph.direction == 'horizontal':
-            nx, ny = 30, 0
+            nx, ny = self.degree, 0
         elif self.j1.node.graph.direction == 'vertical':
-            nx, ny = 0, 30
+            nx, ny = 0, self.degree
 
         if index == 0:
             self._path.setElementPositionAt(0, pos.x(), pos.y())
@@ -71,28 +71,29 @@ class Junction(QtWidgets.QGraphicsPolygonItem):
     Parameters
     ----------
     node: Node
+    type: {'in', 'out'}
+    size: int
+    color: QColor
 
     """
-    def __init__(self, node, hide=False):
+    def __init__(self, node, type, size=5, color=QtGui.QColor(0, 150, 0)):
         super(Junction, self).__init__(node.handle)
         self.node = node
-        if not hide:
-            self.initShape()
+        self.initShape(type, size, color)
 
         self.links = []
         self.setZValue(1)
 
-    def initShape(self):
-        size = 5
-        color = QtGui.QColor(0, 150, 0)
+    def initShape(self, type, size, color):
+        d = 0 if type == 'out' else -size
         if self.node.graph.direction == 'horizontal':
-            points = [QtCore.QPoint(0, 0),
-                      QtCore.QPoint(-size, size),
-                      QtCore.QPoint(-size, -size)]
+            points = [QtCore.QPoint(d+size, 0),
+                      QtCore.QPoint(d, size),
+                      QtCore.QPoint(d, -size)]
         if self.node.graph.direction == 'vertical':
-            points = [QtCore.QPoint(0, 0),
-                      QtCore.QPoint(-size, -size),
-                      QtCore.QPoint(size, -size)]
+            points = [QtCore.QPoint(0, d+size),
+                      QtCore.QPoint(-size, d),
+                      QtCore.QPoint(size, d)]
         self.setPolygon(QtGui.QPolygonF(points))
         self.setBrush(QtGui.QBrush(color))
         self.setPen(QtGui.QPen(color))
@@ -121,8 +122,9 @@ class Node(ui.QViewWidget):
     """
     rightClicked = QtCore.pyqtSignal(int)
 
-    def __init__(self, graph, type, name, parents=[], position=(0, 0)):
-        super().__init__(os.path.join(UI_DIR, "Node.ui"))
+    def __init__(self, graph, type, name, parents=[], position=(0, 0), *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setWidget(uic.loadUi(os.path.join(UI_DIR, "Node.ui")))
         self.graph = graph
         self.type = type
         self.name = name
@@ -160,8 +162,8 @@ class Node(ui.QViewWidget):
                 self.state = 'isMoving'
                 self.updateCurrentBranch()
             if self.state == 'isMoving':
-                delta = self.pos() - self.current_position
-                self.current_position = self.pos()
+                delta = self.pos() - self.currentPosition
+                self.currentPosition = self.pos()
                 for child in self.current_branch:
                     child.moveBy(delta.x(), delta.y())
 
@@ -172,7 +174,7 @@ class Node(ui.QViewWidget):
         if not self.graph.holdCtrl:
             self.handle.setSelected(False)
 
-    def addJunction(self, type):
+    def addJunction(self, type, size, color):
         """
         create a junction to fix link
 
@@ -186,7 +188,7 @@ class Node(ui.QViewWidget):
         ------
         junction: Junction
         """
-        junction = Junction(self, hide=type == 'out')
+        junction = Junction(self, type, size, color)
         self.positionChanged.connect(junction.updateLinkPos)
         self.sizeChanged.connect(lambda: junction.setPos(*self.getJunctionRelativePosition(type)))
         self.sizeChanged.connect(junction.updateLinkPos)
@@ -267,8 +269,8 @@ class Node(ui.QViewWidget):
         true_pos = np.rint(click_pos * ratio).astype(int)
         x, y, z = np.insert(true_pos, self.snap_axis, self.current_slice)
         # update labels with pixel value and position
-        self.value.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
-        self.position.setText("{0} {1} {2}".format(x, y, z))
+        self.rightfoot.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
+        self.leftfoot.setText("{0} {1} {2}".format(x, y, z))
 
     def enterEvent(self, event):
         """
@@ -413,6 +415,7 @@ class Graph(QtWidgets.QWidget):
         self.view.setRenderHint(QtGui.QPainter.Antialiasing)
         self.view.setScene(self.scene)
         self.view.contextMenuEvent = lambda e: self.openMenu()
+        self.view.setBackgroundBrush(GRAPH_PARAMETERS['backgroundBrush'])
 
         self.installEventFilter(self)
         self.holdShift = False
@@ -431,9 +434,14 @@ class Graph(QtWidgets.QWidget):
         parent, child: Node
             nodes to visually bind
         """
-        jout = parent.addJunction('out')
-        jin = child.addJunction('in')
-        link = Link(jout, jin)
+        jout = parent.addJunction('out', GRAPH_PARAMETERS['junctionSize'][1],
+                                  GRAPH_PARAMETERS['junctionColor'][1])
+        jin = child.addJunction('in', GRAPH_PARAMETERS['junctionSize'][0],
+                                GRAPH_PARAMETERS['junctionColor'][0])
+        link = Link(jout, jin,
+                    GRAPH_PARAMETERS['lineWidth'],
+                    GRAPH_PARAMETERS['lineColor'],
+                    GRAPH_PARAMETERS['lineDegree'])
         self.scene.addItem(link)
 
     def setEnabledScroll(self, enable_scroll=True):
@@ -591,8 +599,10 @@ class Graph(QtWidgets.QWidget):
             if isinstance(parent, str):
                 parents[i] = self.nodes[parent]
         name = self.getUniqueName(type)
-        node = Node(self, type, name, parents)
-        node.addToScene(self.scene)
+        node = Node(self, type, name, parents,
+                    handleColor=GRAPH_PARAMETERS['handleColor'],
+                    handleSize=GRAPH_PARAMETERS['handleSize'])
+        node.addToScene(self.scene, )
 
         node.button.clicked.connect(lambda: self.nodeClicked.emit(node))
         node.rightClicked.connect(lambda: self.openMenu(node))
