@@ -1,13 +1,13 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 
 
-def menuFromDict(acts, activation_function=None, menu=None):
+def menu_from_dict(acts, activation_function=None, menu=None):
     """
     create a menu on right-click, based on 'acts' dictionnary
 
     Parameters
     ----------
-    acts: list or dict
+    acts: dict
         actions to insert in menu
     activation_function: function, optionnal
         function that takes a QAction as argument and apply the requested action
@@ -21,23 +21,20 @@ def menuFromDict(acts, activation_function=None, menu=None):
     """
     if menu is None:
         menu = QtWidgets.QMenu()
-    for a in acts:
-        if a is None:
-            menu.addSeparator()
-        elif isinstance(a, dict):
-            for suba, subacts in a.items():
-                submenu = menu.addMenu(suba)
-                menuFromDict(subacts, activation_function, submenu)
-        else:
+    for a, subacts in acts.items():
+        if not subacts:
             act = menu.addAction(a)
             if activation_function is not None:
-                def connect(action, s):
+                def connect(action):
                     action.triggered.connect(lambda: activation_function(action))
-                connect(act, a)
+                connect(act)
+        else:
+            submenu = menu.addMenu(a)
+            menu_from_dict(subacts, activation_function, submenu)
     return menu
 
 
-def deleteLayout(layout):
+def delete_layout(layout):
     """
     delete the selected layout
 
@@ -48,12 +45,12 @@ def deleteLayout(layout):
     """
     if layout is None:
         return
-    emptyLayout(layout)
+    empty_layout(layout)
     layout.deleteLater()
     QtCore.QObjectCleanupHandler().add(layout)
 
 
-def emptyLayout(layout):
+def empty_layout(layout):
     """
     delete all children (widget and layout) of the selected layout
 
@@ -69,7 +66,7 @@ def emptyLayout(layout):
         if widget is not None:
             widget.deleteLater()
         else:
-            deleteLayout(item.layout())
+            delete_layout(item.layout())
 
 
 class QViewWidget(QtWidgets.QWidget):

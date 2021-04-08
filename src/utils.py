@@ -3,7 +3,7 @@ import copy
 from src import _IMAGES_STACK, IMAGES_STACK
 
 
-def getMinimumDtype(arr):
+def get_minimum_dtype(arr):
     """
     This function is temporary and not optimized at all
     This function find the minimal dtype of an array of type float or int
@@ -22,7 +22,7 @@ def getMinimumDtype(arr):
             return dt
 
 
-def storeImage(im, name):
+def store_image(im, name):
     """
     store raw image and (0, 255)-scaled image, 0 is nan values
 
@@ -49,3 +49,20 @@ def storeImage(im, name):
     # convert and store
     im_c = im_c.astype(np.uint8)
     IMAGES_STACK[name] = im_c
+
+
+def dict_from_list(dict_to_complete, element_list):
+    """
+    convert a list of elements into a one-branch dictionary
+
+    Parameters
+    ----------
+    dict_to_complete
+    element_list: list
+
+    """
+    if element_list:
+        element = element_list.pop(0)
+        dict_to_complete.setdefault(element, {})
+    if element_list:
+        dict_from_list(dict_to_complete.get(element), element_list)

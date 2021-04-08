@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, uic, QtGui
 from src.view.graph import Graph
-from src import UI_DIR, CONFIG_DIR
+from src import UI_DIR, CONFIG_DIR, utils
 import os
 import json
 
@@ -36,14 +36,15 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         # load modules settings
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), 'rb'))
+
         # initalize right-clic-menu
         self.menu = {}
         for k, values in self.modules.items():
-            v = values['type']
-            if v in self.menu:
-                self.menu[v].append(k)
-            else:
-                self.menu[v] = [k]
+            lst = [values['type']]
+            if 'menu' in values:
+                lst += values['menu'].split('/')
+            lst.append(k)
+            utils.dict_from_list(self.menu, lst)
 
     def guirestore(self):
         """
