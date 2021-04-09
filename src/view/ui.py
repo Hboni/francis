@@ -146,7 +146,7 @@ class QViewWidget(QtWidgets.QWidget):
         ----------
         widget: QWidget
         """
-        for k, v in widget.__dict__.items():
+        for k in widget.__dict__:
             if k in self.__dict__:
                 return print("setWidget FAILED: you cannot set widget in \
                     QViewWidget that contains a parameter named '{}'".format(k))
@@ -155,7 +155,7 @@ class QViewWidget(QtWidgets.QWidget):
 
     class RectItem(QtWidgets.QGraphicsRectItem):
         """
-        graphic item which allow to move the widgte in graphic view
+        graphic item which allow to move the widget in graphic view
 
         Parameters
         ----------
@@ -170,9 +170,6 @@ class QViewWidget(QtWidgets.QWidget):
                           QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges)
 
         def itemChange(self, change, value):
-            """
-            send position changed signal and update current position
-            """
             if change in [QtWidgets.QGraphicsItem.ItemPositionChange,
                           QtWidgets.QGraphicsItem.ItemVisibleChange]:
                 self.parent.positionChanged.emit()
@@ -180,25 +177,16 @@ class QViewWidget(QtWidgets.QWidget):
             return QtWidgets.QGraphicsRectItem.itemChange(self, change, value)
 
         def mousePressEvent(self, event=None):
-            """
-            set selected if mouse clicked
-            """
             self.parent.state = 'pressed'
             self.setSelected(True)
             return QtWidgets.QGraphicsRectItem.mousePressEvent(self, event)
 
         def mouseReleaseEvent(self, event=None):
-            """
-            set unselected if mouse released
-            """
             self.parent.state = 'released'
             self.setSelected(False)
             return QtWidgets.QGraphicsRectItem.mouseReleaseEvent(self, event)
 
     def resizeEvent(self, event):
-        """
-        send size changed signal
-        """
         self.sizeChanged.emit()
         return QtWidgets.QWidget.resizeEvent(self, event)
 
