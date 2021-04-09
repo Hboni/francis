@@ -27,6 +27,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="reference">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;image we want to add value (relevant if 'add value' is checked)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="editable">
           <bool>false</bool>
          </property>
