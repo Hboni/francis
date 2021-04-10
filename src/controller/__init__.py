@@ -51,6 +51,9 @@ MODULES = {
         "ui": "SaveImage.ui",
         "function": "save_image"
     },
+    "rename": {
+        "type": "secondary"
+    },
     "delete": {
         "type": "secondary"
     }

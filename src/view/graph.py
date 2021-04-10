@@ -120,6 +120,7 @@ class Node(ui.QViewWidget):
 
     """
     rightClicked = QtCore.pyqtSignal(int)
+    nameChanged = QtCore.pyqtSignal(str, str)
 
     def __init__(self, graph, type, name, parents=[], position=(0, 0)):
         super().__init__(os.path.join(UI_DIR, "Node.ui"))
@@ -300,6 +301,14 @@ class Node(ui.QViewWidget):
             childs += child.getChilds()
         return childs
 
+    def rename(self, new_name):
+        if self.name in IMAGES_STACK:
+            IMAGES_STACK[new_name] = IMAGES_STACK.pop(self.name)
+            _IMAGES_STACK[new_name] = _IMAGES_STACK.pop(self.name)
+        self.button.setText(new_name)
+        self.nameChanged.emit(self.name, new_name)
+        self.name = new_name
+
     def updateCurrentBranch(self):
         """
         update the current branch as a unique list of nodes
@@ -476,7 +485,7 @@ class Graph(QtWidgets.QWidget):
                     self.holdCtrl = False
         return super(Graph, self).eventFilter(obj, event)
 
-    def getUniqueName(self, name):
+    def getUniqueName(self, name, exception=None):
         """
         find an unused name by adding _n at the end of the name
 
@@ -484,6 +493,8 @@ class Graph(QtWidgets.QWidget):
         ----------
         name: str
             default non-unique name of the node
+        exception: None or str
+            if new name is exception, keep it
 
         Return
         ------
@@ -493,7 +504,7 @@ class Graph(QtWidgets.QWidget):
         """
         i = 1
         new_name = copy.copy(name)
-        while new_name in self.nodes:
+        while new_name in self.nodes and new_name != exception:
             new_name = "{0}_{1}".format(name, i)
             i += 1
         return new_name
@@ -533,6 +544,15 @@ class Graph(QtWidgets.QWidget):
         pos = QtGui.QCursor.pos()
         self._mouse_position = self.view.mapToScene(self.view.mapFromGlobal(pos))
         menu.exec_(QtGui.QCursor.pos())
+
+    def renameNode(self, node):
+        # open input dialog
+        new_name, valid = QtWidgets.QInputDialog.getText(self, "user input", "new name",
+                                                         QtWidgets.QLineEdit.Normal, node.type)
+        if valid:
+            new_name = self.getUniqueName(new_name, exception=node.name)
+            self.nodes[new_name] = self.nodes.pop(node.name)
+            node.rename(new_name)
 
     def deleteBranch(self, parent, childs_only=False):
         """

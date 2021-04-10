@@ -45,13 +45,22 @@ class Connector:
                 widget.spin.valueChanged.connect(activate)
                 widget.reversed.stateChanged.connect(activate)
                 widget.spin.valueChanged.emit(0)
+            elif t in ["erode image", "dilate image"]:
+                widget.spin.valueChanged.connect(activate)
+                widget.spin.valueChanged.emit(0)
             elif t in ["add images", "substract images", "multiply images", "subdivide images"]:
-                widget.reference.currentIndexChanged.connect(activate)
                 widget.apply.clicked.connect(activate)
                 widget.reference.addItems(modules_fn.get_parent_names(widget))
                 if t in ["add images", "multiply images"]:
                     widget.singleValue.stateChanged.connect(widget.reference.setEnabled)
                     widget.singleValue.stateChanged.emit(False)
-            elif t in ["erode image", "dilate image"]:
-                widget.spin.valueChanged.connect(activate)
-                widget.spin.valueChanged.emit(0)
+
+                # rename parent name inside reference combobox
+                def updateParentName(name, new_name):
+                    current_index = widget.reference.currentIndex()
+                    ind = widget.reference.findText(name)
+                    widget.reference.removeItem(ind)
+                    widget.reference.insertItem(ind, new_name)
+                    widget.reference.setCurrentIndex(current_index)
+                for parent in widget.node.parents:
+                    parent.nameChanged.connect(updateParentName)
