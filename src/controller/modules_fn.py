@@ -19,7 +19,7 @@ def browse_savepath(widget):
     open a browse window to define the nifti save path
     """
     name = get_parent_names(widget)[0]
-    filename, extension = QtWidgets.QFileDialog.getSaveFileName(widget.parent().parent(), 'Save file',
+    filename, extension = QtWidgets.QFileDialog.getSaveFileName(widget.node.graph, 'Save file',
                                                                 os.path.join(OUT_DIR, name), filter=".nii.gz")
     widget.path.setText(filename+extension)
     widget.path.setToolTip(filename+extension)
@@ -44,7 +44,7 @@ def browse_image(widget):
     """
     global DATA_DIR
     dialog = QtWidgets.QFileDialog()
-    filename, _ = dialog.getOpenFileName(widget.parent().parent(), "Select a file...", DATA_DIR)
+    filename, _ = dialog.getOpenFileName(widget.node.graph, "Select a file...", DATA_DIR)
     DATA_DIR = os.path.dirname(filename)
     widget.path.setText(filename)
     widget.path.setToolTip(filename)
