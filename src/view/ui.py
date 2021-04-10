@@ -146,10 +146,11 @@ class QViewWidget(QtWidgets.QWidget):
         ----------
         widget: QWidget
         """
-        for k in widget.__dict__:
-            if k in self.__dict__:
-                return print("setWidget FAILED: you cannot set widget in \
-                    QViewWidget that contains a parameter named '{}'".format(k))
+        inter = set(widget.__dict__).intersection(set(self.__dict__))
+        if inter:
+            return print("FAILED setWidget: you cannot set widget in QViewWidget " +
+                         "containing parameters like:\n " + " ".join(list(inter)))
+
         self.layout().replaceWidget(self.layout().itemAt(0).widget(), widget)
         self.__dict__.update(widget.__dict__)
 
