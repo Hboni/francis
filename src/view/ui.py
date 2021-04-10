@@ -72,6 +72,7 @@ def empty_layout(layout):
 class QViewWidget(QtWidgets.QWidget):
     sizeChanged = QtCore.pyqtSignal()
     positionChanged = QtCore.pyqtSignal()
+    focused = QtCore.pyqtSignal(bool)
 
     def __init__(self, ui_path):
         super().__init__()
@@ -101,6 +102,7 @@ class QViewWidget(QtWidgets.QWidget):
         def __init__(self, parent):
             super().__init__()
             self.parent = parent
+            self.setAcceptHoverEvents(True)
             self.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable |
                           QtWidgets.QGraphicsItem.ItemIsFocusable |
                           QtWidgets.QGraphicsItem.ItemIsSelectable |
@@ -122,6 +124,22 @@ class QViewWidget(QtWidgets.QWidget):
             self.parent.state = 'released'
             self.setSelected(False)
             return QtWidgets.QGraphicsRectItem.mouseReleaseEvent(self, event)
+
+        def hoverEnterEvent(self, event):
+            self.parent.focused.emit(True)
+            return QtWidgets.QGraphicsRectItem.hoverEnterEvent(self, event)
+
+        def hoverLeaveEvent(self, event):
+            self.parent.focused.emit(False)
+            return QtWidgets.QGraphicsRectItem.hoverLeaveEvent(self, event)
+
+    def enterEvent(self, event):
+        self.focused.emit(True)
+        return QtWidgets.QWidget.enterEvent(self, event)
+
+    def leaveEvent(self, event):
+        self.focused.emit(False)
+        return QtWidgets.QWidget.leaveEvent(self, event)
 
     def resizeEvent(self, event):
         self.sizeChanged.emit()

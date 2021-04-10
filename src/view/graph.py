@@ -119,7 +119,6 @@ class Node(ui.QViewWidget):
         position of the node in the graphic view
 
     """
-    rightClicked = QtCore.pyqtSignal(int)
     nameChanged = QtCore.pyqtSignal(str, str)
 
     def __init__(self, graph, type, name, parents=[], position=(0, 0)):
@@ -136,6 +135,7 @@ class Node(ui.QViewWidget):
         self.positionChanged.connect(self.moveChilds)
         self.sizeChanged.connect(self.updateSnap)
         self.sizeChanged.connect(self.updateHeight)
+        self.focused.connect(self.focusNode)
 
         self.current_branch = []
         self.childs = []
@@ -271,21 +271,9 @@ class Node(ui.QViewWidget):
         self.value.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
         self.position.setText("{0} {1} {2}".format(x, y, z))
 
-    def enterEvent(self, event):
-        """
-        disable graphics view scrolling when entering node
-        """
-        self.graph.setEnabledScroll(False)
-        self.graph.focus = self
-        return super(Node, self).enterEvent(event)
-
-    def leaveEvent(self, event):
-        """
-        enable graphics view scrolling when leaving node
-        """
-        self.graph.setEnabledScroll(True)
-        self.graph.focus = None
-        return super(Node, self).leaveEvent(event)
+    def focusNode(self, boolean):
+        self.graph.setEnabledScroll(not boolean)
+        self.graph.focus = self if boolean else None
 
     def getChilds(self):
         """
@@ -615,7 +603,6 @@ class Graph(QtWidgets.QWidget):
         node.addToScene(self.scene)
 
         node.button.clicked.connect(lambda: self.nodeClicked.emit(node))
-        node.rightClicked.connect(lambda: self.openMenu(node))
 
         # resize widget in order to update widget minimum height
         node.button.clicked.connect(lambda: node.resize(node.width(), node.height()+1))
