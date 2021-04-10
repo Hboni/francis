@@ -1,7 +1,8 @@
 import os
 from PyQt5 import uic
-from src import UI_DIR
-from src.controller import modules_fn, MODULES
+from src import UI_DIR, CONFIG_DIR
+from src.controller import modules_fn
+import json
 
 
 class Connector:
@@ -15,7 +16,8 @@ class Connector:
 
         """
         self.window = window
-        self.window.initMenu(MODULES)
+        self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
+        self.window.initMenu(self.modules)
         self.window.graph.nodeClicked.connect(self.activate_node)
 
     def activate_node(self, node):
@@ -28,7 +30,7 @@ class Connector:
 
         """
         t = node.type
-        parameters = MODULES[t]
+        parameters = self.modules[t]
 
         if node.parameters.itemAt(0) is None:
             widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
