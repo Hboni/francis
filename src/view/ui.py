@@ -140,7 +140,7 @@ class QViewWidget(QtWidgets.QWidget):
         self.proxy.setWidget(self)
 
     def _mouseMoveEvent(self, event):
-        self.resize(self.width()+event.pos().x(), 0)
+        self.resize(self.width()+event.pos().x(), self.height()+event.pos().y())
 
     def setWidget(self, widget):
         """
