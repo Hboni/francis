@@ -45,9 +45,10 @@ def test_load_image(qtbot, francis, test_image_path):
                          QtCore.Qt.LeftButton)
     # Fill the widget with the image path
     assert os.path.exists(test_image_path)
-    francis.graph.nodes[load_image_node].path = test_image_path
+    francis.graph.nodes[load_image_node].paramters.itemAt(0).widget().path.setText(test_image_path)
+
     # Click on apply
-    qtbot.mouseClick(francis.graph.nodes[load_image_node].parameters.itemAt(0).widgets.apply,
+    qtbot.mouseClick(francis.graph.nodes[load_image_node].parameters.itemAt(0).widget().apply,
                      QtCore.Qt.LeftButton)
 
     assert len(francis.graph.nodes) == 1
@@ -55,7 +56,8 @@ def test_load_image(qtbot, francis, test_image_path):
 
 def test_add_nodes(qtbot, francis):
     qtbot.addWidget(francis)
-    francis.graph.addNode('multiply image')
+    parent_node = francis.graph.addNode('load image')
     assert len(francis.graph.nodes) == 1
-    francis.graph.addNode('load image')
+
+    francis.graph.addNode('multiply images', parent_node)
     assert len(francis.graph.nodes) == 2
