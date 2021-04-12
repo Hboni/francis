@@ -45,7 +45,7 @@ def test_load_image(qtbot, francis, test_image_path):
                          QtCore.Qt.LeftButton)
     # Fill the widget with the image path
     assert os.path.exists(test_image_path)
-    francis.graph.nodes[load_image_node].paramters.itemAt(0).widget().path.setText(test_image_path)
+    francis.graph.nodes[load_image_node].parameters.itemAt(0).widget().path.setText(test_image_path)
 
     # Click on apply
     qtbot.mouseClick(francis.graph.nodes[load_image_node].parameters.itemAt(0).widget().apply,
