@@ -31,11 +31,23 @@
    </property>
    <item>
     <widget class="QGraphicsView" name="view">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::StrongFocus</enum>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContents</enum>
      </property>
      <property name="backgroundBrush">
       <brush brushstyle="CrossPattern">
@@ -61,8 +73,14 @@
      <property name="cacheMode">
       <set>QGraphicsView::CacheNone</set>
      </property>
-     <property name="resizeAnchor">
+     <property name="transformationAnchor">
       <enum>QGraphicsView::NoAnchor</enum>
+     </property>
+     <property name="resizeAnchor">
+      <enum>QGraphicsView::AnchorViewCenter</enum>
+     </property>
+     <property name="rubberBandSelectionMode">
+      <enum>Qt::IntersectsItemShape</enum>
      </property>
     </widget>
    </item>
