@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>206</width>
-    <height>76</height>
+    <width>187</width>
+    <height>48</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,14 +54,14 @@
        </property>
       </layout>
      </item>
-     <item>
+     <item alignment="Qt::AlignTop">
       <widget class="QLabel" name="snap">
        <property name="enabled">
         <bool>true</bool>
        </property>
        <property name="minimumSize">
         <size>
-         <width>198</width>
+         <width>1</width>
          <height>0</height>
         </size>
        </property>
