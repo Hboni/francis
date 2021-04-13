@@ -17,6 +17,7 @@ class Connector:
         """
         self.window = window
         self.window.graph.nodeClicked.connect(self.activate_node)
+        self.window.conn = self
 
     def activate_node(self, node):
         """
