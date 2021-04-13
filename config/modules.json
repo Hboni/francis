@@ -10,41 +10,23 @@
         "ui": "ThresholdImage.ui",
         "function": "update_threshold"
     },
-    "add images": {
+    "operation between images": {
         "type": "secondary",
         "menu": "operation",
-        "ui": "AddImages.ui",
-        "function": "add_images"
+        "ui": "Operation.ui",
+        "function": "operation_between_images"
     },
-    "substract images": {
+    "operation with single value": {
         "type": "secondary",
         "menu": "operation",
-        "ui": "SubstractImages.ui",
-        "function": "substract_images"
+        "ui": "SimpleOperation.ui",
+        "function": "operation_with_single_value"
     },
-    "multiply images": {
+    "morpho basics": {
         "type": "secondary",
-        "menu": "operation",
-        "ui": "MultiplyImages.ui",
-        "function": "multiply_images"
-    },
-    "divide images": {
-        "type": "secondary",
-        "menu": "operation",
-        "ui": "DivideImages.ui",
-        "function": "divide_images"
-    },
-    "erode image": {
-        "type": "secondary",
-        "menu": "morpho/basics",
-        "ui": "ErodeImage.ui",
-        "function": "update_erosion"
-    },
-    "dilate image": {
-        "type": "secondary",
-        "menu": "morpho/basics",
-        "ui": "DilateImage.ui",
-        "function": "update_dilation"
+        "menu": "morpho",
+        "ui": "MorphoBasics.ui",
+        "function": "morpho_basics"
     },
     "save image": {
         "type": "secondary",

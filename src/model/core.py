@@ -81,6 +81,13 @@ def apply_threshold(im, threshold, reverse=False):
     return mask.astype(np.uint8)
 
 
+def add_value(im, value):
+    im_sum = im.astype(float)
+    im_sum += value
+    im_sum = im_sum.astype(get_minimum_dtype(im_sum))
+    return im_sum
+
+
 def add_images(ims, value=None):
     """
     apply sum to each pixel of all input images
@@ -95,13 +102,17 @@ def add_images(ims, value=None):
     im_sum: 2d/3d numpy array
     """
     im_sum = ims[0].astype(float)
-    if value is not None:
-        im_sum += value
-    else:
-        for im in ims[1:]:
-            im_sum += im.astype(float)
+    for im in ims[1:]:
+        im_sum += im.astype(float)
     im_sum = im_sum.astype(get_minimum_dtype(im_sum))
     return im_sum
+
+
+def substract_value(im, value):
+    im_sub = im.astype(float)
+    im_sub -= value
+    im_sub = im_sub.astype(get_minimum_dtype(im_sub))
+    return im_sub
 
 
 def substract_images(ref_im, ims=[], value=None):
@@ -120,15 +131,18 @@ def substract_images(ref_im, ims=[], value=None):
     im_sub: 2d/3d numpy array
 
     """
-
     im_sub = ref_im.astype(float)
-    if value is not None:
-        im_sub -= value
-    else:
-        for im in ims:
-            im_sub -= im.astype(float)
+    for im in ims:
+        im_sub -= im.astype(float)
     im_sub = im_sub.astype(get_minimum_dtype(im_sub))
     return im_sub
+
+
+def multiply_value(im, value):
+    im_mult = im.astype(float)
+    im_mult *= value
+    im_mult = im_mult.astype(get_minimum_dtype(im_mult))
+    return im_mult
 
 
 def multiply_images(ims, value=None):
@@ -145,13 +159,17 @@ def multiply_images(ims, value=None):
     im_mult: 2d/3d numpy array
     """
     im_mult = ims[0].astype(float)
-    if value is not None:
-        im_mult *= value
-    else:
-        for im in ims[1:]:
-            im_mult *= im.astype(float)
+    for im in ims[1:]:
+        im_mult *= im.astype(float)
     im_mult = im_mult.astype(get_minimum_dtype(im_mult))
     return im_mult
+
+
+def divide_value(im, value):
+    im_div = im.astype(float)
+    im_div /= value
+    im_div = im_div.astype(get_minimum_dtype(im_div))
+    return im_div
 
 
 def divide_images(ref_im, ims=[], value=None):
@@ -170,10 +188,7 @@ def divide_images(ref_im, ims=[], value=None):
     im_div: 2d/3d numpy array
     """
     im_div = ref_im.astype(float)
-    if value is None:
-        for im in ims:
-            im_div /= im.astype(float)
-    else:
-        im_div /= value
+    for im in ims:
+        im_div /= im.astype(float)
     im_div = im_div.astype(get_minimum_dtype(im_div))
     return im_div

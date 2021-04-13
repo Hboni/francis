@@ -40,29 +40,35 @@ class Connector:
             def activate():
                 return eval("modules_fn.{}".format(parameters['function']))(widget)
 
-            if t == "load image":
-                widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
-                widget.apply.clicked.connect(activate)
-            elif t == "threshold image":
+            if t == "threshold image":
                 widget.spin.valueChanged.connect(activate)
                 widget.reversed.stateChanged.connect(activate)
                 widget.spin.valueChanged.emit(0)
-            elif t in ["erode image", "dilate image"]:
-                widget.spin.valueChanged.connect(activate)
-                widget.spin.valueChanged.emit(0)
-            elif t in ["add images", "substract images", "multiply images", "subdivide images"]:
-                widget.apply.clicked.connect(activate)
-                widget.reference.addItems(modules_fn.get_parent_names(widget))
-                if t in ["add images", "multiply images"]:
-                    widget.singleValue.stateChanged.connect(widget.reference.setEnabled)
-                    widget.singleValue.stateChanged.emit(False)
 
-                # rename parent name inside reference combobox
-                def updateParentName(name, new_name):
-                    current_index = widget.reference.currentIndex()
-                    ind = widget.reference.findText(name)
-                    widget.reference.removeItem(ind)
-                    widget.reference.insertItem(ind, new_name)
-                    widget.reference.setCurrentIndex(current_index)
-                for parent in widget.node.parents:
-                    parent.nameChanged.connect(updateParentName)
+            else:
+                widget.apply.clicked.connect(activate)
+
+                if t == "load image":
+                    widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
+
+                if t == "save image":
+                    widget.browse.clicked.connect(lambda: modules_fn.browse_savepath(widget))
+
+                elif t == "operation between images":
+                    for rb in [widget.addition, widget.multiplication]:
+                        rb.clicked.connect(lambda: widget.reference.setEnabled(False))
+                    for rb in [widget.division, widget.substraction]:
+                        rb.clicked.connect(lambda: widget.reference.setEnabled(True))
+                    widget.addition.clicked.emit()
+
+                    # rename parent name inside reference combobox
+                    widget.reference.addItems(modules_fn.get_parent_names(widget))
+
+                    def updateParentName(name, new_name):
+                        current_index = widget.reference.currentIndex()
+                        ind = widget.reference.findText(name)
+                        widget.reference.removeItem(ind)
+                        widget.reference.insertItem(ind, new_name)
+                        widget.reference.setCurrentIndex(current_index)
+                    for parent in widget.node.parents:
+                        parent.nameChanged.connect(updateParentName)
