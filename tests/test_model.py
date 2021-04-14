@@ -23,37 +23,37 @@ def grey_scale():
 
 
 def test_erode(cube, square):
-    assert np.sum(core.erode(cube, 1, round_shape=False)) == 4**3
-    assert np.sum(core.erode(cube, 2, round_shape=False)) == 2**3
+    assert np.sum(core.apply_basic_morpho(cube, 1, 'erosion', round_shape=False)) == 4**3
+    assert np.sum(core.apply_basic_morpho(cube, 2, 'erosion', round_shape=False)) == 2**3
 
-    assert np.sum(core.erode(square, 1, round_shape=True)) == 4**2
-    assert np.sum(core.erode(square, 2, round_shape=True)) == 2**2
+    assert np.sum(core.apply_basic_morpho(square, 1, 'erosion', round_shape=True)) == 4**2
+    assert np.sum(core.apply_basic_morpho(square, 2, 'erosion', round_shape=True)) == 2**2
 
-    assert np.array_equal(core.erode(square, 1, round_shape=True),
-                          core.erode(square, 1, round_shape=False))
+    assert np.array_equal(core.apply_basic_morpho(square, 1, 'erosion', round_shape=True),
+                          core.apply_basic_morpho(square, 1, 'erosion', round_shape=False))
 
     assert np.array_equal(
-        core.erode(
-            core.dilate(cube, 1, round_shape=False),
-            1, round_shape=False
+        core.apply_basic_morpho(
+            core.apply_basic_morpho(cube, 1, 'dilation', round_shape=False),
+            1, 'erosion', round_shape=False
         ),
         cube)
 
 
 def test_dilation(cube, square):
-    assert np.sum(core.dilate(cube, 1, round_shape=False)) == 8**3
-    assert np.sum(core.dilate(cube, 2, round_shape=False)) == 10**3
-    assert np.sum(core.dilate(cube, 1, round_shape=True)) == 432
-    assert np.sum(core.dilate(cube, 2, round_shape=True)) == 728
+    assert np.sum(core.apply_basic_morpho(cube, 1, 'dilation', round_shape=False)) == 8**3
+    assert np.sum(core.apply_basic_morpho(cube, 2, 'dilation', round_shape=False)) == 10**3
+    assert np.sum(core.apply_basic_morpho(cube, 1, 'dilation', round_shape=True)) == 432
+    assert np.sum(core.apply_basic_morpho(cube, 2, 'dilation', round_shape=True)) == 728
 
-    assert np.sum(core.dilate(square, 1, round_shape=False)) == 8**2
-    assert np.sum(core.dilate(square, 2, round_shape=False)) == 10**2
-    assert np.sum(core.dilate(square, 1, round_shape=True)) == 8**2 - 4
+    assert np.sum(core.apply_basic_morpho(square, 1, 'dilation', round_shape=False)) == 8**2
+    assert np.sum(core.apply_basic_morpho(square, 2, 'dilation', round_shape=False)) == 10**2
+    assert np.sum(core.apply_basic_morpho(square, 1, 'dilation', round_shape=True)) == 8**2 - 4
 
     assert np.array_equal(
-        core.dilate(
-            core.erode(cube, 1, round_shape=False),
-            1, round_shape=False
+        core.apply_basic_morpho(
+            core.apply_basic_morpho(cube, 1, 'erosion', round_shape=False),
+            1, 'dilation', round_shape=False
         ),
         cube)
 
@@ -66,47 +66,47 @@ def test_threshold(grey_scale):
 
 
 def test_add_value(cube, square):
-    assert np.max(core.add_value(square, value=2)) == np.max(square) + 2
-    assert np.max(core.add_value(square, value=0)) == np.max(square)
-    assert np.max(core.add_value(cube, value=2)) == np.max(cube) + 2
-    assert np.max(core.add_value(cube, value=0)) == np.max(cube)
+    assert np.max(core.apply_operation(square, 2, operation='add')) == np.max(square) + 2
+    assert np.max(core.apply_operation(square, 0, operation='add')) == np.max(square)
+    assert np.max(core.apply_operation(cube, 2, operation='add')) == np.max(cube) + 2
+    assert np.max(core.apply_operation(cube, 0, operation='add')) == np.max(cube)
 
 
 def test_add_image(cube, square):
-    assert np.sum(core.add_images([square, square])) == 2 * np.sum(square)
-    assert np.sum(core.add_images([square, square, square, square])) == 4 * np.sum(square)
-    assert np.sum(core.add_images([cube, cube])) == 2 * np.sum(cube)
-    assert np.sum(core.add_images([cube, cube, cube, cube])) == 4 * np.sum(cube)
+    assert np.sum(core.apply_operation(square, square, operation='add')) == 2 * np.sum(square)
+    assert np.sum(core.apply_operation(square, [square, square, square], operation='add')) == 4 * np.sum(square)
+    assert np.sum(core.apply_operation(cube, cube, operation='add')) == 2 * np.sum(cube)
+    assert np.sum(core.apply_operation(cube, [cube, cube, cube], operation='add')) == 4 * np.sum(cube)
 
 
 def test_subtract_value(cube, square):
-    assert np.max(core.substract_value(square, value=2)) == np.max(square) - 2
-    assert np.max(core.substract_value(square, value=0)) == np.max(square)
-    assert np.max(core.substract_value(cube, value=2)) == np.max(cube) - 2
-    assert np.max(core.substract_value(cube, value=0)) == np.max(cube)
+    assert np.max(core.apply_operation(square, 2, operation='subtract')) == np.max(square) - 2
+    assert np.max(core.apply_operation(square, 0, operation='subtract')) == np.max(square)
+    assert np.max(core.apply_operation(cube, 2, operation='subtract')) == np.max(cube) - 2
+    assert np.max(core.apply_operation(cube, 0, operation='subtract')) == np.max(cube)
 
 
 def test_subtract_image(cube, square):
-    assert np.sum(core.substract_images(square, ims=[square])) == 0
-    assert np.sum(core.substract_images(square, ims=[square, square, square])) == -2 * np.sum(square)
-    assert np.sum(core.substract_images(cube, ims=[cube])) == 0
-    assert np.sum(core.substract_images(cube, ims=[cube, cube, cube])) == -2 * np.sum(cube)
+    assert np.sum(core.apply_operation(square, square, operation='subtract')) == 0
+    assert np.sum(core.apply_operation(square, [square, square, square], operation='subtract')) == -2 * np.sum(square)
+    assert np.sum(core.apply_operation(cube, cube, operation='subtract')) == 0
+    assert np.sum(core.apply_operation(cube, [cube, cube, cube], operation='subtract')) == -2 * np.sum(cube)
 
 
 def test_multiply_value(cube, square):
-    assert np.max(core.multiply_value(square, 5)) == 5
-    assert np.min(core.multiply_value(square, -4)) == -4
-    assert np.max(core.multiply_value(square, 0)) == 0
-    assert np.max(core.multiply_value(cube, 5)) == 5
-    assert np.min(core.multiply_value(cube, -4)) == -4
-    assert np.max(core.multiply_value(cube, 0)) == 0
+    assert np.max(core.apply_operation(square, 5, operation='multiply')) == 5
+    assert np.min(core.apply_operation(square, -4, operation='multiply')) == -4
+    assert np.max(core.apply_operation(square, 0, operation='multiply')) == 0
+    assert np.max(core.apply_operation(cube, 5, operation='multiply')) == 5
+    assert np.min(core.apply_operation(cube, -4, operation='multiply')) == -4
+    assert np.max(core.apply_operation(cube, 0, operation='multiply')) == 0
 
 
 def test_multiply_image(cube, square):
-    self_multiply = core.multiply_images([square, square])
+    self_multiply = core.apply_operation(square, square, operation='multiply')
     assert np.array_equal(self_multiply, square)
 
 
 def test_divide_value(cube, square):
-    assert np.max(core.divide_value(square, value=2)) == 0.5
-    assert np.min(core.divide_value(square, value=-2)) == -0.5
+    assert np.max(core.apply_operation(square, 2, operation='divide')) == 0.5
+    assert np.min(core.apply_operation(square, -2, operation='divide')) == -0.5
