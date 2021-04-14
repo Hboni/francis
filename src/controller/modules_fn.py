@@ -3,7 +3,8 @@ import os
 import nibabel as nib
 from src.model import core
 from src import DATA_DIR, OUT_DIR, _IMAGES_STACK
-from src.utils import store_image
+from src.utils import store_image, get_image
+from src.view.ui import get_checked_radiobutton
 DATA_DIR
 
 
@@ -25,18 +26,6 @@ def browse_savepath(widget):
     widget.path.setToolTip(filename+extension)
 
 
-def save_image(widget):
-    """
-    save the parent image as nifti file at specified path
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    ni_img = nib.Nifti1Image(_IMAGES_STACK[parent_name], None)
-    nib.save(ni_img, widget.path.text())
-    print("done")
-
-
 def browse_image(widget):
     """
     open a browse window to select a nifti file
@@ -48,6 +37,16 @@ def browse_image(widget):
     DATA_DIR = os.path.dirname(filename)
     widget.path.setText(filename)
     widget.path.setToolTip(filename)
+
+
+def save_image(widget):
+    """
+    save the parent image as nifti file at specified path
+    """
+    parent_name = get_parent_names(widget)[0]
+    ni_img = nib.Nifti1Image(get_image(parent_name), None)
+    nib.save(ni_img, widget.path.text())
+    print("done")
 
 
 def load_image(widget):
@@ -65,41 +64,13 @@ def load_image(widget):
     widget.node.updateSnap()
 
 
-def update_erosion(widget):
-    """
-    compute 3d erosion on the parent image
-    and store the eroded image into image stack dictionnaries
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.erode(_IMAGES_STACK[parent_name], widget.spin.value())
-    store_image(im, widget.node.name)
-    widget.node.updateSnap()
-
-
-def update_dilation(widget):
-    """
-    compute 3d dilation on the parent image
-    and store the dilated image into image stack dictionnaries
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.dilate(_IMAGES_STACK[parent_name], widget.spin.value())
-    store_image(im, widget.node.name)
-    widget.node.updateSnap()
-
-
 def update_threshold(widget):
     """
     compute 3d thresholding on the parent image
     and store the thresholded image into image stack dictionnaries
     """
     parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.apply_threshold(_IMAGES_STACK[parent_name],
+    im = core.apply_threshold(get_image(parent_name),
                               widget.spin.value(), widget.reversed.isChecked())
     store_image(im, widget.node.name)
     widget.node.updateSnap()
@@ -107,43 +78,25 @@ def update_threshold(widget):
 
 def operation_between_images(widget):
     parent_names = get_parent_names(widget)
-    for parent_name in parent_names:
-        if parent_name not in _IMAGES_STACK:
-            return print("'{}' not in image stack".format(parent_name))
-    for need_ref, cbox, function in zip([False, False, True, True],
-                                        [widget.addition, widget.multiplication,
-                                        widget.substraction, widget.division],
-                                        [core.add_images, core.multiply_images,
-                                        core.substract_images, core.divide_images]):
-        if cbox.isChecked():
-            if need_ref:
-                ref_parent_name = widget.reference.currentText()
-                parent_names.remove(ref_parent_name)
-                im = function(_IMAGES_STACK[ref_parent_name],
-                              [_IMAGES_STACK[parent_name] for parent_name in parent_names])
-            else:
-                im = function([_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
+    ref_parent_name = widget.reference.currentText()
+    parent_names.remove(ref_parent_name)
+    im = core.apply_operation(get_image(ref_parent_name),
+                              [get_image(parent_name) for parent_name in parent_names],
+                              operation=operation)
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
 
 def operation_with_single_value(widget):
-    parent_names = get_parent_names(widget)
-    if len(parent_names) > 1:
-        return print("only one parent required")
-    parent_name = parent_names[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
+    parent_name = get_parent_names(widget)[0]
+    operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
     try:
         value = float(widget.value.text())
     except ValueError as e:
         return print(e)
-    for cbox, function in zip([widget.addition, widget.multiplication,
-                              widget.substraction, widget.division],
-                              [core.add_value, core.multiply_value,
-                              core.substract_value, core.divide_value]):
-        if cbox.isChecked():
-            im = function(_IMAGES_STACK[parent_name], value)
+    im = core.apply_operation(get_image(parent_name),
+                              value, operation=operation)
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
@@ -156,9 +109,11 @@ def morpho_basics(widget):
     parent_name = get_parent_names(widget)[0]
     if parent_name not in _IMAGES_STACK:
         return print("'{}' not in image stack".format(parent_name))
-    for cbox, function in zip([widget.erosion, widget.dilation],
-                              [core.erode, core.dilate]):
-        if cbox.isChecked():
-            im = function(_IMAGES_STACK[parent_name], widget.size.value())
+
+    operation = get_checked_radiobutton(widget, ['erosion', 'dilation', 'opening', 'closing'])
+    if widget.binary.isChecked():
+        operation = "binary_" + operation
+    im = core.apply_basic_morpho(get_image(parent_name),  widget.size.value(), operation)
+
     store_image(im, widget.node.name)
     widget.node.updateSnap()

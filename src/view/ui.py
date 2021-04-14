@@ -69,6 +69,12 @@ def empty_layout(layout):
             delete_layout(item.layout())
 
 
+def get_checked_radiobutton(widget, sub_widget_names):
+    for name in sub_widget_names:
+        if widget.__dict__[name].isChecked():
+            return name
+
+
 class QViewWidget(QtWidgets.QWidget):
     """
     resizable and movable widget inside QGraphicsScene

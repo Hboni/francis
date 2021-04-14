@@ -51,15 +51,15 @@ class Connector:
                 if t == "load image":
                     widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
 
-                if t == "save image":
+                elif t == "save image":
                     widget.browse.clicked.connect(lambda: modules_fn.browse_savepath(widget))
 
                 elif t == "operation between images":
-                    for rb in [widget.addition, widget.multiplication]:
+                    for rb in [widget.add, widget.multiply]:
                         rb.clicked.connect(lambda: widget.reference.setEnabled(False))
-                    for rb in [widget.division, widget.substraction]:
+                    for rb in [widget.divide, widget.subtract]:
                         rb.clicked.connect(lambda: widget.reference.setEnabled(True))
-                    widget.addition.clicked.emit()
+                    widget.add.clicked.emit()
 
                     # rename parent name inside reference combobox
                     widget.reference.addItems(modules_fn.get_parent_names(widget))

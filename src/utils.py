@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 from src import _IMAGES_STACK, IMAGES_STACK
+# import sparse
 
 
 def get_minimum_dtype(arr):
@@ -22,9 +23,16 @@ def get_minimum_dtype(arr):
             return dt
 
 
+def get_image(name):
+    if name not in _IMAGES_STACK:
+        raise ValueError("'{}' not in image stack".format(name))
+    # return _IMAGES_STACK[name].todense()
+    return _IMAGES_STACK[name]
+
+
 def store_image(im, name):
     """
-    store raw image and (0, 255)-scaled image, 0 is nan values
+    store raw sparsed image and (0, 255)-scaled image, 0 is nan values
 
     Parameters
     ----------
@@ -32,6 +40,7 @@ def store_image(im, name):
     name: str
     """
     # initialize
+    # _IMAGES_STACK[name] = sparse.COO(im)
     _IMAGES_STACK[name] = im
     im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
     im_c[np.isinf(im_c)] = np.nan

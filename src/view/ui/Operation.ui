@@ -17,14 +17,14 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="0">
-      <widget class="QRadioButton" name="multiplication">
+      <widget class="QRadioButton" name="multiply">
        <property name="text">
         <string>multiplication</string>
        </property>
       </widget>
      </item>
      <item row="0" column="0">
-      <widget class="QRadioButton" name="addition">
+      <widget class="QRadioButton" name="add">
        <property name="text">
         <string>addition</string>
        </property>
@@ -34,14 +34,14 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QRadioButton" name="substraction">
+      <widget class="QRadioButton" name="subtract">
        <property name="text">
-        <string>substraction</string>
+        <string>subtraction</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QRadioButton" name="division">
+      <widget class="QRadioButton" name="divide">
        <property name="text">
         <string>division</string>
        </property>
