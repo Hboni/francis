@@ -22,53 +22,52 @@ class Connector:
 
     def activate_node(self, node):
         """
-        apply connection between node widgets and model
+        apply connection between node widgets and model and initialize widgets
 
         Parameters
         ----------
         node: graph.Node
 
         """
+        if node.parameters.itemAt(0) is not None:
+            return
+
         t = node.type
         parameters = self.modules[t]
 
-        if node.parameters.itemAt(0) is None:
-            widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
-            widget.node = node
-            node.parameters.addWidget(widget)
+        widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
+        widget.node = node
+        node.parameters.addWidget(widget)
 
-            def activate():
-                return eval("modules_fn.{}".format(parameters['function']))(widget)
+        def activate():
+            return eval("modules_fn.{}".format(parameters['function']))(widget)
+        widget.apply.clicked.connect(activate)
 
-            if t == "threshold image":
-                widget.spin.valueChanged.connect(activate)
-                widget.reversed.stateChanged.connect(activate)
-                widget.spin.valueChanged.emit(0)
+        if t == "threshold image":
+            widget.spin.valueChanged.connect(activate)
+            widget.reversed.stateChanged.connect(activate)
 
-            else:
-                widget.apply.clicked.connect(activate)
+        elif t == "load image":
+            widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
 
-                if t == "load image":
-                    widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
+        elif t == "save image":
+            widget.browse.clicked.connect(lambda: modules_fn.browse_savepath(widget))
 
-                elif t == "save image":
-                    widget.browse.clicked.connect(lambda: modules_fn.browse_savepath(widget))
+        elif t == "operation between images":
+            for rb in [widget.add, widget.multiply]:
+                rb.clicked.connect(lambda: widget.reference.setEnabled(False))
+            for rb in [widget.divide, widget.subtract]:
+                rb.clicked.connect(lambda: widget.reference.setEnabled(True))
+            widget.add.clicked.emit()
 
-                elif t == "operation between images":
-                    for rb in [widget.add, widget.multiply]:
-                        rb.clicked.connect(lambda: widget.reference.setEnabled(False))
-                    for rb in [widget.divide, widget.subtract]:
-                        rb.clicked.connect(lambda: widget.reference.setEnabled(True))
-                    widget.add.clicked.emit()
+            # rename parent name inside reference combobox
+            widget.reference.addItems(modules_fn.get_parent_names(widget))
 
-                    # rename parent name inside reference combobox
-                    widget.reference.addItems(modules_fn.get_parent_names(widget))
-
-                    def updateParentName(name, new_name):
-                        current_index = widget.reference.currentIndex()
-                        ind = widget.reference.findText(name)
-                        widget.reference.removeItem(ind)
-                        widget.reference.insertItem(ind, new_name)
-                        widget.reference.setCurrentIndex(current_index)
-                    for parent in widget.node.parents:
-                        parent.nameChanged.connect(updateParentName)
+            def updateParentName(name, new_name):
+                current_index = widget.reference.currentIndex()
+                ind = widget.reference.findText(name)
+                widget.reference.removeItem(ind)
+                widget.reference.insertItem(ind, new_name)
+                widget.reference.setCurrentIndex(current_index)
+            for parent in node.parents:
+                parent.nameChanged.connect(updateParentName)
