@@ -126,6 +126,7 @@ class QViewWidget(QtWidgets.QWidget):
         # add size gripto footer  if rezizable
         if resizable:
             self.sizeGrip = QtWidgets.QSizeGrip(self)
+            self.sizeGrip.mouseMoveEvent = self._mouseMoveEvent
             hbox.addWidget(self.sizeGrip)
 
         vbox.addWidget(QtWidgets.QWidget())
@@ -144,6 +145,9 @@ class QViewWidget(QtWidgets.QWidget):
 
         self.proxy = QtWidgets.QGraphicsProxyWidget(self.handle)
         self.proxy.setWidget(self)
+
+    def _mouseMoveEvent(self, event):
+        self.resize(self.width()+event.pos().x(), self.height()+event.pos().y())
 
     def setWidget(self, widget):
         """
