@@ -23,16 +23,15 @@ def apply_basic_morpho(im, size, operation='erosion', round_shape=True):
         Transformed input image with same size as im
 
     """
-    print(im.dtype, np.unique(im))
     if size == 0:
         return im
     if len(im.shape) == 3:
         selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
     elif len(im.shape) == 2:
         selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
+
     function = eval("morphology."+operation)
     out = function(im, selem)
-    print(out.dtype, np.unique(out))
     return out
 
 

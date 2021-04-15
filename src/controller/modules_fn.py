@@ -3,7 +3,7 @@ import os
 import nibabel as nib
 from src.model import core
 from src import DATA_DIR, OUT_DIR, _IMAGES_STACK
-from src.utils import store_image, get_image
+from src.utils import store_image, get_image, protector
 from src.view.ui import get_checked_radiobutton
 DATA_DIR
 
@@ -39,6 +39,7 @@ def browse_image(widget):
     widget.path.setToolTip(filename)
 
 
+@protector
 def save_image(widget):
     """
     save the parent image as nifti file at specified path
@@ -64,6 +65,7 @@ def load_image(widget):
     widget.node.updateSnap()
 
 
+@protector
 def update_threshold(widget):
     """
     compute 3d thresholding on the parent image
@@ -76,6 +78,7 @@ def update_threshold(widget):
     widget.node.updateSnap()
 
 
+@protector
 def operation_between_images(widget):
     parent_names = get_parent_names(widget)
     operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
@@ -88,19 +91,17 @@ def operation_between_images(widget):
     widget.node.updateSnap()
 
 
+@protector
 def operation_with_single_value(widget):
     parent_name = get_parent_names(widget)[0]
     operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
-    try:
-        value = float(widget.value.text())
-    except ValueError as e:
-        return print(e)
     im = core.apply_operation(get_image(parent_name),
-                              value, operation=operation)
+                              float(widget.value.text()), operation=operation)
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
 
+@protector
 def morpho_basics(widget):
     """
     compute 3d morphological operation on the parent image

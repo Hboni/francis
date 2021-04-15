@@ -4,6 +4,15 @@ from src import _IMAGES_STACK, IMAGES_STACK
 # import sparse
 
 
+def protector(foo):
+    def inner(*args, **kwargs):
+        try:
+            return foo(*args, **kwargs)
+        except ValueError as e:
+            print("ERROR: {}".format(e))
+    return inner
+
+
 def get_minimum_dtype(arr):
     """
     This function is temporary and not optimized at all
