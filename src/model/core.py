@@ -31,8 +31,7 @@ def apply_basic_morpho(im, size, operation='erosion', round_shape=True):
         selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
 
     function = eval("morphology."+operation)
-    out = function(im, selem)
-    return out
+    return function(im, selem)
 
 
 def apply_operation(arr, elements=[], operation='add'):
@@ -56,7 +55,6 @@ def apply_operation(arr, elements=[], operation='add'):
     function = eval("np."+operation)
     for element in elements:
         arr = function(arr, element, dtype=np.float64)
-
     return arr
 
 
