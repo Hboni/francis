@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets, uic, QtGui
 from src.view.graph import Graph
 from src import UI_DIR, CONFIG_DIR, utils
-import os
 import json
+import os
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -19,7 +19,6 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         initialize graph and basic connections/shortcuts
         """
-        self.initModules()
         self.graph = Graph(self, 'horizontal')
         self.graph.nodeClicked.connect(self.showHideParameters)
         self.setCentralWidget(self.graph)
@@ -30,16 +29,13 @@ class MainWindow(QtWidgets.QMainWindow):
         restore_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+R'), self)
         restore_sc.activated.connect(self.guirestore)
 
-    def initModules(self):
+    def initMenu(self, modules):
         """
-        load json to create module and right-clic menu
+        create right-clic menu from modules
         """
-        # load modules settings
-        self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), 'rb'))
-
         # initalize right-clic-menu
         self.menu = {}
-        for k, values in self.modules.items():
+        for k, values in modules.items():
             lst = [values['type']]
             if 'menu' in values:
                 lst += values['menu'].split('/')

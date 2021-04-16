@@ -3,8 +3,22 @@
         "type": "load image",
         "parents": []
     },
-    "load image_1": {
-        "type": "load image",
-        "parents": []
+    "save image": {
+        "type": "save image",
+        "parents": [
+            "load image"
+        ]
+    },
+    "threshold image": {
+        "type": "threshold image",
+        "parents": [
+            "load image"
+        ]
+    },
+    "morpho basics": {
+        "type": "morpho basics",
+        "parents": [
+            "load image"
+        ]
     }
 }
