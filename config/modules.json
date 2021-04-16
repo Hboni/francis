@@ -2,85 +2,39 @@
     "load image": {
         "type": "primary",
         "ui": "LoadImage.ui",
-        "connection": {
-            "browse": "modules_fn.browse_image",
-            "apply": "modules_fn.load_image"}
+        "function": "load_image"
     },
-    "threshold image":{
+    "threshold image": {
         "type": "secondary",
         "menu": "thresholding",
         "ui": "ThresholdImage.ui",
-        "start": "widget.spin.valueChanged.emit(0)",
-        "connection": {
-            "spin": "modules_fn.update_threshold",
-            "reversed": "modules_fn.update_threshold"
-        }
+        "function": "update_threshold"
     },
-    "add images":{
+    "operation between images": {
         "type": "secondary",
         "menu": "operation",
-        "ui": "AddImages.ui",
-        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
-        "connection": {
-            "reference": "modules_fn.add_images",
-            "apply": "modules_fn.add_images"
-        }
+        "ui": "Operation.ui",
+        "function": "operation_between_images"
     },
-    "substract images":{
+    "operation with single value": {
         "type": "secondary",
         "menu": "operation",
-        "ui": "SubstractImages.ui",
-        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
-        "connection": {
-            "reference": "modules_fn.substract_images",
-            "apply": "modules_fn.substract_images"
-        }
+        "ui": "SimpleOperation.ui",
+        "function": "operation_with_single_value"
     },
-    "multiply images":{
+    "morpho basics": {
         "type": "secondary",
-        "menu": "operation",
-        "ui": "MultiplyImages.ui",
-        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
-        "connection": {
-            "reference": "modules_fn.multiply_images",
-            "apply": "modules_fn.multiply_images"
-        }
+        "menu": "morpho",
+        "ui": "MorphoBasics.ui",
+        "function": "morpho_basics"
     },
-    "divide images":{
-        "type": "secondary",
-        "menu": "operation",
-        "ui": "DivideImages.ui",
-        "start": "widget.reference.addItems(modules_fn.get_parent_names(widget))",
-        "connection": {
-            "reference": "modules_fn.divide_images",
-            "apply": "modules_fn.divide_images"
-        }
-    },
-    "erode image":{
-        "type": "secondary",
-        "menu": "morpho/basics",
-        "ui": "ErodeImage.ui",
-        "start": "widget.spin.valueChanged.emit(0)",
-        "connection": {
-            "spin": "modules_fn.update_erosion"
-        }
-    },
-    "dilate image":{
-        "type": "secondary",
-        "menu": "morpho/basics",
-        "ui": "DilateImage.ui",
-        "start": "widget.spin.valueChanged.emit(0)",
-        "connection": {
-            "spin": "modules_fn.update_dilation"
-        }
-    },
-    "save image":{
+    "save image": {
         "type": "secondary",
         "ui": "SaveImage.ui",
-        "connection": {
-            "browse": "modules_fn.browse_savepath",
-            "apply": "modules_fn.save_image"
-        }
+        "function": "save_image"
+    },
+    "rename": {
+        "type": "secondary"
     },
     "delete": {
         "type": "secondary"

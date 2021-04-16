@@ -3,7 +3,8 @@ import os
 import nibabel as nib
 from src.model import core
 from src import DATA_DIR, OUT_DIR, _IMAGES_STACK
-from src.utils import store_image
+from src.utils import store_image, get_image, protector
+from src.view.ui import get_checked_radiobutton
 DATA_DIR
 
 
@@ -25,18 +26,6 @@ def browse_savepath(widget):
     widget.path.setToolTip(filename+extension)
 
 
-def save_image(widget):
-    """
-    save the parent image as nifti file at specified path
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    ni_img = nib.Nifti1Image(_IMAGES_STACK[parent_name], None)
-    nib.save(ni_img, widget.path.text())
-    print("done")
-
-
 def browse_image(widget):
     """
     open a browse window to select a nifti file
@@ -48,6 +37,17 @@ def browse_image(widget):
     DATA_DIR = os.path.dirname(filename)
     widget.path.setText(filename)
     widget.path.setToolTip(filename)
+
+
+@protector
+def save_image(widget):
+    """
+    save the parent image as nifti file at specified path
+    """
+    parent_name = get_parent_names(widget)[0]
+    ni_img = nib.Nifti1Image(get_image(parent_name), None)
+    nib.save(ni_img, widget.path.text())
+    print("done")
 
 
 def load_image(widget):
@@ -65,129 +65,56 @@ def load_image(widget):
     widget.node.updateSnap()
 
 
-def update_erosion(widget):
-    """
-    compute 3d erosion on the parent image
-    and store the eroded image into image stack dictionnaries
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.erode(_IMAGES_STACK[parent_name], widget.spin.value())
-    store_image(im, widget.node.name)
-    widget.node.updateSnap()
-
-
-def update_dilation(widget):
-    """
-    compute 3d dilation on the parent image
-    and store the dilated image into image stack dictionnaries
-    """
-    parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.dilate(_IMAGES_STACK[parent_name], widget.spin.value())
-    store_image(im, widget.node.name)
-    widget.node.updateSnap()
-
-
+@protector
 def update_threshold(widget):
     """
     compute 3d thresholding on the parent image
     and store the thresholded image into image stack dictionnaries
     """
     parent_name = get_parent_names(widget)[0]
-    if parent_name not in _IMAGES_STACK:
-        return print("'{}' not in image stack".format(parent_name))
-    im = core.apply_threshold(_IMAGES_STACK[parent_name],
+    im = core.apply_threshold(get_image(parent_name),
                               widget.spin.value(), widget.reversed.isChecked())
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
 
-def add_images(widget):
-    """
-    compute addition of all input images
-    """
-    if widget.singleValue.isChecked():
-        try:
-            value = float(widget.value.text())
-        except ValueError as e:
-            return print(e)
-        ref_parent_name = widget.reference.currentText()
-        im = core.add_images([_IMAGES_STACK[ref_parent_name]], value=value)
-    else:
-        parent_names = get_parent_names(widget)
-        for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK:
-                return print("'{}' not in image stack".format(parent_name))
-        im = core.add_images([_IMAGES_STACK[parent_name] for parent_name in parent_names])
-    store_image(im, widget.node.name)
-    widget.node.updateSnap()
-
-
-def substract_images(widget):
-    """
-    compute substraction of all input images from the reference image
-    """
+@protector
+def operation_between_images(widget):
+    parent_names = get_parent_names(widget)
+    operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
     ref_parent_name = widget.reference.currentText()
-    if widget.singleValue.isChecked():
-        try:
-            value = float(widget.value.text())
-        except ValueError as e:
-            return print(e)
-        im = core.substract_images(_IMAGES_STACK[ref_parent_name], value=value)
-    else:
-        parent_names = get_parent_names(widget)
-        for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK:
-                return print("'{}' not in image stack".format(parent_name))
-        parent_names.remove(ref_parent_name)
-        im = core.substract_images(_IMAGES_STACK[ref_parent_name],
-                                   [_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    parent_names.remove(ref_parent_name)
+    im = core.apply_operation(get_image(ref_parent_name),
+                              [get_image(parent_name) for parent_name in parent_names],
+                              operation=operation)
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
 
-def multiply_images(widget):
-    """
-    compute multiplication of all input images
-    """
-    if widget.singleValue.isChecked():
-        try:
-            value = float(widget.value.text())
-        except ValueError as e:
-            return print(e)
-        ref_parent_name = widget.reference.currentText()
-        im = core.multiply_images([_IMAGES_STACK[ref_parent_name]], value=value)
-    else:
-        parent_names = get_parent_names(widget)
-        for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK:
-                return print("'{}' not in image stack".format(parent_name))
-        im = core.multiply_images([_IMAGES_STACK[parent_name] for parent_name in parent_names])
+@protector
+def operation_with_single_value(widget):
+    parent_name = get_parent_names(widget)[0]
+    operation = get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])
+    im = core.apply_operation(get_image(parent_name),
+                              float(widget.value.text()), operation=operation)
     store_image(im, widget.node.name)
     widget.node.updateSnap()
 
 
-def divide_images(widget):
+@protector
+def morpho_basics(widget):
     """
-    compute division of all input images
+    compute 3d morphological operation on the parent image
+    and store the modified image into image stack dictionnaries
     """
-    ref_parent_name = widget.reference.currentText()
-    if widget.singleValue.isChecked():
-        try:
-            value = float(widget.value.text())
-        except ValueError as e:
-            return print(e)
-        im = core.divide_images(_IMAGES_STACK[ref_parent_name], value=value)
-    else:
-        parent_names = get_parent_names(widget)
-        for parent_name in parent_names:
-            if parent_name not in _IMAGES_STACK:
-                return print("'{}' not in image stack".format(parent_name))
-        parent_names.remove(ref_parent_name)
-        im = core.divide_images(_IMAGES_STACK[ref_parent_name],
-                                [_IMAGES_STACK[parent_name] for parent_name in parent_names])
+    parent_name = get_parent_names(widget)[0]
+    if parent_name not in _IMAGES_STACK:
+        return print("'{}' not in image stack".format(parent_name))
+
+    operation = get_checked_radiobutton(widget, ['erosion', 'dilation', 'opening', 'closing'])
+    if widget.binary.isChecked():
+        operation = "binary_" + operation
+    im = core.apply_basic_morpho(get_image(parent_name),  widget.size.value(), operation)
+
     store_image(im, widget.node.name)
     widget.node.updateSnap()

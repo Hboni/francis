@@ -1,8 +1,8 @@
 import os
-from PyQt5 import QtWidgets, uic
-from src import UI_DIR
+from PyQt5 import uic
+from src import UI_DIR, CONFIG_DIR
 from src.controller import modules_fn
-modules_fn  # avoid pre-commit to fail, modules_fn is used inside eval()
+import json
 
 
 class Connector:
@@ -16,36 +16,58 @@ class Connector:
 
         """
         self.window = window
+        self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
+        self.window.initMenu(self.modules)
         self.window.graph.nodeClicked.connect(self.activate_node)
 
     def activate_node(self, node):
         """
-        apply connection between node widgets and model
+        apply connection between node widgets and model and initialize widgets
 
         Parameters
         ----------
         node: graph.Node
 
         """
-        parameters = self.window.modules[node.type]
+        if node.parameters.itemAt(0) is not None:
+            return
 
-        if node.parameters.itemAt(0) is None:
-            widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
-            widget.node = node
+        t = node.type
+        parameters = self.modules[t]
 
-            # connect buttons to functions
-            def conn(w, function):
-                w = widget.__dict__[w]
-                if isinstance(w, (QtWidgets.QPushButton, QtWidgets.QToolButton)):
-                    w.clicked.connect(lambda: eval(function)(widget))
-                elif isinstance(w, (QtWidgets.QSpinBox)):
-                    w.valueChanged.connect(lambda: eval(function)(widget))
-                elif isinstance(w, (QtWidgets.QCheckBox)):
-                    w.stateChanged.connect(lambda: eval(function)(widget))
-            for b, f in parameters["connection"].items():
-                conn(b, f)
+        widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
+        widget.node = node
+        node.parameters.addWidget(widget)
 
-            # start functions
-            if "start" in parameters:
-                eval(parameters['start'])
-            node.parameters.addWidget(widget)
+        def activate():
+            return eval("modules_fn.{}".format(parameters['function']))(widget)
+        widget.apply.clicked.connect(activate)
+
+        if t == "threshold image":
+            widget.spin.valueChanged.connect(activate)
+            widget.reversed.stateChanged.connect(activate)
+
+        elif t == "load image":
+            widget.browse.clicked.connect(lambda: modules_fn.browse_image(widget))
+
+        elif t == "save image":
+            widget.browse.clicked.connect(lambda: modules_fn.browse_savepath(widget))
+
+        elif t == "operation between images":
+            for rb in [widget.add, widget.multiply]:
+                rb.clicked.connect(lambda: widget.reference.setEnabled(False))
+            for rb in [widget.divide, widget.subtract]:
+                rb.clicked.connect(lambda: widget.reference.setEnabled(True))
+            widget.add.clicked.emit()
+
+            # rename parent name inside reference combobox
+            widget.reference.addItems(modules_fn.get_parent_names(widget))
+
+            def updateParentName(name, new_name):
+                current_index = widget.reference.currentIndex()
+                ind = widget.reference.findText(name)
+                widget.reference.removeItem(ind)
+                widget.reference.insertItem(ind, new_name)
+                widget.reference.setCurrentIndex(current_index)
+            for parent in node.parents:
+                parent.nameChanged.connect(updateParentName)
