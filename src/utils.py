@@ -8,7 +8,7 @@ def protector(foo):
     def inner(*args, **kwargs):
         try:
             return foo(*args, **kwargs)
-        except ValueError as e:
+        except KeyError as e:
             print("ERROR: {}".format(e))
     return inner
 
@@ -34,7 +34,7 @@ def get_minimum_dtype(arr):
 
 def get_image(name):
     if name not in _IMAGES_STACK:
-        raise ValueError("'{}' not in image stack".format(name))
+        raise KeyError("'{}' not in image stack".format(name))
     # return _IMAGES_STACK[name].todense()
     return _IMAGES_STACK[name]
 
