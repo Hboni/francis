@@ -590,7 +590,7 @@ class Graph(QtWidgets.QWidget):
         ----------
         type: str
             type of node
-        parents: list of Node
+        parents: list of Node or Node
 
         """
         if not isinstance(parents, list):
