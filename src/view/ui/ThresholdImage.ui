@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>176</width>
-    <height>82</height>
+    <width>167</width>
+    <height>117</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,6 +46,13 @@
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="apply">
+       <property name="text">
+        <string>apply</string>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="verticalSpacer">
