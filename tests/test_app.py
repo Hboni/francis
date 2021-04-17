@@ -23,6 +23,14 @@ def francis():
     return win
 
 
+@pytest.fixture
+def load_node(qtbot, francis):
+    load_image_node = 'load image'
+    qtbot.addWidget(francis)
+    francis.graph.addNode(load_image_node)
+    return francis.graph.nodes[load_image_node]
+
+
 def test_francis_launch(qtbot, francis):
     # win = MainWindow()
     # win.show()
@@ -31,27 +39,29 @@ def test_francis_launch(qtbot, francis):
     assert not francis.graph.nodes
 
 
-def test_load_image(qtbot, francis, test_image_path):
+def test_load_image(qtbot, francis, load_node, test_image_path):
     """Select load image node and load the demonstration image"""
-    load_image_node = 'load image'
-    qtbot.addWidget(francis)
-    francis.graph.addNode(load_image_node)
 
     # Click on Load image btn
     with qtbot.waitSignal(francis.graph.nodeClicked,
                           timeout=2000,
                           raising=True):
-        qtbot.mouseClick(francis.graph.nodes[load_image_node].button,
+        qtbot.mouseClick(load_node.button,
                          QtCore.Qt.LeftButton)
     # Fill the widget with the image path
-    assert os.path.exists(test_image_path)
-    francis.graph.nodes[load_image_node].parameters.itemAt(0).widget().path.setText(test_image_path)
+    load_node.parameters.itemAt(0).widget().path.setText(test_image_path)
 
     # Click on apply
-    qtbot.mouseClick(francis.graph.nodes[load_image_node].parameters.itemAt(0).widget().apply,
+    qtbot.mouseClick(load_node.parameters.itemAt(0).widget().apply,
                      QtCore.Qt.LeftButton)
 
     assert len(francis.graph.nodes) == 1
+    # As the window is not displayed, the value load_node.snap.isVisible is False
+    assert load_node.current_slice is not None
+
+# TODO Test of save image
+# TODO Test of delete node
+# TODO See how to test child node creation
 
 
 def test_add_nodes(qtbot, francis):
