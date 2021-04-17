@@ -15,6 +15,15 @@ def test_image_path():
 
 
 @pytest.fixture
+def test_image_write_path():
+    saved_path = os.path.join(os.getcwd(),
+                              'data/saved_image.nii.gz')
+    if os.path.exists(saved_path):
+        os.remove(saved_path)
+    return saved_path
+
+
+@pytest.fixture
 def francis():
     # Launch Francis
     win = MainWindow()
@@ -59,7 +68,38 @@ def test_load_image(qtbot, francis, load_node, test_image_path):
     # As the window is not displayed, the value load_node.snap.isVisible is False
     assert load_node.current_slice is not None
 
-# TODO Test of save image
+
+def test_save_image(qtbot, load_node, francis,
+                    test_image_path, test_image_write_path):
+
+    # Click on Load image btn
+    with qtbot.waitSignal(francis.graph.nodeClicked,
+                          timeout=2000,
+                          raising=True):
+        qtbot.mouseClick(load_node.button,
+                         QtCore.Qt.LeftButton)
+    # Fill the widget with the image path
+    load_node.parameters.itemAt(0).widget().path.setText(test_image_path)
+
+    # Click on apply
+    qtbot.mouseClick(load_node.parameters.itemAt(0).widget().apply,
+                     QtCore.Qt.LeftButton)
+    francis.graph.addNode('save image', load_node)
+    save_node = francis.graph.nodes['save image']
+
+    with qtbot.waitSignal(francis.graph.nodeClicked,
+                          timeout=2000,
+                          raising=True):
+        qtbot.mouseClick(save_node.button,
+                         QtCore.Qt.LeftButton)
+
+    save_node.parameters.itemAt(0).widget().path.setText(test_image_write_path)
+    qtbot.mouseClick(save_node.parameters.itemAt(0).widget().apply,
+                     QtCore.Qt.LeftButton)
+
+    assert len(francis.graph.nodes) == 2
+    assert os.path.exists(test_image_write_path)
+
 # TODO Test of delete node
 # TODO See how to test child node creation
 
