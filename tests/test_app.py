@@ -8,13 +8,13 @@ from src.controller.connection import Connector
 from PyQt5 import QtCore
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def test_image_path():
     return os.path.join(os.getcwd(),
                         'data/cvs_avg35_inMNI152.nii.gz')
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def test_image_write_path():
     saved_path = os.path.join(os.getcwd(),
                               'data/saved_image.nii.gz')
@@ -100,8 +100,10 @@ def test_save_image(qtbot, load_node, francis,
     assert len(francis.graph.nodes) == 2
     assert os.path.exists(test_image_write_path)
 
-# TODO Test of delete node
-# TODO See how to test child node creation
+
+def test_delete_node(qtbot, load_node, francis):
+    francis.graph.deleteBranch(load_node)
+    assert not francis.graph.nodes
 
 
 def test_add_nodes(qtbot, francis):
