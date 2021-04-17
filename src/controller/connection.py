@@ -19,6 +19,7 @@ class Connector:
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
         self.window.initMenu(self.modules)
         self.window.graph.nodeClicked.connect(self.activate_node)
+        self.window.conn = self
 
     def activate_node(self, node):
         """

@@ -56,7 +56,7 @@ def load_image(widget):
     and create the rendering widget to put image inside
     """
     try:
-        im = nib.load(widget.path.text()).get_data()
+        im = nib.load(widget.path.text()).get_fdata()
     except (nib.filebasedimages.ImageFileError, FileNotFoundError) as e:
         return print(e)
     if len(im.shape) != 3:
