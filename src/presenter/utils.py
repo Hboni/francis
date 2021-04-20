@@ -3,6 +3,7 @@ from src import _IMAGES_STACK, IMAGES_STACK
 import numpy as np
 import copy
 # import sparse
+THREADING_ENABLED = False
 RUNNERS = []
 
 
@@ -28,14 +29,19 @@ class Runner(QtCore.QThread):
         self.out = self._target(*self._args, **self._kwargs)
 
 
-def view_manager(in_thread=True):
+def enable_threading(boolean):
+    global THREADING_ENABLED
+    THREADING_ENABLED = boolean
+
+
+def view_manager(threadable=True):
     """
     this decorator manage the loading gif and threading
 
     Parameters
     ----------
-    in_thread: bool, default=True
-        if True, the model function will be processed inside a QThread
+    threadable: bool, default=True
+        if True, the model function will be processed inside a QThread (if allowed)
 
     """
     def decorator(foo):
@@ -54,7 +60,7 @@ def view_manager(in_thread=True):
                     widget.node.gif.stop()
 
             # start the process inside a QThread
-            if in_thread:
+            if threadable and THREADING_ENABLED:
                 runner = Runner(function, **args)
                 RUNNERS.append(runner)  # needed to keep a trace of the QThread
                 runner.finished.connect(lambda: updateView(runner.out))

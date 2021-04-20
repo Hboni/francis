@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore
 import os
 import nibabel as nib
 from src import DATA_DIR, OUT_DIR
-from src.presenter.utils import view_manager, store_image, get_image
+from src.presenter.utils import view_manager, store_image, get_image, enable_threading
 from src.view import ui
 DATA_DIR
 
@@ -28,6 +28,8 @@ class Presenter:
         self._view.initMenu(self.modules)
         self._view.graph.nodeClicked.connect(self.activate_node)
         self._view.presenter = self
+
+        self._view.action_thread.toggled.connect(enable_threading)
 
     def activate_node(self, node):
         """
