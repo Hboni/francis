@@ -2,9 +2,8 @@
 
 import pytest
 import os
-
-from src.view.app import MainWindow
-from src.controller.connection import Connector
+from src.view.view import View
+from src.presenter.presenter import Presenter
 from PyQt5 import QtCore
 
 
@@ -26,10 +25,9 @@ def test_image_write_path():
 @pytest.fixture
 def francis():
     # Launch Francis
-    win = MainWindow()
-    conn = Connector()
-    conn.connect_view_to_model(win)
-    return win
+    view = View()
+    Presenter(view)
+    return view
 
 
 @pytest.fixture

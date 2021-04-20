@@ -21,7 +21,7 @@ class Presenter:
 
     """
 
-    def __init__(self, view, model):
+    def __init__(self, view, model=None):
         self._view = view
         self._model = model
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
