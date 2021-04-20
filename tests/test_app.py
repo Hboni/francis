@@ -10,13 +10,13 @@ from PyQt5 import QtCore
 @pytest.fixture(scope='module')
 def test_image_path():
     return os.path.join(os.getcwd(),
-                        'data/cvs_avg35_inMNI152.nii.gz')
+                        'resources/data/cvs_avg35_inMNI152.nii.gz')
 
 
 @pytest.fixture(scope='module')
 def test_image_write_path():
     saved_path = os.path.join(os.getcwd(),
-                              'data/saved_image.nii.gz')
+                              'resources/data/out/saved_image.nii.gz')
     if os.path.exists(saved_path):
         os.remove(saved_path)
     return saved_path
