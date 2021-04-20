@@ -5,7 +5,7 @@ import json
 import os
 
 
-class MainWindow(QtWidgets.QMainWindow):
+class View(QtWidgets.QMainWindow):
     """
     main window where widgets and menu are displayed
     """

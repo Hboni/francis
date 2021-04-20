@@ -1,4 +1,13 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from src import DESIGN_DIR
+import os
+
+
+def get_parent_names(widget):
+    """
+    get parent names of the node associated to the widget
+    """
+    return [p.name for p in widget.node.parents]
 
 
 def menu_from_dict(acts, activation_function=None, menu=None):
@@ -231,3 +240,72 @@ class QViewWidget(QtWidgets.QWidget):
         self.sizeChanged.connect(lambda: self.handle.setRect(QtCore.QRectF(self.geometry().adjusted(*self.handleSize))))
         self.sizeChanged.emit()
         scene.addItem(self.handle)
+
+
+class Gif(QtWidgets.QWidget):
+    """
+    GIF QWidget
+
+    Parameters
+    ----------
+    size: tuple, default=(15, 15)
+        size of the GIF
+    gif_pathname: str
+        path to the gif file
+    fail_pathname: str
+        path to the fail image, useful if GIF state is set to 'fail'
+    end_pathname: str
+        path to the end image, useful if GIF state is set to 'stop'
+
+    """
+    def __init__(self, size=(15, 15), gif_pathname=os.path.join(DESIGN_DIR, "loading.gif"),
+                 fail_pathname=os.path.join(DESIGN_DIR, "fail.png"),
+                 end_pathname=os.path.join(DESIGN_DIR, "valid.png")):
+        super().__init__()
+        # initialize
+        self.setFixedSize(*size)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.CustomizeWindowHint)
+        self.label = QtWidgets.QLabel(self)
+
+        # initialize gif
+        self.movie = QtGui.QMovie(gif_pathname)
+        self.movie.setScaledSize(QtCore.QSize(*size))
+
+        # initialize fail and end state images
+        self.valid = QtGui.QPixmap(end_pathname)
+        self.valid = self.valid.scaled(*size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.error = QtGui.QPixmap(fail_pathname)
+        self.error = self.error.scaled(*size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        self.start()
+        self.clear()
+
+    def start(self):
+        """
+        start gif animation
+        """
+        self.clear()
+        self.label.setMovie(self.movie)
+        self.movie.start()
+        self.show()
+
+    def stop(self):
+        """
+        replace gif animation by 'valid' image
+        """
+        self.clear()
+        self.label.setPixmap(self.valid)
+
+    def fail(self, msg=""):
+        """
+        replace gif animation by 'fail' image and add message tooltip on the image
+        """
+        self.clear()
+        self.label.setPixmap(self.error)
+        self.label.setToolTip(msg)
+
+    def clear(self):
+        """
+        clear the widget and reset the tooltip
+        """
+        self.label.clear()
+        self.label.setToolTip("")
