@@ -39,9 +39,35 @@
      <string>Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuPreferences">
+    <property name="title">
+     <string>Preferences</string>
+    </property>
+    <widget class="QMenu" name="menuqss">
+     <property name="title">
+      <string>qss</string>
+     </property>
+     <addaction name="Custom"/>
+     <addaction name="MacOS"/>
+     <addaction name="Ubuntu"/>
+     <addaction name="Aqua"/>
+     <addaction name="ConsoleStyle"/>
+     <addaction name="ElegantDark"/>
+     <addaction name="Fibrary"/>
+     <addaction name="Hookmark"/>
+     <addaction name="ManjaroMix"/>
+     <addaction name="MaterialDark"/>
+     <addaction name="NeonButtons"/>
+     <addaction name="Toolery"/>
+     <addaction name="AMOLED"/>
+     <addaction name="SpyBot"/>
+    </widget>
+    <addaction name="menuqss"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuPreferences"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_thread">
@@ -50,6 +76,91 @@
    </property>
    <property name="text">
     <string>process in background</string>
+   </property>
+  </action>
+  <action name="actionAMOLED">
+   <property name="text">
+    <string>AMOLED</string>
+   </property>
+  </action>
+  <action name="actionAqua">
+   <property name="text">
+    <string>Aqua</string>
+   </property>
+  </action>
+  <action name="AMOLED">
+   <property name="text">
+    <string>AMOLED</string>
+   </property>
+  </action>
+  <action name="Aqua">
+   <property name="text">
+    <string>Aqua</string>
+   </property>
+  </action>
+  <action name="ConsoleStyle">
+   <property name="text">
+    <string>ConsoleStyle</string>
+   </property>
+  </action>
+  <action name="Custom">
+   <property name="text">
+    <string>Custom</string>
+   </property>
+  </action>
+  <action name="ElegantDark">
+   <property name="text">
+    <string>ElegantDark</string>
+   </property>
+  </action>
+  <action name="Fibrary">
+   <property name="text">
+    <string>Fibrary</string>
+   </property>
+  </action>
+  <action name="Hookmark">
+   <property name="text">
+    <string>Hookmark</string>
+   </property>
+  </action>
+  <action name="MacOS">
+   <property name="text">
+    <string>MacOS</string>
+   </property>
+  </action>
+  <action name="ManjaroMix">
+   <property name="text">
+    <string>ManjaroMix</string>
+   </property>
+  </action>
+  <action name="MaterialDark">
+   <property name="text">
+    <string>MaterialDark</string>
+   </property>
+  </action>
+  <action name="NeonButtons">
+   <property name="text">
+    <string>NeonButtons</string>
+   </property>
+  </action>
+  <action name="SpyBot">
+   <property name="text">
+    <string>SpyBot</string>
+   </property>
+  </action>
+  <action name="Toolery">
+   <property name="text">
+    <string>Toolery</string>
+   </property>
+  </action>
+  <action name="Ubuntu">
+   <property name="text">
+    <string>Ubuntu</string>
+   </property>
+  </action>
+  <action name="actionjcc">
+   <property name="text">
+    <string>jcc</string>
    </property>
   </action>
  </widget>

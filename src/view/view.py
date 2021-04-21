@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, uic, QtGui
 from src.view.graph import Graph
-from src import UI_DIR, CONFIG_DIR, utils
+from src import UI_DIR, CONFIG_DIR, utils, DESIGN_DIR
+from src.view import STYLE_SHEETS
 import json
 import os
 
@@ -28,6 +29,23 @@ class View(QtWidgets.QMainWindow):
 
         restore_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+R'), self)
         restore_sc.activated.connect(self.guirestore)
+
+        # edit style sheet
+        def connectStyle(name):
+            eval("self."+name).triggered.connect(lambda: self.resetStylesheet(name))
+        for style_sheet in STYLE_SHEETS:
+            connectStyle(style_sheet)
+        self.currentStyle = None
+        reset_style = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+G'), self)
+        reset_style.activated.connect(self.resetStylesheet)
+
+    def resetStylesheet(self, name=None):
+        if name is None:
+            name = self.currentStyle
+        if name is not None:
+            with open(os.path.join(DESIGN_DIR, "stylesheet", name+".qss"), "r") as f:
+                QtWidgets.qApp.setStyleSheet(f.read())
+            self.currentStyle = name
 
     def initMenu(self, modules):
         """
