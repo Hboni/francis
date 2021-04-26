@@ -12,10 +12,6 @@ GRAPH_PARAMETERS = {
     "handleSize": (0, -20, 0, 0),  # left, top, right, bottom
     "handleColor": QtGui.QColor(180, 200, 180, 180),  # r, g, b, alpha
 
-    "junctionSize": (5, 5),  # in, out
-    "junctionColor": (QtGui.QColor(0, 150, 0), QtGui.QColor(0, 150, 0, 0)),  # int, out
-
-    "lineWidth": 2,
-    "lineColor": QtGui.QColor(0, 150, 0),
-    "lineDegree": 40,
+    "lineWidth": 10,
+    "lineColor": QtGui.QColor(0, 150, 0, 100)
 }

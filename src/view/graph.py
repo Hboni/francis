@@ -6,7 +6,7 @@ from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
 import numpy as np
 
 
-class Link(QtWidgets.QGraphicsPathItem):
+class Link(QtWidgets.QGraphicsLineItem):
     """
     graphic line between two graphic points
 
@@ -16,52 +16,42 @@ class Link(QtWidgets.QGraphicsPathItem):
         the two points to link
 
     """
-    def __init__(self, junction1, junction2, lineWidth=2, lineColor=QtGui.QColor(0, 150, 0), degree=30):
+    def __init__(self, junction1, junction2, lineWidth=2, lineColor=QtGui.QColor(0, 150, 0)):
         super().__init__()
-        self.degree = degree
-
         self.j1, self.j2 = junction1, junction2
         self.setZValue(-1)
-        self.setPen(QtGui.QPen(lineColor, lineWidth))
+        self.setPen(QtGui.QPen(QtGui.QColor(lineColor.red(), lineColor.green(), lineColor.blue(), 50), lineWidth))
 
-        # set curve point positions
-        self._path = QtGui.QPainterPath(self.j1.pos())
-        self._path.cubicTo(0, 0, 0, 0, 0, 0)
-        self.updateElement(0, self.j1.pos())
-        self.updateElement(1, self.j2.pos())
+        # arrow parameters
+        arrow_width, space = 3, lineWidth*2.3
+        self._arrow_resolution = 5
+        self._arrow_len = lineWidth
+
+        # define arrow as a list of doted lines
+        self._arrow = []
+        for i in np.linspace(0, lineWidth-2, self._arrow_resolution):
+            line = QtWidgets.QGraphicsLineItem(self)
+            lw = lineWidth - i
+            pen = QtGui.QPen(lineColor, lw)
+            pen.setCapStyle(QtCore.Qt.FlatCap)
+            pen.setDashPattern([arrow_width / lw, space / lw])
+            line.setPen(pen)
+            self._arrow.append(line)
 
         self.j1.links.append((self, 0))
         self.j2.links.append((self, 1))
-        self.setPath(self._path)
 
         self.j1.updateLinkPos()
         self.j2.updateLinkPos()
 
-    def updateElement(self, index, pos):
-        """
-        update the position of one end of line
-
-        Parameters
-        ----------
-        index: {0, 1}
-            specified one of the two end of line
-        pos: QtCore.QPoint
-            new position for the end of line
-
-        """
-        if self.j1.node.graph.direction == 'horizontal':
-            nx, ny = self.degree, 0
-        elif self.j1.node.graph.direction == 'vertical':
-            nx, ny = 0, self.degree
-
-        if index == 0:
-            self._path.setElementPositionAt(0, pos.x(), pos.y())
-            self._path.setElementPositionAt(1, pos.x()+nx, pos.y()+ny)
-        elif index == 1:
-            self._path.setElementPositionAt(2, pos.x()-nx, pos.y()-ny)
-            self._path.setElementPositionAt(3, pos.x(), pos.y())
-
-        self.setPath(self._path)
+    def updateElement(self):
+        # update line
+        pos1, pos2 = self.j1.node.pos()+self.j1.pos(), self.j2.node.pos()+self.j2.pos()
+        self.setLine(QtCore.QLineF(pos1, pos2))
+        # update arrow
+        diff = QtGui.QVector2D(pos2 - pos1).normalized().toPointF() * self._arrow_len / self._arrow_resolution
+        for i, line in enumerate(self._arrow):
+            line.setLine(QtCore.QLineF(pos1+diff*i, pos2))
 
 
 class Junction(QtWidgets.QGraphicsPolygonItem):
@@ -76,31 +66,15 @@ class Junction(QtWidgets.QGraphicsPolygonItem):
     color: QColor
 
     """
-    def __init__(self, node, type, size=5, color=QtGui.QColor(0, 150, 0)):
+    def __init__(self, node):
         super(Junction, self).__init__(node.handle)
         self.node = node
-        self.initShape(type, size, color)
-
         self.links = []
         self.setZValue(1)
 
-    def initShape(self, type, size, color):
-        d = 0 if type == 'out' else -size
-        if self.node.graph.direction == 'horizontal':
-            points = [QtCore.QPoint(d+size, 0),
-                      QtCore.QPoint(d, size),
-                      QtCore.QPoint(d, -size)]
-        if self.node.graph.direction == 'vertical':
-            points = [QtCore.QPoint(0, d+size),
-                      QtCore.QPoint(-size, d),
-                      QtCore.QPoint(size, d)]
-        self.setPolygon(QtGui.QPolygonF(points))
-        self.setBrush(QtGui.QBrush(color))
-        self.setPen(QtGui.QPen(color))
-
     def updateLinkPos(self):
         for link, index in self.links:
-            link.updateElement(index, self.node.pos()+self.pos())
+            link.updateElement()
 
 
 class Node(ui.QViewWidget):
@@ -175,52 +149,21 @@ class Node(ui.QViewWidget):
         if not self.graph.holdCtrl:
             self.handle.setSelected(False)
 
-    def addJunction(self, type, size, color):
+    def addJunction(self):
         """
         create a junction to fix link
-
-        Parameters
-        ----------
-        type: {'out', 'in'}
-            type of junction, if 'out' the junction will be hidden
-            the type influence the relative position of the junction in the node
 
         Return
         ------
         junction: Junction
         """
-        junction = Junction(self, type, size, color)
+        junction = Junction(self)
         self.positionChanged.connect(junction.updateLinkPos)
-        self.sizeChanged.connect(lambda: junction.setPos(*self.getJunctionRelativePosition(type)))
+        self.sizeChanged.connect(lambda: junction.setPos(self.width()/2, self.height()/2))
         self.sizeChanged.connect(junction.updateLinkPos)
         self.sizeChanged.emit()
         self.junctions.append(junction)
         return junction
-
-    def getJunctionRelativePosition(self, type='out'):
-        """
-        get the relative position of the junction in the node
-
-        Parameters
-        ----------
-        type: {'out', 'in'}, default='out'
-            type of the node
-
-        Return
-        ------
-        x, y: two floats
-            relative position of the junction
-        """
-        if self.graph.direction == 'horizontal':  # left to right
-            if type == 'out':
-                return self.width(), self.height()/2
-            elif type == 'in':
-                return 0, self.height()/2
-        elif self.graph.direction == 'vertical':  # top to bottom
-            if type == 'out':
-                return self.width()/2, self.height()
-            elif type == 'in':
-                return self.width()/2, 0
 
     def delete(self):
         """
@@ -431,14 +374,11 @@ class Graph(QtWidgets.QWidget):
         parent, child: Node
             nodes to visually bind
         """
-        jout = parent.addJunction('out', GRAPH_PARAMETERS['junctionSize'][1],
-                                  GRAPH_PARAMETERS['junctionColor'][1])
-        jin = child.addJunction('in', GRAPH_PARAMETERS['junctionSize'][0],
-                                GRAPH_PARAMETERS['junctionColor'][0])
+        jout = parent.addJunction()
+        jin = child.addJunction()
         link = Link(jout, jin,
                     GRAPH_PARAMETERS['lineWidth'],
-                    GRAPH_PARAMETERS['lineColor'],
-                    GRAPH_PARAMETERS['lineDegree'])
+                    GRAPH_PARAMETERS['lineColor'])
         self.scene.addItem(link)
 
     def setEnabledScroll(self, enable_scroll=True):
