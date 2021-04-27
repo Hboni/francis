@@ -61,9 +61,6 @@ class Junction(QtWidgets.QGraphicsPolygonItem):
     Parameters
     ----------
     node: Node
-    type: {'in', 'out'}
-    size: int
-    color: QColor
 
     """
     def __init__(self, node):
@@ -159,11 +156,15 @@ class Node(ui.QViewWidget):
         """
         junction = Junction(self)
         self.positionChanged.connect(junction.updateLinkPos)
-        self.sizeChanged.connect(lambda: junction.setPos(self.width()/2, self.height()/2))
+        self.sizeChanged.connect(lambda: junction.setPos(*self.mid_pos))
         self.sizeChanged.connect(junction.updateLinkPos)
         self.sizeChanged.emit()
         self.junctions.append(junction)
         return junction
+
+    @property
+    def mid_pos(self):
+        return self.width()/2, self.height()/2
 
     def delete(self):
         """
