@@ -1,7 +1,6 @@
 from skimage import morphology
 import numpy as np
 from src.utils import protector
-# from src.utils import get_minimum_dtype
 
 
 class Model:

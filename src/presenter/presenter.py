@@ -5,9 +5,8 @@ from PyQt5 import QtWidgets, QtCore
 import os
 import nibabel as nib
 from src import DATA_DIR, OUT_DIR
-from src.presenter.utils import view_manager, store_image, get_image, enable_threading
+from src.presenter.utils import view_manager, store_image, get_image
 from src.view import ui
-DATA_DIR
 
 
 class Presenter:
@@ -29,7 +28,11 @@ class Presenter:
         self._view.graph.nodeClicked.connect(self.activate_node)
         self._view.presenter = self
 
-        self._view.action_thread.toggled.connect(enable_threading)
+        self.threading_enabled = False
+        self._view.action_thread.toggled.connect(self.enable_threading)
+
+    def enable_threading(self, boolean):
+        self.threading_enabled = boolean
 
     def activate_node(self, node):
         """
@@ -102,10 +105,8 @@ class Presenter:
         open a browse window to select a nifti file
         then update path in the corresponding QLineEdit
         """
-        global DATA_DIR
         dialog = QtWidgets.QFileDialog()
         filename, _ = dialog.getOpenFileName(widget.node.graph, "Select a file...", DATA_DIR)
-        DATA_DIR = os.path.dirname(filename)
         widget.path.setText(filename)
         widget.path.setToolTip(filename)
 
