@@ -8,12 +8,26 @@ import numpy as np
 
 class Link(QtWidgets.QGraphicsPolygonItem):
     """
-    graphic line between two graphic points
+    graphic arrow between two graphic points
 
     Parameters
     ----------
-    junction1/junction2: Junction
-        the two points to link
+    parent/child: Node
+        the two nodes to link
+    width: float, default=5
+        width of the arrow line
+    arrowWidth: float, default=10
+        width of the arrow head
+    arrowLen: float, default=10
+        length of the arrow head
+    space: float, default=20
+        space between arrow extremity and nodes
+    color: QColor, default=QtGui.QColor(0, 150, 0)
+        color of the arrow background
+    borderWidth: float, default=2
+        width of the arrow border
+    borderColor: QColor, default=QtGui.QColor(0, 150, 0)
+        color of the arrow border
 
     """
     def __init__(self, parent, child, width=5, arrowWidth=10, arrowLen=10, space=20,
@@ -31,24 +45,48 @@ class Link(QtWidgets.QGraphicsPolygonItem):
         self.updatePos()
 
     def intersects(self, line, rect, ref_position):
+        """
+        This method find the intersection between widget rect and line
+        by checking the intersection between line and each rect border line.
+        As the line comes from inside the rect, only one intersection exists
+
+        Parameters
+        ----------
+        line: QLineF
+        rect: QRect
+            rect of the widget
+        ref_position: QPoint
+            absolute position of the rect int the graph
+
+        Return
+        ------
+        result: QPointF
+            first position found of the intersection
+        """
         points = [rect.bottomLeft(), rect.bottomRight(), rect.topRight(), rect.topLeft()]
         for i in range(4):
             border = QtCore.QLineF(ref_position + points[i-1], ref_position + points[i])
-            intersect, intersection_point = line.intersects(border)
-            if intersect == QtCore.QLineF.BoundedIntersection:
+            intersection_type, intersection_point = line.intersects(border)
+            if intersection_type == QtCore.QLineF.BoundedIntersection:
                 return intersection_point
         return QtCore.QPointF()
 
     def updatePos(self):
+        """
+        This method create the arrow between child and parent
+        """
+        # build direction line
         r1, r2 = self._parent.rect(), self._child.rect()
         line = QtCore.QLineF(self._parent.pos() + r1.center(),
                              self._child.pos() + r2.center())
+
+        # build unit vectors
         unit = (line.unitVector().p2() - line.unitVector().p1())
         normal = (line.normalVector().unitVector().p2() - line.normalVector().unitVector().p1())
 
+        # get arrow point
         p1 = self.intersects(line, r1, self._parent.pos()) + unit * self.space
         p2 = self.intersects(line, r2, self._child.pos()) - unit * self.space
-
         p11 = p1 + normal * self.width
         p12 = p1 - normal * self.width
         p21 = p2 + normal * self.width - unit * self.arrowLen
@@ -56,6 +94,7 @@ class Link(QtWidgets.QGraphicsPolygonItem):
         p23 = p2 + normal * self.arrowWidth - unit * self.arrowLen
         p24 = p2 - normal * self.arrowWidth - unit * self.arrowLen
 
+        # build arrow
         if np.sign((p22 - p12).x()) == np.sign(unit.x()) and np.sign((p22 - p12).y()) == np.sign(unit.y()):
             self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
         else:
