@@ -6,7 +6,7 @@ from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
 import numpy as np
 
 
-class Link(QtWidgets.QGraphicsLineItem):
+class Link(QtWidgets.QGraphicsPolygonItem):
     """
     graphic line between two graphic points
 
@@ -16,62 +16,50 @@ class Link(QtWidgets.QGraphicsLineItem):
         the two points to link
 
     """
-    def __init__(self, junction1, junction2, lineWidth=2, lineColor=QtGui.QColor(0, 150, 0)):
+    def __init__(self, parent, child, width=5, arrowWidth=10, arrowLen=10, space=20,
+                 color=QtGui.QColor(0, 150, 0), borderWidth=2, borderColor=QtGui.QColor(0, 150, 0)):
         super().__init__()
-        self.j1, self.j2 = junction1, junction2
+        self._parent = parent
+        self._child = child
         self.setZValue(-1)
-        self.setPen(QtGui.QPen(QtGui.QColor(lineColor.red(), lineColor.green(), lineColor.blue(), 50), lineWidth))
+        self.setPen(QtGui.QPen(borderColor, borderWidth))
+        self.setBrush(color)
+        self.width = width
+        self.arrowWidth = arrowWidth
+        self.arrowLen = arrowLen
+        self.space = space
+        self.updatePos()
 
-        # arrow parameters
-        arrow_width, space = 3, lineWidth*2.3
-        self._arrow_resolution = 5
-        self._arrow_len = lineWidth
+    def intersects(self, line, rect, ref_position):
+        points = [rect.bottomLeft(), rect.bottomRight(), rect.topRight(), rect.topLeft()]
+        for i in range(4):
+            border = QtCore.QLineF(ref_position + points[i-1], ref_position + points[i])
+            intersect, intersection_point = line.intersects(border)
+            if intersect == QtCore.QLineF.BoundedIntersection:
+                return intersection_point
+        return QtCore.QPointF()
 
-        # define arrow as a list of doted lines
-        self._arrow = []
-        for i in np.linspace(0, lineWidth-2, self._arrow_resolution):
-            line = QtWidgets.QGraphicsLineItem(self)
-            lw = lineWidth - i
-            pen = QtGui.QPen(lineColor, lw)
-            pen.setCapStyle(QtCore.Qt.FlatCap)
-            pen.setDashPattern([arrow_width / lw, space / lw])
-            line.setPen(pen)
-            self._arrow.append(line)
+    def updatePos(self):
+        r1, r2 = self._parent.rect(), self._child.rect()
+        line = QtCore.QLineF(self._parent.pos() + r1.center(),
+                             self._child.pos() + r2.center())
+        unit = (line.unitVector().p2() - line.unitVector().p1())
+        normal = (line.normalVector().unitVector().p2() - line.normalVector().unitVector().p1())
 
-        self.j1.links.append((self, 0))
-        self.j2.links.append((self, 1))
+        p1 = self.intersects(line, r1, self._parent.pos()) + unit * self.space
+        p2 = self.intersects(line, r2, self._child.pos()) - unit * self.space
 
-        self.j1.updateLinkPos()
-        self.j2.updateLinkPos()
+        p11 = p1 + normal * self.width
+        p12 = p1 - normal * self.width
+        p21 = p2 + normal * self.width - unit * self.arrowLen
+        p22 = p2 - normal * self.width - unit * self.arrowLen
+        p23 = p2 + normal * self.arrowWidth - unit * self.arrowLen
+        p24 = p2 - normal * self.arrowWidth - unit * self.arrowLen
 
-    def updateElement(self):
-        # update line
-        pos1, pos2 = self.j1.node.pos()+self.j1.pos(), self.j2.node.pos()+self.j2.pos()
-        self.setLine(QtCore.QLineF(pos1, pos2))
-        # update arrow
-        diff = QtGui.QVector2D(pos2 - pos1).normalized().toPointF() * self._arrow_len / self._arrow_resolution
-        for i, line in enumerate(self._arrow):
-            line.setLine(QtCore.QLineF(pos1+diff*i, pos2))
-
-
-class Junction(QtWidgets.QGraphicsPolygonItem):
-    """
-    graphic point
-
-    Parameters
-    ----------
-    node: Node
-
-    """
-    def __init__(self, node):
-        super(Junction, self).__init__(node.handle)
-        self.node = node
-        self.links = []
-        self.setZValue(1)
-
-    def updateLinkPos(self):
-        for link, index in self.links:
-            link.updateElement()
+        if np.sign((p22 - p12).x()) == np.sign(unit.x()) and np.sign((p22 - p12).y()) == np.sign(unit.y()):
+            self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
+        else:
+            self.setPolygon(QtGui.QPolygonF([p23, p2, p24, p23]))
 
 
 class Node(ui.QViewWidget):
@@ -117,7 +105,7 @@ class Node(ui.QViewWidget):
         self.cmap = 'rednan'
         self.ctable = None
         self.snap_axis = 0
-        self.junctions = []
+        self.links = []
 
     def updateHeight(self):
         """
@@ -146,22 +134,6 @@ class Node(ui.QViewWidget):
         if not self.graph.holdCtrl:
             self.handle.setSelected(False)
 
-    def addJunction(self):
-        """
-        create a junction to fix link
-
-        Return
-        ------
-        junction: Junction
-        """
-        junction = Junction(self)
-        self.positionChanged.connect(junction.updateLinkPos)
-        self.sizeChanged.connect(lambda: junction.setPos(*self.mid_pos))
-        self.sizeChanged.connect(junction.updateLinkPos)
-        self.sizeChanged.emit()
-        self.junctions.append(junction)
-        return junction
-
     @property
     def mid_pos(self):
         return self.width()/2, self.height()/2
@@ -170,10 +142,8 @@ class Node(ui.QViewWidget):
         """
         delete itself and all related graphic items (links and junctions)
         """
-        for j in self.junctions:
-            for l1, _ in j.links:
-                self.graph.scene.removeItem(l1)
-            self.graph.scene.removeItem(j)
+        for link in self.links:
+            self.graph.scene.removeItem(link)
         self.graph.scene.removeItem(self.handle)
         self.proxy.deleteLater()
         self.deleteLater()
@@ -375,11 +345,18 @@ class Graph(QtWidgets.QWidget):
         parent, child: Node
             nodes to visually bind
         """
-        jout = parent.addJunction()
-        jin = child.addJunction()
-        link = Link(jout, jin,
-                    GRAPH_PARAMETERS['lineWidth'],
-                    GRAPH_PARAMETERS['lineColor'])
+        # jout = parent.addJunction()
+        # jin = child.addJunction()
+        link = Link(parent, child)
+
+        parent.positionChanged.connect(link.updatePos)
+        parent.sizeChanged.connect(link.updatePos)
+        child.positionChanged.connect(link.updatePos)
+        child.sizeChanged.connect(link.updatePos)
+        child.sizeChanged.emit()
+
+        parent.links.append(link)
+        child.links.append(link)
         self.scene.addItem(link)
 
     def setEnabledScroll(self, enable_scroll=True):
