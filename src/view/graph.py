@@ -384,8 +384,6 @@ class Graph(QtWidgets.QWidget):
         parent, child: Node
             nodes to visually bind
         """
-        # jout = parent.addJunction()
-        # jin = child.addJunction()
         link = Link(parent, child)
 
         parent.positionChanged.connect(link.updatePos)
