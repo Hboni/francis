@@ -1,15 +1,12 @@
 import numpy as np
-import copy
-from src import _IMAGES_STACK, IMAGES_STACK
-# import sparse
 
 
 def protector(foo):
     def inner(*args, **kwargs):
         try:
             return foo(*args, **kwargs)
-        except KeyError as e:
-            print("ERROR: {}".format(e))
+        except Exception as e:
+            return e
     return inner
 
 
@@ -30,43 +27,6 @@ def get_minimum_dtype(arr):
                np.uint32, np.int32, np.float32, np.uint64, np.int64, np.float64]:
         if np.array_equal(arr, arr.astype(dt), equal_nan=True):
             return dt
-
-
-def get_image(name):
-    if name not in _IMAGES_STACK:
-        raise KeyError("'{}' not in image stack".format(name))
-    # return _IMAGES_STACK[name].todense()
-    return _IMAGES_STACK[name]
-
-
-def store_image(im, name):
-    """
-    store raw sparsed image and (0, 255)-scaled image, 0 is nan values
-
-    Parameters
-    ----------
-    im: numpy.array
-    name: str
-    """
-    # initialize
-    # _IMAGES_STACK[name] = sparse.COO(im)
-    _IMAGES_STACK[name] = im
-    im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
-    im_c[np.isinf(im_c)] = np.nan
-
-    # scale image in range (1, 255)
-    mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
-    if mini == maxi:
-        mini = 0
-        maxi = max(maxi, 1)
-    im_c = (im_c - mini) / (maxi - mini) * 254 + 1
-
-    # set 0 as nan values
-    im_c[np.isnan(im_c)] = 0
-
-    # convert and store
-    im_c = im_c.astype(np.uint8)
-    IMAGES_STACK[name] = im_c
 
 
 def dict_from_list(dict_to_complete, element_list):
