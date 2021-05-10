@@ -2,8 +2,6 @@ from PyQt5 import QtCore
 from src import _IMAGES_STACK, IMAGES_STACK
 import numpy as np
 import copy
-# import sparse
-THREADING_ENABLED = False
 RUNNERS = []
 
 
@@ -22,16 +20,11 @@ class Runner(QtCore.QThread):
         self._args = args
         self._kwargs = kwargs
 
-        # where the funciton result is stored
+        # where the function result is stored
         self.out = None
 
     def run(self):
         self.out = self._target(*self._args, **self._kwargs)
-
-
-def enable_threading(boolean):
-    global THREADING_ENABLED
-    THREADING_ENABLED = boolean
 
 
 def view_manager(threadable=True):
@@ -60,7 +53,7 @@ def view_manager(threadable=True):
                     widget.node.gif.stop()
 
             # start the process inside a QThread
-            if threadable and THREADING_ENABLED:
+            if threadable and presenter.threading_enabled:
                 runner = Runner(function, **args)
                 RUNNERS.append(runner)  # needed to keep a trace of the QThread
                 runner.finished.connect(lambda: updateView(runner.out))
@@ -76,7 +69,6 @@ def get_image(name):
     if name not in _IMAGES_STACK:
         print("'{}' not in image stack".format(name))
         return None
-    # return _IMAGES_STACK[name].todense()
     return _IMAGES_STACK[name]
 
 
@@ -90,7 +82,6 @@ def store_image(im, name):
     name: str
     """
     # initialize
-    # _IMAGES_STACK[name] = sparse.COO(im)
     _IMAGES_STACK[name] = im
     im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
     im_c[np.isinf(im_c)] = np.nan
