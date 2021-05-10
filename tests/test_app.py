@@ -2,22 +2,21 @@
 
 import pytest
 import os
-
-from src.view.app import MainWindow
-from src.controller.connection import Connector
+from src.view.view import View
+from src.presenter.presenter import Presenter
 from PyQt5 import QtCore
 
 
 @pytest.fixture(scope='module')
 def test_image_path():
     return os.path.join(os.getcwd(),
-                        'data/cvs_avg35_inMNI152.nii.gz')
+                        'resources/data/cvs_avg35_inMNI152.nii.gz')
 
 
 @pytest.fixture(scope='module')
 def test_image_write_path():
     saved_path = os.path.join(os.getcwd(),
-                              'data/saved_image.nii.gz')
+                              'resources/data/out/saved_image.nii.gz')
     if os.path.exists(saved_path):
         os.remove(saved_path)
     return saved_path
@@ -26,10 +25,9 @@ def test_image_write_path():
 @pytest.fixture
 def francis():
     # Launch Francis
-    win = MainWindow()
-    conn = Connector()
-    conn.connect_view_to_model(win)
-    return win
+    view = View()
+    Presenter(view)
+    return view
 
 
 @pytest.fixture
