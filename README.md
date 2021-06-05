@@ -1,6 +1,7 @@
 # Francis
 
 ![pytest](https://github.com/Hboni/francis/actions/workflows/python-app.yml/badge.svg)
+[![codecov](https://codecov.io/gh/Hboni/francis/branch/main/graph/badge.svg?token=3ZTYZBL9NS)](https://codecov.io/gh/Hboni/francis)
 
 Francis is a friendly image analysis interface system.
 
