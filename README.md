@@ -62,7 +62,7 @@ pip install -r requirements.txt
 To develop in this project, it is also recommended to use [pre-commit](https://pre-commit.com/).
 
 ```bash
-pip install pre-commit
+pip instal -r tests/requirements.txt
 ```
 
 ## Known issues
