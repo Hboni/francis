@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore
 import os
 import nibabel as nib
 from src import DATA_DIR, OUT_DIR
-from src.presenter.utils import view_manager, store_image, get_image
+from src.presenter.utils import view_manager, store_image, get_result
 from src.view import ui
 
 
@@ -115,9 +115,8 @@ class Presenter:
         save the parent image as nifti file at specified path
         """
         parent_name = ui.get_parent_names(widget)[0]
-        ni_img = nib.Nifti1Image(get_image(parent_name), None)
+        ni_img = nib.Nifti1Image(get_result(parent_name), None)
         nib.save(ni_img, widget.path.text())
-        print("done")
 
     def load_image(self, widget):
         """
@@ -131,7 +130,16 @@ class Presenter:
         if len(im.shape) != 3:
             return "for now loaded images must be of size 3"
         store_image(im, widget.node.name)
-        widget.node.updateSnap()
+        widget.node.updateResult()
+
+    @view_manager(True)
+    def get_info(self, widget):
+        parent_name = ui.get_parent_names(widget)[0]
+
+        function = self._model.get_img_infos
+        args = {"im": get_result(parent_name),
+                "info": widget.infos.currentText()}
+        return function, args
 
     @view_manager(True)
     def update_threshold(self, widget):
@@ -142,7 +150,7 @@ class Presenter:
         parent_name = ui.get_parent_names(widget)[0]
 
         function = self._model.apply_threshold
-        args = {"im": get_image(parent_name),
+        args = {"im": get_result(parent_name),
                 "threshold": widget.spin.value(),
                 "reverse": widget.reversed.isChecked()}
         return function, args
@@ -154,8 +162,8 @@ class Presenter:
         parent_names.remove(ref_parent_name)
 
         function = self._model.apply_operation
-        args = {"arr": get_image(ref_parent_name),
-                "elements": [get_image(parent_name) for parent_name in parent_names],
+        args = {"arr": get_result(ref_parent_name),
+                "elements": [get_result(parent_name) for parent_name in parent_names],
                 "operation": ui.get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
@@ -164,7 +172,7 @@ class Presenter:
         parent_name = ui.get_parent_names(widget)[0]
 
         function = self._model.apply_operation
-        args = {"arr": get_image(parent_name),
+        args = {"arr": get_result(parent_name),
                 "elements": float(widget.value.text()),
                 "operation": ui.get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
@@ -181,7 +189,7 @@ class Presenter:
             operation = "binary_" + operation
 
         function = self._model.apply_basic_morpho
-        args = {"im": get_image(parent_name),
+        args = {"im": get_result(parent_name),
                 "size": widget.size.value(),
                 "operation": operation,
                 "round_shape": True}

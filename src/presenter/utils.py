@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from src import _IMAGES_STACK, IMAGES_STACK
+from src import _STACK, STACK
 import numpy as np
 import copy
 RUNNERS = []
@@ -48,8 +48,8 @@ def view_manager(threadable=True):
                 if isinstance(output, Exception):
                     widget.node.gif.fail("[{0}] {1}".format(type(output).__name__, output))
                 else:
-                    store_image(output, widget.node.name)
-                    widget.node.updateSnap()
+                    store_result(output, widget.node.name)
+                    widget.node.updateResult()
                     widget.node.gif.stop()
 
             # start the process inside a QThread
@@ -65,11 +65,26 @@ def view_manager(threadable=True):
     return decorator
 
 
-def get_image(name):
-    if name not in _IMAGES_STACK:
+def get_result(name):
+    if name not in _STACK:
         print("'{}' not in image stack".format(name))
         return None
-    return _IMAGES_STACK[name]
+    return _STACK[name]
+
+
+def store_result(res, name):
+    """
+    store result in stacks
+
+    Parameters
+    ----------
+    im: numpy.array, float
+    name: str
+    """
+    if isinstance(res, np.ndarray):
+        store_image(res, name)
+    elif isinstance(res, (int, float)):
+        STACK[name] = res
 
 
 def store_image(im, name):
@@ -82,7 +97,7 @@ def store_image(im, name):
     name: str
     """
     # initialize
-    _IMAGES_STACK[name] = im
+    _STACK[name] = im
     im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
     im_c[np.isinf(im_c)] = np.nan
 
@@ -98,4 +113,4 @@ def store_image(im, name):
 
     # convert and store
     im_c = im_c.astype(np.uint8)
-    IMAGES_STACK[name] = im_c
+    STACK[name] = im_c

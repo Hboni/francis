@@ -10,7 +10,7 @@ UI_DIR = os.path.join(MAIN_DIR, "src", "view", "ui")
 OUT_DIR = os.path.join(DATA_DIR, "out")
 
 # contain raw images
-_IMAGES_STACK = {}
+_STACK = {}
 
 # contain viewable images (pixel values between 0 and 255)
-IMAGES_STACK = {}
+STACK = {}

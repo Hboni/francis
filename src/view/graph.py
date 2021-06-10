@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from src.view import ui, CMAP, GRAPH_PARAMETERS
 import os
 import copy
-from src import UI_DIR, IMAGES_STACK, _IMAGES_STACK
+from src import UI_DIR, STACK, _STACK
 import numpy as np
 
 
@@ -127,30 +127,27 @@ class Node(ui.QViewWidget):
         self.type = type
         self.name = name
         self.button.setText(name)
-        self.snap.wheelEvent = self.snapWheelEvent
-        self.snap.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
-        self.snap.mousePressEvent = self.snapMousePressEvent
-        self.snap.setVisible(False)
 
         self.positionChanged.connect(self.moveChilds)
-        self.sizeChanged.connect(self.updateSnap)
+        self.sizeChanged.connect(self.updateResult)
         self.sizeChanged.connect(self.updateHeight)
         self.focused.connect(self.focusNode)
 
+        self.widget.setVisible(False)
+
+        self.outputType = None
         self.current_branch = []
         self.childs = []
         self.parents = parents
-        self.current_slice = None
-        self.cmap = 'rednan'
-        self.ctable = None
-        self.snap_axis = 0
+
         self.links = []
 
     def updateHeight(self):
         """
         resize widget to its minimum height
         """
-        self.resize(self.width(), self.minimumHeight())
+        if self.outputType != "text":
+            self.resize(self.width(), self.minimumHeight())
 
     def moveChilds(self):
         """
@@ -214,18 +211,18 @@ class Node(ui.QViewWidget):
         update pixel value and position labels when clicking snap view
         """
         # set ratio between image and qpixmap
-        if self.name not in _IMAGES_STACK:
+        if self.name not in _STACK:
             return
-        ratio = _IMAGES_STACK[self.name].shape[int(self.snap_axis == 0)] / self.snap.width()
+        ratio = _STACK[self.name].shape[int(self.snap_axis == 0)] / self.result.width()
         # get click position
         click_pos = np.array([event.pos().y(), event.pos().x()])
         # define position in image
         true_pos = np.rint(click_pos * ratio).astype(int)
         x, y, z = np.insert(true_pos, self.snap_axis, self.current_slice)
         # update labels with pixel value and position
-        shape = _IMAGES_STACK[self.name].shape
+        shape = _STACK[self.name].shape
         if x < shape[0] and y < shape[1] and z < shape[2]:
-            self.rightfoot.setText(str(_IMAGES_STACK[self.name][x, y, z])+" ")
+            self.rightfoot.setText(str(_STACK[self.name][x, y, z])+" ")
             self.leftfoot.setText("{0} {1} {2}".format(x, y, z))
 
     def focusNode(self, boolean):
@@ -247,9 +244,9 @@ class Node(ui.QViewWidget):
         return childs
 
     def rename(self, new_name):
-        if self.name in IMAGES_STACK:
-            IMAGES_STACK[new_name] = IMAGES_STACK.pop(self.name)
-            _IMAGES_STACK[new_name] = _IMAGES_STACK.pop(self.name)
+        if self.name in STACK:
+            STACK[new_name] = STACK.pop(self.name)
+            _STACK[new_name] = _STACK.pop(self.name)
         self.button.setText(new_name)
         self.nameChanged.emit(self.name, new_name)
         self.name = new_name
@@ -280,6 +277,46 @@ class Node(ui.QViewWidget):
             self.ctable = [QtGui.qRgb(i, i, i) for i in values]
         return self.ctable
 
+    def updateResult(self):
+        if self.outputType is None:
+            res = STACK.get(self.name)
+            if res is None:
+                return
+            elif isinstance(res, np.ndarray):
+                self.result.wheelEvent = self.snapWheelEvent
+                self.result.mouseDoubleClickEvent = self.snapMouseDoubleClickEvent
+                self.result.mousePressEvent = self.snapMousePressEvent
+                self.current_slice = None
+                self.cmap = 'rednan'
+                self.ctable = None
+                self.snap_axis = 0
+                self.outputType = "image"
+            elif isinstance(res, (str, float, int)):
+                self.outputType = "text"
+
+        if self.outputType == "image":
+            self.updateSnap()
+        elif self.outputType == "text":
+            self.updateText()
+
+    def updateText(self):
+        txt = STACK.get(self.name)
+        if txt is None:
+            return
+        self.widget.setVisible(True)
+
+        # fit font size to widget size
+        font = self.result.font()
+        size = QtGui.QFontMetrics(font).size(QtCore.Qt.TextSingleLine, str(txt))
+        ratio = np.min([self.widget.width() / size.width(), self.widget.height() / size.height()])
+        newPointSize = font.pointSize() * ratio - 1
+        pointSize = np.max([newPointSize, 12])
+        font.setPointSize(pointSize)
+        self.result.setFont(font)
+
+        # set text
+        self.result.setText(str(txt))
+
     def updateSnap(self, sync=True):
         """
         update image slice in snap view
@@ -291,11 +328,10 @@ class Node(ui.QViewWidget):
             to the current slice recursively
 
         """
-        if self.name not in IMAGES_STACK:
+        im = STACK.get(self.name)
+        if im is None:
             return
-        self.snap.setVisible(True)
-
-        im = IMAGES_STACK[self.name]
+        self.widget.setVisible(True)
         s = im.shape[self.snap_axis]
 
         # set current slice
@@ -323,22 +359,23 @@ class Node(ui.QViewWidget):
 
         # scale pixmap to qlabel size
         pixmap = QtGui.QPixmap(qim)
-        pixmap = pixmap.scaled(self.snap.width(), self.snap.width(),
+        pixmap = pixmap.scaled(self.result.width(), self.result.width(),
                                QtCore.Qt.KeepAspectRatio,
                                QtCore.Qt.FastTransformation)
 
-        self.snap.setPixmap(pixmap)
-        self.snap.update()
+        self.result.setPixmap(pixmap)
+        self.result.update()
 
         # synchronize parents and children
         if sync:
             for node in self.childs+self.parents:
-                if node.current_slice != self.current_slice:
-                    node.current_slice = self.current_slice
-                    node.updateSnap(sync)
-                elif node.snap_axis != self.snap_axis:
-                    node.snap_axis = self.snap_axis
-                    node.updateSnap(sync)
+                if node.outputType == 'image':
+                    if node.current_slice != self.current_slice:
+                        node.current_slice = self.current_slice
+                        node.updateSnap(sync)
+                    elif node.snap_axis != self.snap_axis:
+                        node.snap_axis = self.snap_axis
+                        node.updateSnap(sync)
 
 
 class Graph(QtWidgets.QWidget):
@@ -524,9 +561,10 @@ class Graph(QtWidgets.QWidget):
             if not child.parents:
                 self.deleteBranch(child)
         # delete data
-        if parent.name in IMAGES_STACK:
-            del _IMAGES_STACK[parent.name]
-            del IMAGES_STACK[parent.name]
+        if parent.name in STACK:
+            del STACK[parent.name]
+        if parent.name in _STACK:
+            del _STACK[parent.name]
         # remove node from parent children
         for p in parent.parents:
             p.childs.remove(parent)

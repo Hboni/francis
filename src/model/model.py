@@ -4,6 +4,23 @@ from src.utils import protector
 
 
 class Model:
+    @protector
+    def get_img_infos(self, im, info='max'):
+        """
+        get info of the input image
+
+        Parameters
+        ----------
+        im: 2D/3D numpy array
+        info: {'max', 'min', 'mean'}, default='max'
+
+        Returns
+        -------
+        value: float
+            info you want to extract from the image
+        """
+        value = eval("np.{0}(im)".format(info))
+        return value
 
     @protector
     def apply_basic_morpho(self, im, size, operation='erosion', round_shape=True):

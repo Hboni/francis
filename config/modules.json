@@ -22,6 +22,12 @@
         "ui": "SimpleOperation.ui",
         "function": "operation_with_single_value"
     },
+    "get info": {
+        "type": "secondary",
+        "menu": "description",
+        "ui": "GetInfo.ui",
+        "function": "get_info"
+    },
     "morpho basics": {
         "type": "secondary",
         "menu": "morpho",
