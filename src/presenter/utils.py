@@ -29,7 +29,7 @@ class Runner(QtCore.QThread):
 
 def view_manager(threadable=True):
     """
-    this decorator manage the loading gif and threading
+    this decorator manage the progress bar and threading
 
     Parameters
     ----------
@@ -39,18 +39,18 @@ def view_manager(threadable=True):
     """
     def decorator(foo):
         def inner(presenter, widget):
-            # start gif animation
-            widget.node.gif.start()
-
+            # start progress bar
+            widget.node.setState("loading")
             function, args = foo(presenter, widget)
 
             def updateView(output):
+                widget.node.progress.setMaximum(1)
                 if isinstance(output, Exception):
-                    widget.node.gif.fail("[{0}] {1}".format(type(output).__name__, output))
+                    widget.node.setState("fail", "[{0}] {1}".format(type(output).__name__, output))
                 else:
                     store_image(output, widget.node.name)
                     widget.node.updateSnap()
-                    widget.node.gif.stop()
+                    widget.node.setState("stop")
 
             # start the process inside a QThread
             if threadable and presenter.threading_enabled:

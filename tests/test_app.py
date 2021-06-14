@@ -26,7 +26,7 @@ def test_image_write_path():
 def francis():
     # Launch Francis
     view = View()
-    Presenter(view)
+    Presenter(view, threading_enabled=False)
     return view
 
 

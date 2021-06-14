@@ -278,6 +278,27 @@ class Node(ui.QViewWidget):
             self.ctable = [QtGui.qRgb(i, i, i) for i in values]
         return self.ctable
 
+    def setState(self, state, msg=""):
+        """
+        set state of progress
+
+        Parameters
+        ----------
+        state: {"loading", "fail", "stop"}
+        msg: str,
+            tooltip added to the node to see errors
+        """
+        if state == "loading":
+            self.progress.setMaximum(0)
+            self.progress.setValue(-1)
+        else:
+            self.progress.setMaximum(1)
+            if state == "fail":
+                self.progress.setValue(0)
+            elif state == "stop":
+                self.progress.setValue(1)
+        self.button.setToolTip(msg)
+
     def updateSnap(self, sync=True):
         """
         update image slice in snap view

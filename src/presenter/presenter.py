@@ -1,7 +1,7 @@
 from PyQt5 import uic
 from src import UI_DIR, CONFIG_DIR
 import json
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import os
 import nibabel as nib
 from src import DATA_DIR, OUT_DIR
@@ -20,7 +20,7 @@ class Presenter:
 
     """
 
-    def __init__(self, view, model=None):
+    def __init__(self, view, model=None, threading_enabled=True):
         self._view = view
         self._model = model
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
@@ -28,7 +28,7 @@ class Presenter:
         self._view.graph.nodeClicked.connect(self.activate_node)
         self._view.presenter = self
 
-        self.threading_enabled = False
+        self.threading_enabled = threading_enabled
         self._view.action_thread.toggled.connect(self.enable_threading)
 
     def enable_threading(self, boolean):
@@ -52,11 +52,6 @@ class Presenter:
         widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
         widget.node = node
         node.parameters.addWidget(widget)
-
-        # add loading gif to widget
-        node.gif = ui.Gif()
-        node.parameters.addWidget(node.gif)
-        node.parameters.setAlignment(node.gif, QtCore.Qt.AlignHCenter)
 
         activation_function = eval("self."+parameters['function'])
         widget.apply.clicked.connect(lambda: activation_function(widget))
