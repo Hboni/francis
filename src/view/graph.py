@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from src.view.utils import menu_from_dict, protector
+from src.view.utils import menu_from_dict
 from src.view.graph_bricks import QGraphicsModule, QGraphicsLink
 from src import DEFAULT, RESULT_STACK
 import copy
@@ -45,7 +45,6 @@ class QGraph(QtWidgets.QGraphicsView):
         self.isFocused = False
         self.higherZValue = 0
 
-    @protector("Critical")
     def bind(self, parent, child):
         """
         create a link between a parent and a child module
@@ -141,7 +140,6 @@ class QGraph(QtWidgets.QGraphicsView):
             i += 1
         return new_name
 
-    @protector("Critical")
     def openMenu(self, module=None):
         """
         open menu on right-clic at clicked position
@@ -193,7 +191,6 @@ class QGraph(QtWidgets.QGraphicsView):
         self._mouse_position = self.mapToScene(self.mapFromGlobal(pos))
         menu.exec_(QtGui.QCursor.pos())
 
-    @protector("Warning")
     def renameModule(self, module, new_name=None):
         if new_name is None:
             new_name, valid = QtWidgets.QInputDialog.getText(self, "user input", "new name",
@@ -210,14 +207,12 @@ class QGraph(QtWidgets.QGraphicsView):
         if module.name in RESULT_STACK:
             del RESULT_STACK[module.name]
 
-    @protector("Information")
     def colorizeModule(self, module, new_color=None):
         if new_color is None:
             new_color = QtWidgets.QColorDialog.getColor(module.color)
         if isinstance(new_color, list) or new_color.isValid():
             module.setColor(new_color)
 
-    @protector("Information")
     def colorizeBackground(self, new_color=None):
         if new_color is None:
             new_color = QtWidgets.QColorDialog.getColor(self.backgroundBrush().color())
@@ -228,7 +223,6 @@ class QGraph(QtWidgets.QGraphicsView):
         while self.modules:
             self.deleteBranch(list(self.modules.values())[0])
 
-    @protector("Critical")
     def deleteBranch(self, parent, childs_only=False):
         """
         delete module, its children and the associated data recursively
@@ -256,7 +250,6 @@ class QGraph(QtWidgets.QGraphicsView):
         parent.delete()
         del self.modules[parent.name]
 
-    @protector("Critical")
     def addModule(self, type, parents=None, position=None, size=None, color=None, name=None):
         """
         create a module with specified parent modules
@@ -319,7 +312,6 @@ class QGraph(QtWidgets.QGraphicsView):
         module.setColor(color)
         return module
 
-    @protector("Warning")
     def setSettings(self, settings):
         """
         restore graph architecture and module parameters
@@ -335,7 +327,6 @@ class QGraph(QtWidgets.QGraphicsView):
             if not isinstance(module, Exception):
                 module.setSettings(values)
 
-    @protector("Warning")
     def getSettings(self):
         """
         get graph architecture and module parameters

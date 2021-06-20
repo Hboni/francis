@@ -1,113 +1,40 @@
 # Test of basic application usage
 
 import pytest
-import os
 from src.view.view import View
 from src.presenter.presenter import Presenter
-from PyQt5 import QtCore
-
-
-@pytest.fixture(scope='module')
-def test_image_path():
-    return os.path.join(os.getcwd(),
-                        'resources/data/cvs_avg35_inMNI152.nii.gz')
-
-
-@pytest.fixture(scope='module')
-def test_image_write_path():
-    saved_path = os.path.join(os.getcwd(),
-                              'resources/data/out/saved_image.nii.gz')
-    if os.path.exists(saved_path):
-        os.remove(saved_path)
-    return saved_path
 
 
 @pytest.fixture
 def francis():
     # Launch Francis
     view = View()
-    Presenter(view)
+    Presenter(view, threading_enabled=False)
     return view
 
 
 @pytest.fixture
-def load_node(qtbot, francis):
-    load_image_node = 'load image'
+def load_module(qtbot, francis):
+    load_image_module = 'LoadImage'
     qtbot.addWidget(francis)
-    francis.graph.addNode(load_image_node)
-    return francis.graph.nodes[load_image_node]
+    francis.graph.addModule(load_image_module)
+    return francis.graph.modules[load_image_module]
 
 
 def test_francis_launch(qtbot, francis):
-    # win = MainWindow()
-    # win.show()
     qtbot.addWidget(francis)
-
-    assert not francis.graph.nodes
-
-
-def test_load_image(qtbot, francis, load_node, test_image_path):
-    """Select load image node and load the demonstration image"""
-
-    # Click on Load image btn
-    with qtbot.waitSignal(francis.graph.nodeClicked,
-                          timeout=2000,
-                          raising=True):
-        qtbot.mouseClick(load_node.button,
-                         QtCore.Qt.LeftButton)
-    # Fill the widget with the image path
-    load_node.parameters.itemAt(0).widget().path.setText(test_image_path)
-
-    # Click on apply
-    qtbot.mouseClick(load_node.parameters.itemAt(0).widget().apply,
-                     QtCore.Qt.LeftButton)
-
-    assert len(francis.graph.nodes) == 1
-    # As the window is not displayed, the value load_node.snap.isVisible is False
-    assert load_node.current_slice is not None
+    assert not francis.graph.modules
 
 
-def test_save_image(qtbot, load_node, francis,
-                    test_image_path, test_image_write_path):
-
-    # Click on Load image btn
-    with qtbot.waitSignal(francis.graph.nodeClicked,
-                          timeout=2000,
-                          raising=True):
-        qtbot.mouseClick(load_node.button,
-                         QtCore.Qt.LeftButton)
-    # Fill the widget with the image path
-    load_node.parameters.itemAt(0).widget().path.setText(test_image_path)
-
-    # Click on apply
-    qtbot.mouseClick(load_node.parameters.itemAt(0).widget().apply,
-                     QtCore.Qt.LeftButton)
-    francis.graph.addNode('save image', load_node)
-    save_node = francis.graph.nodes['save image']
-
-    with qtbot.waitSignal(francis.graph.nodeClicked,
-                          timeout=2000,
-                          raising=True):
-        qtbot.mouseClick(save_node.button,
-                         QtCore.Qt.LeftButton)
-
-    save_node.parameters.itemAt(0).widget().path.setText(test_image_write_path)
-    qtbot.mouseClick(save_node.parameters.itemAt(0).widget().apply,
-                     QtCore.Qt.LeftButton)
-
-    assert len(francis.graph.nodes) == 2
-    assert os.path.exists(test_image_write_path)
+def test_delete_module(qtbot, load_module, francis):
+    francis.graph.deleteBranch(load_module)
+    assert not francis.graph.modules
 
 
-def test_delete_node(qtbot, load_node, francis):
-    francis.graph.deleteBranch(load_node)
-    assert not francis.graph.nodes
-
-
-def test_add_nodes(qtbot, francis):
+def test_add_modules(qtbot, francis):
     qtbot.addWidget(francis)
-    parent_node = francis.graph.addNode('load image')
-    assert len(francis.graph.nodes) == 1
+    parent_module = francis.graph.addModule('LoadImage')
+    assert len(francis.graph.modules) == 1
 
-    francis.graph.addNode('multiply images', parent_node)
-    assert len(francis.graph.nodes) == 2
+    francis.graph.addModule('ThresholdImage', parent_module)
+    assert len(francis.graph.modules) == 2

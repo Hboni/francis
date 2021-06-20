@@ -1,6 +1,5 @@
 import os
 from src import RSC_DIR
-from src.view.utils import protector
 from src.presenter import utils
 from PyQt5 import QtWidgets
 import psutil
@@ -17,7 +16,7 @@ class Presenter():
     view: view.View
 
     """
-    def __init__(self, view, model=None):
+    def __init__(self, view, model=None, threading_enabled=True):
         self._model = model
         self._view = view
         self.threading_enabled = True
@@ -88,7 +87,6 @@ class Presenter():
             module.propagation_child = None
 
     # ------------------------------ CONNECTIONS ------------------------------#
-    @protector("Critical")
     def init_module_connections(self, module):
         """
         initialize module parameters if necessary
@@ -109,7 +107,7 @@ class Presenter():
                 proc = self.getProc(module)
                 if proc:
                     proc.resume()
-            else:
+            elif self._model is not None:
                 activation_function(module)
             module.setState("loading")
 
@@ -131,7 +129,6 @@ class Presenter():
 
         self.init_module_custom_connections(module)
 
-    @protector("Critical")
     def init_module_custom_connections(self, module):
         if module.type == "SaveImage":
             module.parameters.browse.clicked.connect(lambda: self.browse_savepath(module))
@@ -161,7 +158,6 @@ class Presenter():
         module.setSettings(self._view.settings['graph'].get(module.name))
 
     # ----------------------------- utils -------------------------------------#
-    @protector("Warning")
     def browse_savepath(self, module):
         """
         open a browse window to define the nifti save path
@@ -173,7 +169,6 @@ class Presenter():
         module.parameters.path.setText(filename+extension)
         module.parameters.path.setToolTip(filename+extension)
 
-    @protector("Warning")
     def browse_image(self, module):
         """
         open a browse window to select a nifti file

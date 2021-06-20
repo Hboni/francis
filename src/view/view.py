@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
 from src import RSC_DIR, DEFAULT, CONFIG_DIR, KEY, update_default
-from src.view.utils import protector
 from src.view import graph, ui
 from cryptography import fernet
 import json
@@ -197,7 +196,6 @@ class View(QtWidgets.QMainWindow):
             self.saveSettings()
             return True
 
-    @protector("Critical")
     def loadSettings(self, append=False):
         """
         load settings,
@@ -234,7 +232,6 @@ class View(QtWidgets.QMainWindow):
         else:
             self.settings = settings            #
 
-    @protector("Critical")
     def saveSettings(self):
         """
         save settings, encrypt settings if a password is specified
