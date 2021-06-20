@@ -1,0 +1,32 @@
+{
+    "qss": {
+        "mainback_color":   "rgba(234, 234, 235, 255)",
+        "viewback_color":   "rgba(250, 250, 250, 255)",
+        "editback_color":   "rgba(255, 255, 255, 255)",
+        "buttonback_color": "rgba(219, 219, 220, 255)",
+
+        "feature_color":    "rgba(77, 120, 204, 255)",
+        "maintext_color":   "rgba(66, 66, 67, 255)",
+        "normaltext_color": "rgba(142, 142, 144, 255)",
+        "hightext_color":   "rgba(35, 35, 35, 255)",
+
+        "warning_color":    "rgba(234, 93, 68, 255)",
+        "info_color":       "rgba(221, 186, 137, 255)",
+        "valid_color":      "rgba(115, 201, 144, 255)"
+    },
+
+    "background_brush": "QtGui.QBrush(QtGui.QColor(0, 0, 0, 10), QtCore.Qt.CrossPattern)",
+
+    "arrow": {
+        "width": 2,
+        "arrowWidth": 6,
+        "arrowLen": 6,
+        "space": [0, 10],
+        "color": "QtGui.QColor(77, 120, 204)",
+        "borderWidth": 0,
+        "borderColor": "QtGui.QColor(77, 120, 204)"
+    },
+
+    "handle_color": "QtGui.QColor(33, 37, 43, 255)",
+    "handle_size": [0, 0, 0, 0]
+}

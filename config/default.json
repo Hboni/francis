@@ -1,0 +1,21 @@
+{
+    "window_size": [
+        958,
+        1003
+    ],
+    "window_position": [
+        960,
+        0
+    ],
+    "module_size": [
+        250,
+        60
+    ],
+    "space_between_modules": [
+        50,
+        50
+    ],
+    "style": "Default",
+    "theme": "bright",
+    "last_session": "bill"
+}

@@ -1,188 +1,271 @@
-from PyQt5 import uic
-from src import UI_DIR, CONFIG_DIR
-import json
-from PyQt5 import QtWidgets, QtCore
 import os
-import nibabel as nib
-from src import DATA_DIR, OUT_DIR
-from src.presenter.utils import view_manager, store_image, get_image
-from src.view import ui
+from src import RSC_DIR
+from src.view.utils import protector
+from src.presenter import utils
+from PyQt5 import QtWidgets
+import psutil
 
 
-class Presenter:
+class Presenter():
     """
-    connect the view to the model methods
+    This class is part of the MVP app design, it acts as a bridge between
+    the Model and the View
 
     Parameters
     ----------
-    view: View
-    model: Model
+    model: model.Model
+    view: view.View
 
     """
-
     def __init__(self, view, model=None):
-        self._view = view
         self._model = model
-        self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
-        self._view.initMenu(self.modules)
-        self._view.graph.nodeClicked.connect(self.activate_node)
-        self._view.presenter = self
+        self._view = view
+        self.threading_enabled = True
+        self._data_dir = os.path.join(RSC_DIR, "data")
+        self._out_dir = os.path.join(RSC_DIR, "data", "out")
+        self._view.graph.moduleAdded.connect(lambda m: self.init_module_connections(m))
+        self._view.closed.connect(self.terminateProcesses)
 
-        self.threading_enabled = False
-        self._view.action_thread.toggled.connect(self.enable_threading)
+    # ---------------------------- process handle -----------------------------#
+    def getProc(self, module):
+        if module.runner is not None and module.runner.proc is not None:
+            return psutil.Process(module.runner.proc.pid)
 
-    def enable_threading(self, boolean):
-        self.threading_enabled = boolean
+    def terminateProcesses(self):
+        for module in self._view.graph.modules.values():
+            proc = self.getProc(module)
+            if proc:
+                proc.terminate()
 
-    def activate_node(self, node):
+    # --------------------- PRIOR  AND POST FUNCTION CALL ---------------------#
+    def prior_manager(self, module):
         """
-        apply connection between node widgets and model and initialize widgets
+        This method is called by the utils.manager before the function call
 
         Parameters
         ----------
-        node: graph.Node
+        module: QWidget
+        """
+
+        # start loading
+        module.setState('loading')
+
+        # store signal propagation
+        for parent in module.parents:
+            if utils.get_data(parent.name) is None:
+                parent.propagation_child = module
+                parent.play.clicked.emit()
+                return False
+        return True
+
+    def post_manager(self, module, output):
+        """
+        This method manage the output of a model function based on the output type
+        it is called by the utils.manager at the end of the model process
+
+        Parameters
+        ----------
+        module: QWidget
+        output: exception, str, pd.DataFrame, np.array, ...
+        """
+        if output is not None:
+            utils.store_data(module.name, output)
+        if output is None:
+            module.setState()
+        elif isinstance(output, Exception):
+            module.setState('fail')
+        else:
+            module.setState('valid')
+        module.showResult(output)
+
+        for child in module.childs:
+            self.init_module_custom_connections(child)
+
+        # retropropagate signal between modules
+        if module.propagation_child is not None:
+            if not isinstance(output, Exception):
+                module.propagation_child.play.clicked.emit()
+            module.propagation_child = None
+
+    # ------------------------------ CONNECTIONS ------------------------------#
+    @protector("Critical")
+    def init_module_connections(self, module):
+        """
+        initialize module parameters if necessary
+        create connections between view widgets and functions
+
+        Parameters
+        ----------
+        module_name: str
+            name of the loaded module
 
         """
-        if node.parameters.itemAt(0) is not None:
-            return
+        parameters = self._view.getParameters(module.type)
+        activation_function = eval('self.'+parameters['function'])
 
-        t = node.type
-        parameters = self.modules[t]
+        # connect start, pause, stop buttons
+        def play():
+            if module.state == "pause":
+                proc = self.getProc(module)
+                if proc:
+                    proc.resume()
+            else:
+                activation_function(module)
+            module.setState("loading")
 
-        widget = uic.loadUi(os.path.join(UI_DIR, parameters['ui']))
-        widget.node = node
-        node.parameters.addWidget(widget)
+        def pause():
+            proc = self.getProc(module)
+            if proc:
+                proc.suspend()
+            module.setState("pause")
 
-        # add loading gif to widget
-        node.gif = ui.Gif()
-        node.parameters.addWidget(node.gif)
-        node.parameters.setAlignment(node.gif, QtCore.Qt.AlignHCenter)
+        def stop():
+            proc = self.getProc(module)
+            if proc:
+                proc.terminate()
+            module.setState()
 
-        activation_function = eval("self."+parameters['function'])
-        widget.apply.clicked.connect(lambda: activation_function(widget))
+        module.play.clicked.connect(play)
+        module.pause.clicked.connect(pause)
+        module.stop.clicked.connect(stop)
 
-        if t == "threshold image":
-            widget.spin.valueChanged.connect(lambda: activation_function(widget))
-            widget.reversed.stateChanged.connect(lambda: activation_function(widget))
+        self.init_module_custom_connections(module)
 
-        elif t == "load image":
-            widget.browse.clicked.connect(lambda: self.browse_image(widget))
+    @protector("Critical")
+    def init_module_custom_connections(self, module):
+        if module.type == "SaveImage":
+            module.parameters.browse.clicked.connect(lambda: self.browse_savepath(module))
 
-        elif t == "save image":
-            widget.browse.clicked.connect(lambda: self.browse_savepath(widget))
+        elif module.type == "LoadImage":
+            module.parameters.browse.clicked.connect(lambda: self.browse_image(module))
 
-        elif t == "operation between images":
-            for rb in [widget.add, widget.multiply]:
-                rb.clicked.connect(lambda: widget.reference.setEnabled(False))
-            for rb in [widget.divide, widget.subtract]:
-                rb.clicked.connect(lambda: widget.reference.setEnabled(True))
-            widget.add.clicked.emit()
+        elif module.type == "Operation":
+            for rb in [module.parameters.add, module.parameters.multiply]:
+                rb.clicked.connect(lambda: module.parameters.reference.setEnabled(False))
+            for rb in [module.parameters.divide, module.parameters.subtract]:
+                rb.clicked.connect(lambda: module.parameters.reference.setEnabled(True))
+            module.parameters.add.clicked.emit()
 
             # rename parent name inside reference combobox
-            widget.reference.addItems(ui.get_parent_names(widget))
+            module.parameters.reference.addItems(module.get_parent_names())
 
             def updateParentName(name, new_name):
-                current_index = widget.reference.currentIndex()
-                ind = widget.reference.findText(name)
-                widget.reference.removeItem(ind)
-                widget.reference.insertItem(ind, new_name)
-                widget.reference.setCurrentIndex(current_index)
-            for parent in node.parents:
+                current_index = module.parameters.reference.currentIndex()
+                ind = module.parameters.reference.findText(name)
+                module.parameters.reference.removeItem(ind)
+                module.parameters.reference.insertItem(ind, new_name)
+                module.parameters.reference.setCurrentIndex(current_index)
+            for parent in module.parents:
                 parent.nameChanged.connect(updateParentName)
 
-    def browse_savepath(self, widget):
+        module.setSettings(self._view.settings['graph'].get(module.name))
+
+    # ----------------------------- utils -------------------------------------#
+    @protector("Warning")
+    def browse_savepath(self, module):
         """
         open a browse window to define the nifti save path
         """
-        name = ui.get_parent_names(widget)[0]
-        filename, extension = QtWidgets.QFileDialog.getSaveFileName(widget.node.graph, 'Save file',
-                                                                    os.path.join(OUT_DIR, name), filter=".nii.gz")
-        widget.path.setText(filename+extension)
-        widget.path.setToolTip(filename+extension)
+        name = module.get_parent_name()
+        filename, extension = QtWidgets.QFileDialog.getSaveFileName(module.graph, 'Save file',
+                                                                    os.path.join(self._out_dir, name),
+                                                                    filter=".nii.gz")
+        module.parameters.path.setText(filename+extension)
+        module.parameters.path.setToolTip(filename+extension)
 
-    def browse_image(self, widget):
+    @protector("Warning")
+    def browse_image(self, module):
         """
         open a browse window to select a nifti file
         then update path in the corresponding QLineEdit
         """
         dialog = QtWidgets.QFileDialog()
-        filename, _ = dialog.getOpenFileName(widget.node.graph, "Select a file...", DATA_DIR)
-        widget.path.setText(filename)
-        widget.path.setToolTip(filename)
+        filename, ok = dialog.getOpenFileName(module.graph, "Select a file...", self._data_dir)
+        if ok:
+            module.parameters.path.setText(filename)
+            module.parameters.path.setToolTip(filename)
 
-    def save_image(self, widget):
+    # ----------------------------- MODEL CALL --------------------------------#
+    @utils.manager(True)
+    def call_save_image(self, module):
         """
         save the parent image as nifti file at specified path
         """
-        parent_name = ui.get_parent_names(widget)[0]
-        ni_img = nib.Nifti1Image(get_image(parent_name), None)
-        nib.save(ni_img, widget.path.text())
-        print("done")
+        parent_name = module.get_parent_names()
+        function = self._model.save_image
+        args = {"img": utils.get_data(parent_name),
+                "path": module.parameters.path.text()}
+        return function, args
 
-    def load_image(self, widget):
+    @utils.manager(True)
+    def call_load_image(self, module):
         """
         load nifti file, store inside the image stack dictionnaries
         and create the rendering widget to put image inside
         """
-        try:
-            im = nib.load(widget.path.text()).get_fdata()
-        except (nib.filebasedimages.ImageFileError, FileNotFoundError) as e:
-            return print(e)
-        if len(im.shape) != 3:
-            return "for now loaded images must be of size 3"
-        store_image(im, widget.node.name)
-        widget.node.updateSnap()
+        function = self._model.load_image
+        args = {"path": module.parameters.path.text()}
+        return function, args
 
-    @view_manager(True)
-    def update_threshold(self, widget):
+    @utils.manager(True)
+    def call_get_img_infos(self, module):
+        parent_name = module.get_parent_name()
+
+        function = self._model.get_img_infos
+        args = {"im": utils.get_data(parent_name),
+                "info": module.parameters.infos.currentText()}
+        return function, args
+
+    @utils.manager(True)
+    def call_apply_threshold(self, module):
         """
         compute 3d thresholding on the parent image
         and store the thresholded image into image stack dictionnaries
         """
-        parent_name = ui.get_parent_names(widget)[0]
+        parent_name = module.get_parent_name()
 
         function = self._model.apply_threshold
-        args = {"im": get_image(parent_name),
-                "threshold": widget.spin.value(),
-                "reverse": widget.reversed.isChecked()}
+        args = {"im": utils.get_data(parent_name),
+                "threshold": module.parameters.spin.value(),
+                "reverse": module.parameters.reversed.isChecked()}
         return function, args
 
-    @view_manager(True)
-    def operation_between_images(self, widget):
-        parent_names = ui.get_parent_names(widget)
-        ref_parent_name = widget.reference.currentText()
+    @utils.manager(True)
+    def call_apply_operation(self, module):
+        parent_names = module.get_parent_names()
+        ref_parent_name = module.parameters.reference.currentText()
         parent_names.remove(ref_parent_name)
 
         function = self._model.apply_operation
-        args = {"arr": get_image(ref_parent_name),
-                "elements": [get_image(parent_name) for parent_name in parent_names],
-                "operation": ui.get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])}
+        args = {"arr": utils.get_data(ref_parent_name),
+                "elements": utils.get_data(parent_names),
+                "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @view_manager(True)
-    def operation_with_single_value(self, widget):
-        parent_name = ui.get_parent_names(widget)[0]
+    @utils.manager(True)
+    def call_apply_simple_operation(self, module):
+        parent_name = module.get_parent_name()
 
         function = self._model.apply_operation
-        args = {"arr": get_image(parent_name),
-                "elements": float(widget.value.text()),
-                "operation": ui.get_checked_radiobutton(widget, ['add', 'multiply', 'subtract', 'divide'])}
+        args = {"arr": utils.get_data(parent_name),
+                "elements": float(module.parameters.value.text()),
+                "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @view_manager(True)
-    def morpho_basics(self, widget):
+    @utils.manager(True)
+    def call_apply_basic_morpho(self, module):
         """
         compute 3d morphological operation on the parent image
         and store the modified image into image stack dictionnaries
         """
-        parent_name = ui.get_parent_names(widget)[0]
-        operation = ui.get_checked_radiobutton(widget, ['erosion', 'dilation', 'opening', 'closing'])
-        if widget.binary.isChecked():
+        parent_name = module.get_parent_name()
+        operation = utils.get_checked(module.parameters, ['erosion', 'dilation', 'opening', 'closing'])
+        if module.parameters.binary.isChecked():
             operation = "binary_" + operation
 
         function = self._model.apply_basic_morpho
-        args = {"im": get_image(parent_name),
-                "size": widget.size.value(),
+        args = {"im": utils.get_data(parent_name),
+                "size": module.parameters.size.value(),
                 "operation": operation,
                 "round_shape": True}
         return function, args

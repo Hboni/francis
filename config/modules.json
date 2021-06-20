@@ -1,42 +1,60 @@
 {
-    "load image": {
-        "type": "primary",
-        "ui": "LoadImage.ui",
-        "function": "load_image"
+    "primary": {
+        "LoadImage": {
+            "label": "importer une image",
+            "function": "call_load_image",
+            "color": [255, 198, 179, 255]
+        },
+        "delimiter_1": {},
+        "colorBackground": {
+            "label": "couleur du fond"
+        }
     },
-    "threshold image": {
-        "type": "secondary",
-        "menu": "thresholding",
-        "ui": "ThresholdImage.ui",
-        "function": "update_threshold"
-    },
-    "operation between images": {
-        "type": "secondary",
-        "menu": "operation",
-        "ui": "Operation.ui",
-        "function": "operation_between_images"
-    },
-    "operation with single value": {
-        "type": "secondary",
-        "menu": "operation",
-        "ui": "SimpleOperation.ui",
-        "function": "operation_with_single_value"
-    },
-    "morpho basics": {
-        "type": "secondary",
-        "menu": "morpho",
-        "ui": "MorphoBasics.ui",
-        "function": "morpho_basics"
-    },
-    "save image": {
-        "type": "secondary",
-        "ui": "SaveImage.ui",
-        "function": "save_image"
-    },
-    "rename": {
-        "type": "secondary"
-    },
-    "delete": {
-        "type": "secondary"
+
+    "secondary": {
+        "seuillage": {
+            "ThresholdImage": {
+                "label": "standard",
+                "function": "call_apply_threshold",
+                "color": [255, 198, 179, 255]
+            }
+        },
+        "opération": {
+            "SimpleOperation": {
+                "label": "standard",
+                "function": "call_apply_simple_operation",
+                "color": [255, 198, 179, 255]
+            },
+            "Operation": {
+                "label": "inter-images",
+                "function": "call_apply_operation",
+                "nparents": -1,
+                "color": [255, 198, 179, 255]
+            }
+        },
+        "description": {
+            "GetInfo": {
+                "label": "min/max/mean",
+                "function": "call_get_img_infos",
+                "color": [255, 198, 179, 255]
+            }
+        },
+        "morphologie math.": {
+            "MorphoBasics": {
+                "label": "standard",
+                "function": "call_apply_basic_morpho",
+                "color": [255, 198, 179, 255]
+            }
+        },
+        "SaveImage": {
+            "label": "enregistrer",
+            "function": "call_save_image",
+            "color": [255, 198, 179, 255]
+        },
+        "delimiter_1": {},
+
+        "rename": {"label": "renommer"},
+        "changeColor": {"label": "changer la couleur"},
+        "delete": {"label": "supprimer"}
     }
 }

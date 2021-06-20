@@ -1,8 +1,10 @@
 from PyQt5 import QtCore
-from src import _IMAGES_STACK, IMAGES_STACK
-import numpy as np
+from src import RESULT_STACK, RSC_DIR
 import copy
-RUNNERS = []
+import functools
+import multiprocessing
+import os
+import pickle
 
 
 class Runner(QtCore.QThread):
@@ -14,22 +16,52 @@ class Runner(QtCore.QThread):
     target: function
     *args, **kwargs: function arguments
     """
-    def __init__(self, target, *args, **kwargs):
+    def __init__(self, name, target, args):
         super().__init__()
+        self._name = name
         self._target = target
         self._args = args
-        self._kwargs = kwargs
+        self.proc = None
 
         # where the function result is stored
         self.out = None
 
     def run(self):
-        self.out = self._target(*self._args, **self._kwargs)
+        self.proc = multiprocessing.Process(target=decorator(self._name, self._target), args=[(self._args)])
+        self.proc.start()
+        self.proc.join()
+        path = os.path.join(RSC_DIR, "data", "tmp", self._name)
+        if os.path.isfile(path):
+            with open(path, 'rb') as f:
+                self.out = pickle.load(f)
+            os.remove(path)
 
 
-def view_manager(threadable=True):
+class decorator(object):
+    def __init__(self, name, target):
+        self.name = name
+        self.target = target
+
+    def __call__(self, kwargs):
+        try:
+            res = self.target(**kwargs)
+        except Exception as e:
+            res = e
+
+        # pickle save result in tmp dir
+        save_path = os.path.join(RSC_DIR, "data", "tmp", self.name)
+        with open(save_path, 'wb') as f:
+            pickle.dump(res, f)
+
+
+def delete_runner(module):
+    del module.runner.out
+    module.runner = None
+
+
+def manager(threadable=True):
     """
-    this decorator manage the loading gif and threading
+    this decorator manage threading
 
     Parameters
     ----------
@@ -38,64 +70,56 @@ def view_manager(threadable=True):
 
     """
     def decorator(foo):
-        def inner(presenter, widget):
-            # start gif animation
-            widget.node.gif.start()
-
-            function, args = foo(presenter, widget)
-
-            def updateView(output):
-                if isinstance(output, Exception):
-                    widget.node.gif.fail("[{0}] {1}".format(type(output).__name__, output))
-                else:
-                    store_image(output, widget.node.name)
-                    widget.node.updateSnap()
-                    widget.node.gif.stop()
+        @functools.wraps(foo)
+        def inner(presenter, module):
+            cont = presenter.prior_manager(module)
+            if not cont:
+                return
+            function, args = foo(presenter, module)
 
             # start the process inside a QThread
             if threadable and presenter.threading_enabled:
-                runner = Runner(function, **args)
-                RUNNERS.append(runner)  # needed to keep a trace of the QThread
-                runner.finished.connect(lambda: updateView(runner.out))
-                runner.finished.connect(lambda: RUNNERS.remove(runner))
-                runner.start()
+                # runner = Runner(function, **args)
+                module.runner = Runner(module.name, function, args)
+                module.runner.finished.connect(lambda: (presenter.post_manager(module, module.runner.out),
+                                                        delete_runner(module)))
+                module.runner.start()
             else:
-                updateView(function(**args))
+                presenter.post_manager(module, function(**args))
         return inner
     return decorator
 
 
-def get_image(name):
-    if name not in _IMAGES_STACK:
-        print("'{}' not in image stack".format(name))
-        return None
-    return _IMAGES_STACK[name]
+def get_unavailable(names):
+    unvailable = []
+    for name in names:
+        if name not in RESULT_STACK:
+            unvailable.append(name)
+    return unvailable
 
 
-def store_image(im, name):
-    """
-    store raw sparsed image and (0, 255)-scaled image, 0 is nan values
+def get_checked(widget, names=None, first_only=True):
+    checked = []
+    if names is None:
+        for name, w in widget.__dict__.items():
+            if w.isChecked():
+                checked.append(name)
+    else:
+        for name in names:
+            w = widget.__dict__.get(name)
+            if w and w.isChecked():
+                if first_only:
+                    return name
+                checked.append(name)
+    return checked
 
-    Parameters
-    ----------
-    im: numpy.array
-    name: str
-    """
-    # initialize
-    _IMAGES_STACK[name] = im
-    im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
-    im_c[np.isinf(im_c)] = np.nan
 
-    # scale image in range (1, 255)
-    mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
-    if mini == maxi:
-        mini = 0
-        maxi = max(maxi, 1)
-    im_c = (im_c - mini) / (maxi - mini) * 254 + 1
+def get_data(name):
+    if isinstance(name, list):
+        return [get_data(n) for n in name]
+    elif name in RESULT_STACK:
+        return copy.copy(RESULT_STACK[name])
 
-    # set 0 as nan values
-    im_c[np.isnan(im_c)] = 0
 
-    # convert and store
-    im_c = im_c.astype(np.uint8)
-    IMAGES_STACK[name] = im_c
+def store_data(name, df):
+    RESULT_STACK[name] = df

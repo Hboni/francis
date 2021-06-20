@@ -83,13 +83,6 @@
      </item>
     </layout>
    </item>
-   <item>
-    <widget class="QPushButton" name="apply">
-     <property name="text">
-      <string>apply</string>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <resources/>

@@ -1,11 +1,34 @@
 from skimage import morphology
 import numpy as np
-from src.utils import protector
+import nibabel as nib
 
 
 class Model:
+    def load_image(self, path):
+        im = nib.load(path).get_fdata()
+        return im
 
-    @protector
+    def save_image(self, img, path):
+        ni_img = nib.Nifti1Image(img, None)
+        nib.save(ni_img, path)
+
+    def get_img_infos(self, im, info='max'):
+        """
+        get info of the input image
+
+        Parameters
+        ----------
+        im: 2D/3D numpy array
+        info: {'max', 'min', 'mean'}, default='max'
+
+        Returns
+        -------
+        value: float
+            info you want to extract from the image
+        """
+        value = eval("np.{0}(im)".format(info))
+        return value
+
     def apply_basic_morpho(self, im, size, operation='erosion', round_shape=True):
         """
         Apply basic morphological operation on the input image
@@ -36,7 +59,6 @@ class Model:
         function = eval("morphology."+operation)
         return function(im, selem)
 
-    @protector
     def apply_operation(self, arr, elements=[], operation='add'):
         """
 
@@ -60,7 +82,6 @@ class Model:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
-    @protector
     def apply_threshold(self, im, threshold, reverse=False):
         """
         Apply binary threshold on the input image
