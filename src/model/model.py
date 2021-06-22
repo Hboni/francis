@@ -1,16 +1,65 @@
 from skimage import morphology
 import numpy as np
 import nibabel as nib
+import imageio
+import os
+import pickle
+import imageio.core.util
+
+
+# remove imageio warnings
+def silence_imageio_warning(*args, **kwargs):
+    pass
+
+
+imageio.core.util._precision_warn = silence_imageio_warning
 
 
 class Model:
-    def load_image(self, path):
-        im = nib.load(path).get_fdata()
-        return im
+    def load(self, path):
+        """
+        load file
+        """
+        root, ext = os.path.splitext(path)
+        if ext == '.txt':
+            with open(path, 'r') as f:
+                data = f.read()
+        elif ext == '.pkl':
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+        elif ext == '.nii' or path.endswith('.nii.gz'):
+            data = nib.load(path).get_fdata()
+        elif ext in ['.png', '.jpg']:
+            data = imageio.imread(path, as_gray=True)
+        else:
+            raise TypeError("{} not handle yet".format(ext))
+        return data
 
-    def save_image(self, img, path):
-        ni_img = nib.Nifti1Image(img, None)
-        nib.save(ni_img, path)
+    def save(self, data, path):
+        """
+        save any type of data...
+        """
+        root, ext = os.path.splitext(path)
+        if ext == '.txt':
+            with open(path, 'w') as f:
+                f.write(str(data))
+        elif ext == '.pkl':
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+        elif ext in ['.nii.gz', '.nii']:
+            ni_img = nib.Nifti1Image(data, None)
+            nib.save(ni_img, path)
+        elif ext in ['.png', '.jpg']:
+            if len(data.shape) == 3:
+                if not os.path.exists(root):
+                    os.makedirs(root)
+                head, tail = os.path.split(root)
+                for i in range(data.shape[0]):
+                    new_path = os.path.join(root, tail+str(i)+ext)
+                    self.save(data[i], new_path)
+                return "images are saved in directory {}".format(root)
+            imageio.imwrite(path, data)
+        return "saved as {}".format(path)
 
     def get_img_infos(self, im, info='max'):
         """

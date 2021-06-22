@@ -1,8 +1,8 @@
 {
     "primary": {
-        "LoadImage": {
-            "label": "importer une image",
-            "function": "call_load_image",
+        "Load": {
+            "label": "importer",
+            "function": "call_load",
             "color": [255, 198, 179, 255]
         },
         "delimiter_1": {},
@@ -46,9 +46,9 @@
                 "color": [255, 198, 179, 255]
             }
         },
-        "SaveImage": {
+        "Save": {
             "label": "enregistrer",
-            "function": "call_save_image",
+            "function": "call_save",
             "color": [255, 198, 179, 255]
         },
         "delimiter_1": {},

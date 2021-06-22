@@ -3,6 +3,7 @@ from src import RSC_DIR
 from src.presenter import utils
 from PyQt5 import QtWidgets
 import psutil
+import numpy as np
 
 
 class Presenter():
@@ -130,11 +131,11 @@ class Presenter():
         self.init_module_custom_connections(module)
 
     def init_module_custom_connections(self, module):
-        if module.type == "SaveImage":
+        if module.type == "Save":
             module.parameters.browse.clicked.connect(lambda: self.browse_savepath(module))
 
-        elif module.type == "LoadImage":
-            module.parameters.browse.clicked.connect(lambda: self.browse_image(module))
+        elif module.type == "Load":
+            module.parameters.browse.clicked.connect(lambda: self.browse_path(module))
 
         elif module.type == "Operation":
             for rb in [module.parameters.add, module.parameters.multiply]:
@@ -163,42 +164,64 @@ class Presenter():
         open a browse window to define the nifti save path
         """
         name = module.get_parent_name()
+        result = utils.get_data(name)
+
+        if isinstance(result, np.ndarray):
+            extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)"]
+            dim = len(result.shape)
+            if dim == 2:
+                initfilter = extensions[0]
+            elif dim == 3:
+                initfilter = extensions[1]
+        elif result is None or isinstance(result, Exception):
+            extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)", "TEXT (*.txt)"]
+            initfilter = None
+        else:
+            extensions = ["TEXT (*.txt)"]
+            initfilter = extensions[0]
+
+        extensions.append("compressed (*.pkl)")
+        if initfilter is None:
+            initfilter = extensions[-1]
+
         filename, extension = QtWidgets.QFileDialog.getSaveFileName(module.graph, 'Save file',
                                                                     os.path.join(self._out_dir, name),
-                                                                    filter=".nii.gz")
-        module.parameters.path.setText(filename+extension)
-        module.parameters.path.setToolTip(filename+extension)
+                                                                    filter=";;".join(extensions),
+                                                                    initialFilter=initfilter)
+        if filename:
+            module.parameters.path.setText(filename)
+            module.parameters.path.setToolTip(filename)
 
-    def browse_image(self, module):
+    def browse_path(self, module):
         """
         open a browse window to select a nifti file
         then update path in the corresponding QLineEdit
         """
         dialog = QtWidgets.QFileDialog()
-        filename, ok = dialog.getOpenFileName(module.graph, "Select a file...", self._data_dir)
+        filename, ok = dialog.getOpenFileName(module.graph, "Select a file...", self._data_dir,
+                                              filter="*.nii.gz *.nii *.png *.jpg *.txt *.pkl")
         if ok:
             module.parameters.path.setText(filename)
             module.parameters.path.setToolTip(filename)
 
     # ----------------------------- MODEL CALL --------------------------------#
     @utils.manager(True)
-    def call_save_image(self, module):
+    def call_save(self, module):
         """
         save the parent image as nifti file at specified path
         """
-        parent_name = module.get_parent_names()
-        function = self._model.save_image
-        args = {"img": utils.get_data(parent_name),
+        parent_name = module.get_parent_name()
+        function = self._model.save
+        args = {"data": utils.get_data(parent_name),
                 "path": module.parameters.path.text()}
         return function, args
 
     @utils.manager(True)
-    def call_load_image(self, module):
+    def call_load(self, module):
         """
-        load nifti file, store inside the image stack dictionnaries
-        and create the rendering widget to put image inside
+        load any type of data
         """
-        function = self._model.load_image
+        function = self._model.load
         args = {"path": module.parameters.path.text()}
         return function, args
 

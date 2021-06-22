@@ -186,8 +186,14 @@ class QImageRenderer(QtWidgets.QLabel):
     def __init__(self, img, parent):
         QtWidgets.QWidget.__init__(self)
         self.img = self.formatImage(img)
-        self.axis = 0
-        self.currentSlice = None
+        self.dimension = len(self.img.shape)
+        if self.dimension != 3:
+            self.wheelEvent = None
+            self.mouseDoubleClickEvent = None
+        else:
+            self.axis = 0
+            self.currentSlice = None
+        self.pixmap = None
         self._parent = parent
         self.updateSnap()
 
@@ -230,38 +236,40 @@ class QImageRenderer(QtWidgets.QLabel):
         self.updateSnap()
         self.syncSignal.emit()
 
+    def getSliceParams(self):
+        if self.dimension == 2:
+            return self.img, self.img.shape[1], self.img.shape[0]
+        elif self.dimension == 3:
+            s = self.img.shape[self.axis]
+
+            # set current slice
+            if self.currentSlice is None:
+                self.currentSlice = int(s / 2)
+            elif self.currentSlice < 0:
+                self.currentSlice = 0
+            elif self.currentSlice >= s:
+                self.currentSlice = s-1
+
+            # snap axis slice
+            if self.axis == 0:
+                im_slice = self.img[self.currentSlice].copy()
+                _, h, w = self.img.shape
+            elif self.axis == 1:
+                im_slice = self.img[:, self.currentSlice].copy()
+                h, _, w = self.img.shape
+            elif self.axis == 2:
+                im_slice = self.img[:, :, self.currentSlice].copy()
+                h, w, _ = self.img.shape
+
+            return im_slice, w, h
+
     def updateSnap(self):
-        s = self.img.shape[self.axis]
-
-        # set current slice
-        if self.currentSlice is None:
-            self.currentSlice = int(s / 2)
-        elif self.currentSlice < 0:
-            self.currentSlice = 0
-        elif self.currentSlice >= s:
-            self.currentSlice = s-1
-
-        # snap axis slice
-        if self.axis == 0:
-            im_slice = self.img[self.currentSlice].copy()
-            _, h, w = self.img.shape
-        elif self.axis == 1:
-            im_slice = self.img[:, self.currentSlice].copy()
-            h, _, w = self.img.shape
-        elif self.axis == 2:
-            im_slice = self.img[:, :, self.currentSlice].copy()
-            h, w, _ = self.img.shape
-
-        qim = QtGui.QImage(im_slice, w, h, w, QtGui.QImage.Format_Indexed8)
+        im, w, h = self.getSliceParams()
+        qim = QtGui.QImage(im, w, h, w, QtGui.QImage.Format_Indexed8)
         qim.setColorTable([QtGui.qRgba(255, 0, 0, 255)]+[QtGui.qRgba(i, i, i, 255) for i in range(1, 256)])
         self.pixmap = QtGui.QPixmap(qim)
-        # if width is None:
-        #     width = self.width()
-
-        width = self._parent.width()
-        self.pixmap = self.pixmap.scaled(width - 2, width - 2,
-                                         QtCore.Qt.KeepAspectRatio,
-                                         QtCore.Qt.FastTransformation)
+        self.pixmap = self.pixmap.scaledToWidth(self._parent.width() - 2,
+                                                QtCore.Qt.FastTransformation)
         self.setPixmap(self.pixmap)
         self.update()
 

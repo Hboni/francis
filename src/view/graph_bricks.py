@@ -344,17 +344,25 @@ class QGraphicsModule(QtWidgets.QWidget):
         # set ratio between image and qpixmap
         im = RESULT_STACK.get(self.name)
         if im is not None:
-            ratio = im.shape[int(self.result.axis == 0)] / self.result.width()
+            if len(im.shape) == 2:
+                ratio = im.shape[1] / self.result.width()
+            else:
+                ratio = im.shape[int(self.result.axis == 0)] / self.result.width()
             # get click position
             click_pos = np.array([event.pos().y(), event.pos().x()])
             # define position in image
             true_pos = np.rint(click_pos * ratio).astype(int)
-            x, y, z = np.insert(true_pos, self.result.axis, self.result.currentSlice)
-            # update labels with pixel value and position
-            shape = im.shape
-            if x < shape[0] and y < shape[1] and z < shape[2]:
-                self.rightfoot.setText(str(im[x, y, z])+" ")
+            try:
+                if len(im.shape) == 2:
+                    x, y, z = *true_pos, ''
+                    self.rightfoot.setText("%d " % im[x, y])
+                else:
+                    x, y, z = np.insert(true_pos, self.result.axis, self.result.currentSlice)
+                    self.rightfoot.setText("%d " % im[x, y, z])
                 self.leftfoot.setText("{0} {1} {2}".format(x, y, z))
+            except IndexError as e:
+                # click outside image
+                print(e)
 
     def getBranch(self, branch=[]):
         for node in self.childs + self.parents:

@@ -34,7 +34,10 @@ class Runner(QtCore.QThread):
         if os.path.isfile(path):
             with open(path, 'rb') as f:
                 self.out = pickle.load(f)
-            os.remove(path)
+            try:
+                os.remove(path)
+            except PermissionError as e:
+                print("cannot delete {0}, {1}".format(path, e))
 
 
 class decorator(object):
