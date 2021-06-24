@@ -372,16 +372,15 @@ class QGraphicsModule(QtWidgets.QWidget):
         return branch
 
     def synchronizeImages(self):
-        if self.graph._view.sync:
-            for node in self.getBranch():
-                res = node.result
-                if isinstance(res, ui.QImageRenderer):
-                    if res.currentSlice != self.result.currentSlice:
-                        res.currentSlice = self.result.currentSlice
-                        res.updateSnap()
-                    elif res.axis != self.result.axis:
-                        res.axis = self.result.axis
-                        res.updateSnap()
+        for node in self.getBranch():
+            res = node.result
+            if isinstance(res, ui.QImageRenderer):
+                if res.currentSlice != self.result.currentSlice:
+                    res.currentSlice = self.result.currentSlice
+                    res.updateSnap()
+                elif res.axis != self.result.axis:
+                    res.axis = self.result.axis
+                    res.updateSnap()
 
     def releaseData(self):
         self.graph.releaseData(self)

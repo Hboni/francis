@@ -21,8 +21,6 @@ class QGraph(QtWidgets.QGraphicsView):
         horizontal is left to right, vertical is top to bottom
 
     """
-    moduleAdded = QtCore.pyqtSignal(QGraphicsModule)
-
     def __init__(self, mainwin, direction='vertical'):
         super().__init__()
         self._view = mainwin
@@ -32,7 +30,6 @@ class QGraph(QtWidgets.QGraphicsView):
         self.setRenderHint(QtGui.QPainter.Antialiasing)
         self.setScene(self.scene)
         self.contextMenuEvent = lambda e: self.openMenu()
-        self.setBackgroundBrush(eval(self._view.theme['background_brush']))
 
         self.selectAll = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+A'), self)
         self.selectAll.activated.connect(self.selectModules)
@@ -55,7 +52,7 @@ class QGraph(QtWidgets.QGraphicsView):
             modules to visually bind
         """
 
-        link = QGraphicsLink(parent, child, **self._view.theme['arrow'])
+        link = QGraphicsLink(parent, child, **DEFAULT['arrow'])
 
         parent.positionChanged.connect(link.updatePos)
         child.positionChanged.connect(link.updatePos)
@@ -306,7 +303,7 @@ class QGraph(QtWidgets.QGraphicsView):
 
         module.moveBy(x, y)
         self.modules[name] = module
-        self.moduleAdded.emit(module)
+        self._view.moduleAdded.emit(module)
 
         module.resize(*size)
         module.setColor(color)

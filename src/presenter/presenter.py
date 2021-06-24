@@ -23,8 +23,9 @@ class Presenter():
         self.threading_enabled = True
         self._data_dir = os.path.join(RSC_DIR, "data")
         self._out_dir = os.path.join(RSC_DIR, "data", "out")
-        self._view.graph.moduleAdded.connect(lambda m: self.init_module_connections(m))
+        self._view.moduleAdded.connect(lambda m: self.init_module_connections(m))
         self._view.closed.connect(self.terminateProcesses)
+        self._view.openFile(openLast=True)
 
     # ---------------------------- process handle -----------------------------#
     def getProc(self, module):
@@ -32,10 +33,11 @@ class Presenter():
             return psutil.Process(module.runner.proc.pid)
 
     def terminateProcesses(self):
-        for module in self._view.graph.modules.values():
-            proc = self.getProc(module)
-            if proc:
-                proc.terminate()
+        for graph in self._view.graphs:
+            for module in graph.modules.values():
+                proc = self.getProc(module)
+                if proc:
+                    proc.terminate()
 
     # --------------------- PRIOR  AND POST FUNCTION CALL ---------------------#
     def prior_manager(self, module):

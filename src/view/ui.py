@@ -187,10 +187,7 @@ class QImageRenderer(QtWidgets.QLabel):
         QtWidgets.QWidget.__init__(self)
         self.img = self.formatImage(img)
         self.dimension = len(self.img.shape)
-        if self.dimension != 3:
-            self.wheelEvent = None
-            self.mouseDoubleClickEvent = None
-        else:
+        if self.dimension == 3:
             self.axis = 0
             self.currentSlice = None
         self.pixmap = None
@@ -216,6 +213,8 @@ class QImageRenderer(QtWidgets.QLabel):
         return img
 
     def wheelEvent(self, event):
+        if self.dimension != 3:
+            return
         if self.currentSlice is not None:
             step = 1
             if event.angleDelta().y() > 0:
@@ -229,6 +228,8 @@ class QImageRenderer(QtWidgets.QLabel):
         """
         update image axis on double click above image view
         """
+        if self.dimension != 3:
+            return
         if self.axis == 2:
             self.axis = 0
         else:

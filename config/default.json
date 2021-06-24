@@ -4,7 +4,7 @@
         1003
     ],
     "window_position": [
-        0,
+        960,
         0
     ],
     "module_size": [
@@ -15,7 +15,24 @@
         50,
         50
     ],
+    "background_color": [
+        198,
+        237,
+        255
+    ],
+    "arrow": {
+        "width": 2,
+        "arrowWidth": 6,
+        "arrowLen": 6,
+        "space": [
+            0,
+            10
+        ],
+        "color": "QtGui.QColor(77, 120, 204)",
+        "borderWidth": 0,
+        "borderColor": "QtGui.QColor(77, 120, 204)"
+    },
     "style": "Default",
     "theme": "bright",
-    "last_session": "bill"
+    "last_filename": "C:/Users/jean/Desktop/francis/resources/data/out\\save_24062021 14h14m41.iag"
 }
