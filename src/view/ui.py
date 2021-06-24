@@ -23,7 +23,7 @@ def showError(level, error):
     """
     msg = "{0}\n{1}".format(type(error).__name__, error)
     dialog = QtWidgets.QMessageBox(eval("QtWidgets.QMessageBox."+level),
-                                   level, msg, QtWidgets.QMessageBox.Ok)
+                                   level, msg, QtWidgets.QMessageBox.Ok, QtWidgets.qApp.activeWindow())
     dialog.setDetailedText("".join(traceback.format_tb(error.__traceback__)[1:]))
     dialog.exec()
 

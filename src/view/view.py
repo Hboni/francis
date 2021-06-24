@@ -3,7 +3,6 @@ from src import RSC_DIR, DEFAULT, CONFIG_DIR, update_default
 from src.view import graph, graph_bricks
 import json
 import os
-from datetime import datetime
 
 
 class View(QtWidgets.QMainWindow):
@@ -23,13 +22,10 @@ class View(QtWidgets.QMainWindow):
 
         # connect file menu
         self.actionNew.triggered.connect(self.newFile)
-        self.actionOpen.triggered.connect(self.openFile)
         self.actionSave.triggered.connect(self.saveFile)
-        self.actionSaveAs.triggered.connect(lambda b: self.saveAsFile(True))
-
-        self.saveName = ""
-        self.saveDir = os.path.join(RSC_DIR, "data", "out")
-        self.isSaved = False
+        self.actionOpen.triggered.connect(lambda b: self.openFile())
+        self.actionSaveAs.triggered.connect(self.saveAsFile)
+        self.initNewFile.clicked.connect(self.newFile)
 
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
         self.initStyle()
@@ -42,12 +38,14 @@ class View(QtWidgets.QMainWindow):
         self.setTabPosition(QtCore.Qt.RightDockWidgetArea, QtWidgets.QTabWidget.West)
         self.setTabPosition(QtCore.Qt.LeftDockWidgetArea, QtWidgets.QTabWidget.East)
 
-        self.settings = {'graph': {}}
+        self.graphs = {}
 
-        self.graphs = [graph.QGraph(self, 'horizontal')]
-        self.setCentralWidget(self.graphs[0])
+        self.tabWidget.clear()
+        self.tabWidget.tabCloseRequested.connect(self.closeTab)
+        self.tabWidget.hide()
+
         self.setWindowState(QtCore.Qt.WindowActive)
-        self.graphs[0].colorizeBackground(QtGui.QColor(*DEFAULT.get("background_color")))
+        self.setWindowTitle("Francis")
 
     def initStyle(self):
         """
@@ -139,12 +137,6 @@ class View(QtWidgets.QMainWindow):
         dock.raise_()
         return dock
 
-    def updateWindowName(self):
-        if self.isSaved:
-            self.setWindowTitle(os.path.splitext(self.saveName)[0])
-        else:
-            self.setWindowTitle("*unsaved file")
-
     def openDialog(self, name, question, default=QtWidgets.QMessageBox.Yes):
         dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, name, question,
                                        QtWidgets.QMessageBox.Yes |
@@ -154,80 +146,81 @@ class View(QtWidgets.QMainWindow):
         dialog.setDefaultButton(default)
         return dialog.exec()
 
-    def askSaveCurrentFile(self):
-        if self.graphs[0].getSettings() == self.settings.get('graph') and self.isSaved or not self.graphs[0].modules:
-            return QtWidgets.QMessageBox.No
-        else:
-            return self.openDialog("save file", "Do you want to save the current file ?")
+    def colorizeBackground(self, new_color=None):
+        if new_color is None:
+            new_color = QtWidgets.QColorDialog.getColor(QtGui.QColor(*DEFAULT.get("background_color")))
+        for gf in self.graphs.values():
+            gf.setBackgroundBrush(new_color)
+        DEFAULT["background_color"] = [new_color.red(), new_color.green(), new_color.blue()]
+
+    def closeTab(self, index):
+        graph = self.tabWidget.widget(index)
+        resp = graph.askSaveFile()
+        if resp == QtWidgets.QMessageBox.Yes:
+            graph.saveFile()
+        elif resp == QtWidgets.QMessageBox.No:
+            del self.graphs[graph.name]
+            self.tabWidget.removeTab(index)
+        if self.tabWidget.count() == 0:
+            self.tabWidget.hide()
+            self.initNewFile.show()
+
+    def restoreTabs(self):
+        filenames = DEFAULT.get('filenames')
+        for filename in filenames:
+            self.openFile(filename)
+        currentTabInd = DEFAULT.get('current_tab')
+        self.tabWidget.setCurrentIndex(currentTabInd)
 
     def browseFile(self, mode='r', ext="*.iag"):
         dialog = QtWidgets.QFileDialog()
         if mode == 'r':
             filename, _ = dialog.getOpenFileName(self, "Open file", filter=ext)
         elif mode == 'w':
-            defPath = os.path.join(self.saveDir, self.saveName)
+            defPath = self.tabWidget.currentWidget().getDefaultPath()
             filename, _ = dialog.getSaveFileName(self, 'Save file', defPath, filter=ext)
         return filename
 
     def newFile(self):
-        from src.app import main
-        main()
-        resp = self.askSaveCurrentFile()
-        if resp == QtWidgets.QMessageBox.Cancel:
-            return
-        elif resp == QtWidgets.QMessageBox.Yes:
-            self.saveFile()
-        self.graphs[0].deleteAll()
-        self.isSaved = False
-        self.updateWindowName()
+        gf = graph.QGraph(self, 'horizontal')
+        self.graphs[gf.name] = gf
+        gf.setBackgroundBrush(QtGui.QColor(*DEFAULT.get("background_color")))
+        self.tabWidget.addTab(gf, gf.saveName)
+        self.tabWidget.setCurrentWidget(gf)
+        self.tabWidget.show()
+        self.initNewFile.hide()
+        gf.updateName(False)
+        return gf
 
-    def openFile(self, openLast=False):
-        if openLast:
-            filename = DEFAULT.get("last_filename")
-        else:
-            resp = self.askSaveCurrentFile()
-            if resp == QtWidgets.QMessageBox.Cancel:
-                return
-            elif resp == QtWidgets.QMessageBox.Yes:
-                self.saveFile()
+    def openFile(self, filename=None):
+        if filename is None:
             filename = self.browseFile('r')
         if os.path.isfile(filename):
-            with open(filename, 'r') as fp:
-                self.settings = json.load(fp)
-            self.graphs[0].setSettings(self.settings['graph'])
-            self.saveDir, self.saveName = os.path.split(filename)
-            self.isSaved = True
-        self.updateWindowName()
+            gf = self.newFile()
+            gf.restore(filename)
 
     def saveFile(self):
-        if self.isSaved:
-            self.settings['graph'] = self.graphs[0].getSettings()
-            with open(os.path.join(self.saveDir, self.saveName), 'w') as fp:
-                json.dump(self.settings, fp, indent=4)
-        else:
-            return self.saveAsFile(False)
+        self.tabWidget.currentWidget().saveFile()
 
-    def saveAsFile(self, findNewName=True):
-        if findNewName or not self.saveName:
-            self.saveName = "save_{}.iag".format(datetime.now().strftime('%d%m%Y %Hh%Mm%S'))
-        filename = self.browseFile('w')
-        if filename:
-            self.saveDir, self.saveName = os.path.split(filename)
-            self.isSaved = True
-            self.saveFile()
-            self.updateWindowName()
+    def saveAsFile(self):
+        self.tabWidget.currentWidget().saveAsFile()
+
+    def askSaveFiles(self):
+        for gf in self.graphs.values():
+            if gf.modules and (gf.getSettings() != gf.settings or not gf.savePathIsSet):
+                return self.openDialog("save files", "Do you want to close without saving ?",
+                                       default=QtWidgets.QMessageBox.No)
+        return QtWidgets.QMessageBox.Yes
 
     def closeEvent(self, event):
-        resp = self.askSaveCurrentFile()
-        if resp == QtWidgets.QMessageBox.Cancel:
-            return event.ignore()
-        elif resp == QtWidgets.QMessageBox.Yes:
-            self.saveFile()
-
-        self.closed.emit()
-        bck = self.graphs[0].backgroundBrush().color()
-        update_default(window_size=[self.size().width(), self.size().height()],
-                       window_position=[self.pos().x(), self.pos().y()],
-                       last_filename=os.path.join(self.saveDir, self.saveName),
-                       background_color=[bck.red(), bck.green(), bck.blue()])
-        QtWidgets.QMainWindow.closeEvent(self, event)
+        resp = self.askSaveFiles()
+        if resp == QtWidgets.QMessageBox.Yes:
+            self.closed.emit()
+            update_default(window_size=[self.size().width(), self.size().height()],
+                           window_position=[self.pos().x(), self.pos().y()],
+                           current_tab=self.tabWidget.currentIndex(),
+                           filenames=[self.tabWidget.widget(i).getSavePath()
+                                      for i in range(self.tabWidget.count())])
+            QtWidgets.QMainWindow.closeEvent(self, event)
+        else:
+            event.ignore()

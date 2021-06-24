@@ -1,8 +1,11 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from src.view.utils import menu_from_dict
 from src.view.graph_bricks import QGraphicsModule, QGraphicsLink
-from src import DEFAULT, RESULT_STACK
+from src import DEFAULT, RSC_DIR
 import copy
+from datetime import datetime
+import os
+import json
 
 
 # stack under, raise, show
@@ -41,6 +44,14 @@ class QGraph(QtWidgets.QGraphicsView):
         self.lastFocus = None
         self.isFocused = False
         self.higherZValue = 0
+
+        self.settings = {}
+        self.saveName = self.getUniqueName("# not saved", dic=self._view.graphs)
+        self.name = self.saveName
+        self.saveDir = os.path.join(RSC_DIR, "data", "out")
+        self.savePathIsSet = False
+
+        self.resultStack = {}
 
     def bind(self, parent, child):
         """
@@ -113,7 +124,7 @@ class QGraph(QtWidgets.QGraphicsView):
         for module in modules.values():
             module.selected.setChecked(True)
 
-    def getUniqueName(self, name, exception=None):
+    def getUniqueName(self, name, exception=None, dic=None):
         """
         find an unused name by adding _n at the end of the name
 
@@ -130,9 +141,11 @@ class QGraph(QtWidgets.QGraphicsView):
             unique name for the module
 
         """
+        if dic is None:
+            dic = self.modules
         i = 1
         new_name = copy.copy(name)
-        while new_name in self.modules and new_name != exception:
+        while new_name in dic and new_name != exception:
             new_name = "{0}_{1}".format(name, i)
             i += 1
         return new_name
@@ -160,7 +173,7 @@ class QGraph(QtWidgets.QGraphicsView):
             elif type == "changeColor":
                 self.colorizeModule(self.lastFocus)
             elif type == "colorBackground":
-                self.colorizeBackground()
+                self._view.colorizeBackground()
             else:
                 nparents = self._view.getParameters(type).get('nparents')
                 if not parents:
@@ -196,25 +209,19 @@ class QGraph(QtWidgets.QGraphicsView):
                 return
         new_name = self.getUniqueName(new_name, exception=module.name)
         self.modules[new_name] = self.modules.pop(module.name)
-        if module.name in RESULT_STACK:
-            RESULT_STACK[new_name] = RESULT_STACK.pop(module.name)
+        if module.name in self.resultStack:
+            self.resultStack[new_name] = self.resultStack.pop(module.name)
         module.rename(new_name)
 
     def releaseData(self, module):
-        if module.name in RESULT_STACK:
-            del RESULT_STACK[module.name]
+        if module.name in self.resultStack:
+            del self.resultStack[module.name]
 
     def colorizeModule(self, module, new_color=None):
         if new_color is None:
             new_color = QtWidgets.QColorDialog.getColor(module.color)
         if isinstance(new_color, list) or new_color.isValid():
             module.setColor(new_color)
-
-    def colorizeBackground(self, new_color=None):
-        if new_color is None:
-            new_color = QtWidgets.QColorDialog.getColor(self.backgroundBrush().color())
-        if isinstance(new_color, list) or new_color.isValid():
-            self.setBackgroundBrush(new_color)
 
     def deleteAll(self):
         while self.modules:
@@ -247,7 +254,16 @@ class QGraph(QtWidgets.QGraphicsView):
         parent.delete()
         del self.modules[parent.name]
 
-    def addModule(self, type, parents=None, position=None, size=None, color=None, name=None):
+    def getData(self, name):
+        if isinstance(name, list):
+            return [self.getData(n) for n in name]
+        else:
+            return copy.copy(self.resultStack.get(name))
+
+    def storeData(self, name, data):
+        self.resultStack[name] = data
+
+    def addModule(self, type, parents=None, parentNames=None, position=None, width=None, color=None, name=None):
         """
         create a module with specified parent modules
 
@@ -260,18 +276,18 @@ class QGraph(QtWidgets.QGraphicsView):
         """
         if name is None:
             name = self.getUniqueName(type)
-        if size is None:
-            size = DEFAULT['module_size']
+        if width is None:
+            width = DEFAULT['module_width']
         if color is None:
             color = self._view.getParameters(type).get('color')
-        if parents is None:
-            parents = []
-        if not isinstance(parents, list):
-            parents = [parents]
 
-        for i, parent in enumerate(parents):
-            if isinstance(parent, str):
-                parents[i] = self.modules[parent]
+        if parents is None:
+            if parentNames is not None:
+                parents = [self.modules[pn] for pn in parentNames]
+            else:
+                parents = []
+        elif not isinstance(parents, list):
+            parents = [parents]
 
         module = QGraphicsModule(self, type, name, parents)
         module.addToScene(self.scene)
@@ -304,9 +320,11 @@ class QGraph(QtWidgets.QGraphicsView):
         module.moveBy(x, y)
         self.modules[name] = module
         self._view.moduleAdded.emit(module)
+        module.modified.connect(lambda: self.updateName(False))
 
-        module.resize(*size)
+        module.resize(width, 1)
         module.setColor(color)
+        module.modified.emit()
         return module
 
     def setSettings(self, settings):
@@ -320,9 +338,10 @@ class QGraph(QtWidgets.QGraphicsView):
 
         """
         for name, values in settings.items():
-            module = self.addModule(**values['state'])
+            module = self.addModule(**values.get('state'))
             if not isinstance(module, Exception):
                 module.setSettings(values)
+        return settings
 
     def getSettings(self):
         """
@@ -344,3 +363,62 @@ class QGraph(QtWidgets.QGraphicsView):
             else:
                 modules.append(module)
         return settings
+
+    def getDateName(self):
+        return "graph_{}.iag".format(datetime.now().strftime('%d%m%Y %Hh%Mm%S'))
+
+    def getSavePath(self):
+        return os.path.join(self.saveDir, self.saveName)
+
+    def getDefaultPath(self):
+        if self.saveName.startswith("# not saved"):
+            saveName = self.getDateName()
+        else:
+            saveName = self.saveName
+        return os.path.join(self.saveDir, saveName)
+
+    def updateName(self, isSaved=True):
+        new_name = os.path.splitext(self.saveName)[0]
+        index = self._view.tabWidget.indexOf(self)
+        if not isSaved or not self.savePathIsSet:
+            self._view.tabWidget.setTabText(index, "* " + new_name)
+        else:
+            self._view.tabWidget.setTabText(index, new_name)
+        self._view.graphs[new_name] = self._view.graphs.pop(self.name)
+        self.name = new_name
+
+    def askSaveFile(self):
+        if self.getSettings() == self.settings and self.savePathIsSet or not self.modules:
+            return QtWidgets.QMessageBox.No
+        else:
+            return self._view.openDialog("save file", "Do you want to save the current file ?")
+
+    def restore(self, filename):
+        if not os.path.isfile(filename):
+            return
+        with open(filename, 'r') as fp:
+            settings = json.load(fp)
+        self.settings = self.setSettings(settings)
+        self.saveDir, self.saveName = os.path.split(filename)
+        self.savePathIsSet = True
+        self.updateName()
+
+    def saveFile(self, filename=None):
+        if self.savePathIsSet:
+            filename = os.path.join(self.saveDir, self.saveName)
+        if filename:
+            self.settings = self.getSettings()
+            with open(filename, 'w') as fp:
+                json.dump(self.settings, fp, indent=4)
+            self.saveDir, self.saveName = os.path.split(filename)
+            self.savePathIsSet = True
+            self.updateName()
+        else:
+            self.saveAsFile(False)
+
+    def saveAsFile(self, findNewName=True):
+        if findNewName or not self.saveName:
+            self.saveName = self.getDateName()
+        filename = self._view.browseFile('w')
+        if filename:
+            self.saveFile(filename)

@@ -11,7 +11,7 @@ CONFIG_DIR = os.path.join(MAIN_DIR, "config")
 KEY = 'CchfHeEVsE1hMldggpUEXduYH29pUp2ujYE7LPjZhOA='
 
 # true results
-RESULT_STACK = {}
+# RESULT_STACK = {}
 
 # load default global parameters
 with open(os.path.join(CONFIG_DIR, "default.json"), "r") as f:

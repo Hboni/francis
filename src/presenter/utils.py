@@ -1,6 +1,5 @@
 from PyQt5 import QtCore
-from src import RESULT_STACK, RSC_DIR
-import copy
+from src import RSC_DIR
 import functools
 import multiprocessing
 import os
@@ -93,14 +92,6 @@ def manager(threadable=True):
     return decorator
 
 
-def get_unavailable(names):
-    unvailable = []
-    for name in names:
-        if name not in RESULT_STACK:
-            unvailable.append(name)
-    return unvailable
-
-
 def get_checked(widget, names=None, first_only=True):
     checked = []
     if names is None:
@@ -115,14 +106,3 @@ def get_checked(widget, names=None, first_only=True):
                     return name
                 checked.append(name)
     return checked
-
-
-def get_data(name):
-    if isinstance(name, list):
-        return [get_data(n) for n in name]
-    elif name in RESULT_STACK:
-        return copy.copy(RESULT_STACK[name])
-
-
-def store_data(name, df):
-    RESULT_STACK[name] = df

@@ -78,6 +78,18 @@ def protector(level="Warning"):
     return decorator
 
 
+def getModifiedFunction(widget):
+    if isinstance(widget, (QtWidgets.QCheckBox, QtWidgets.QRadioButton)) or \
+       isinstance(widget, QtWidgets.QPushButton) and widget.isCheckable():
+        return widget.clicked
+    elif isinstance(widget, QtWidgets.QLineEdit):
+        return widget.textChanged
+    elif isinstance(widget, QtWidgets.QComboBox):
+        return widget.editTextChanged
+    elif isinstance(widget, QtWidgets.QSpinBox):
+        return widget.valueChanged
+
+
 def getValue(widget):
     if isinstance(widget, (QtWidgets.QCheckBox, QtWidgets.QRadioButton)) or \
        isinstance(widget, QtWidgets.QPushButton) and widget.isCheckable():

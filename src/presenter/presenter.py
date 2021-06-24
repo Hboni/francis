@@ -25,7 +25,7 @@ class Presenter():
         self._out_dir = os.path.join(RSC_DIR, "data", "out")
         self._view.moduleAdded.connect(lambda m: self.init_module_connections(m))
         self._view.closed.connect(self.terminateProcesses)
-        self._view.openFile(openLast=True)
+        self._view.restoreTabs()
 
     # ---------------------------- process handle -----------------------------#
     def getProc(self, module):
@@ -33,7 +33,7 @@ class Presenter():
             return psutil.Process(module.runner.proc.pid)
 
     def terminateProcesses(self):
-        for graph in self._view.graphs:
+        for graph in self._view.graphs.values():
             for module in graph.modules.values():
                 proc = self.getProc(module)
                 if proc:
@@ -54,7 +54,7 @@ class Presenter():
 
         # store signal propagation
         for parent in module.parents:
-            if utils.get_data(parent.name) is None:
+            if module.getData(parent.name) is None:
                 parent.propagation_child = module
                 parent.play.clicked.emit()
                 return False
@@ -71,7 +71,7 @@ class Presenter():
         output: exception, str, pd.DataFrame, np.array, ...
         """
         if output is not None:
-            utils.store_data(module.name, output)
+            module.graph.storeData(module.name, output)
         if output is None:
             module.setState()
         elif isinstance(output, Exception):
@@ -79,9 +79,6 @@ class Presenter():
         else:
             module.setState('valid')
         module.showResult(output)
-
-        for child in module.childs:
-            self.init_module_custom_connections(child)
 
         # retropropagate signal between modules
         if module.propagation_child is not None:
@@ -158,7 +155,7 @@ class Presenter():
             for parent in module.parents:
                 parent.nameChanged.connect(updateParentName)
 
-        module.setSettings(self._view.settings['graph'].get(module.name))
+        module.setSettings(module.graph.settings.get(module.name))
 
     # ----------------------------- utils -------------------------------------#
     def browse_savepath(self, module):
@@ -166,7 +163,7 @@ class Presenter():
         open a browse window to define the nifti save path
         """
         name = module.get_parent_name()
-        result = utils.get_data(name)
+        result = module.getData(name)
 
         if isinstance(result, np.ndarray):
             extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)"]
@@ -214,7 +211,7 @@ class Presenter():
         """
         parent_name = module.get_parent_name()
         function = self._model.save
-        args = {"data": utils.get_data(parent_name),
+        args = {"data": module.getData(parent_name),
                 "path": module.parameters.path.text()}
         return function, args
 
@@ -232,7 +229,7 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.get_img_infos
-        args = {"im": utils.get_data(parent_name),
+        args = {"im": module.getData(parent_name),
                 "info": module.parameters.infos.currentText()}
         return function, args
 
@@ -245,7 +242,7 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.apply_threshold
-        args = {"im": utils.get_data(parent_name),
+        args = {"im": module.getData(parent_name),
                 "threshold": module.parameters.spin.value(),
                 "reverse": module.parameters.reversed.isChecked()}
         return function, args
@@ -257,8 +254,8 @@ class Presenter():
         parent_names.remove(ref_parent_name)
 
         function = self._model.apply_operation
-        args = {"arr": utils.get_data(ref_parent_name),
-                "elements": utils.get_data(parent_names),
+        args = {"arr": module.getData(ref_parent_name),
+                "elements": module.getData(parent_names),
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
@@ -267,7 +264,7 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.apply_operation
-        args = {"arr": utils.get_data(parent_name),
+        args = {"arr": module.getData(parent_name),
                 "elements": float(module.parameters.value.text()),
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
@@ -284,7 +281,7 @@ class Presenter():
             operation = "binary_" + operation
 
         function = self._model.apply_basic_morpho
-        args = {"im": utils.get_data(parent_name),
+        args = {"im": module.getData(parent_name),
                 "size": module.parameters.size.value(),
                 "operation": operation,
                 "round_shape": True}

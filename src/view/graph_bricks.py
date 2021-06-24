@@ -1,16 +1,17 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import os
-from src import RSC_DIR, RESULT_STACK
+from src import RSC_DIR
 from src.view import utils, ui
 import pandas as pd
 import numpy as np
 
 
 class QGraphicsModule(QtWidgets.QWidget):
-    positionChanged = QtCore.pyqtSignal()
     focused = QtCore.pyqtSignal(bool)
-    nameChanged = QtCore.pyqtSignal(str, str)
     saveDataClicked = QtCore.pyqtSignal()
+    positionChanged = QtCore.pyqtSignal()
+    nameChanged = QtCore.pyqtSignal(str, str)
+    modified = QtCore.pyqtSignal()
     """
     movable widget inside the graph associated to a pipeline's step
 
@@ -47,6 +48,8 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.moveBy = self._item.moveBy
         self.pos = self._item.pos
 
+        self.getData = self.graph.getData
+
         self.propagation_child = None
         self.heights = {}
 
@@ -79,6 +82,8 @@ class QGraphicsModule(QtWidgets.QWidget):
 
         self.initConnections()
         self.setState()
+
+        self.connectParametersModifications()
 
     def sendFront(self):
         if self.isFront:
@@ -141,8 +146,6 @@ class QGraphicsModule(QtWidgets.QWidget):
         def itemChange(self, change, value):
             if change == QtWidgets.QGraphicsItem.ItemPositionChange:
                 self._parent.deltaPosition = value - self.pos()
-                self._parent.positionChanged.emit()
-            elif change == QtWidgets.QGraphicsItem.ItemVisibleChange:
                 self._parent.positionChanged.emit()
             return QtWidgets.QGraphicsRectItem.itemChange(self, change, value)
 
@@ -268,10 +271,17 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.nameChanged.connect(lambda _, newname: dock.setWindowTitle(newname))
         dock.setWindowTitle(self.name)
 
+    def connectParametersModifications(self):
+        self.positionChanged.connect(self.modified.emit)
+        self.nameChanged.connect(self.modified.emit)
+        for widget in self.parameters.__dict__.values():
+            modifFunction = utils.getModifiedFunction(widget)
+            if modifFunction:
+                modifFunction.connect(self.modified.emit)
+
     def setSettings(self, settings):
         if settings is None:
             return
-
         for name, w in sorted(self.parameters.__dict__.items()):
             if name in settings['parameters']:
                 utils.setValue(w, settings['parameters'][name])
@@ -288,9 +298,11 @@ class QGraphicsModule(QtWidgets.QWidget):
                 settings['parameters'][name] = value
         settings['state'] = {'name': self.name,
                              'type': self.type,
-                             'parents': [p.name for p in self.parents],
+                             'parentNames': [p.name for p in self.parents],
                              'position': [self.pos().x(), self.pos().y()],
+                             'width': self.width(),
                              'color': [self.color.red(), self.color.green(), self.color.blue(), self.color.alpha()]}
+
         return settings
 
     def openParameters(self):
@@ -342,7 +354,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         update pixel value and position labels when clicking snap view
         """
         # set ratio between image and qpixmap
-        im = RESULT_STACK.get(self.name)
+        im = self.graph.resultStack.get(self.name)
         if im is not None:
             if len(im.shape) == 2:
                 ratio = im.shape[1] / self.result.width()
