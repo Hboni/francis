@@ -19,8 +19,9 @@ def francis():
 def load_module(qtbot, francis):
     load_module_name = 'Load'
     qtbot.addWidget(francis)
-    francis.graph.addModule(load_module_name)
-    return francis.graph.modules[load_module_name]
+    gf = francis.newFile()
+    gf.addModule(load_module_name)
+    return gf.modules[load_module_name]
 
 
 @pytest.fixture(params=[2, 3])
@@ -36,34 +37,34 @@ def image_test(request):
 
 def test_francis_launch(qtbot, francis):
     qtbot.addWidget(francis)
-    assert not francis.graph.modules
+    assert not francis.graph().modules
 
 
 def test_delete_module(qtbot, load_module, francis):
-    francis.graph.deleteBranch(load_module)
-    assert not francis.graph.modules
+    francis.graph().deleteBranch(load_module)
+    assert not francis.graph().modules
 
 
 def test_add_modules(qtbot, francis):
     qtbot.addWidget(francis)
-    parent_module = francis.graph.addModule('Load')
-    assert len(francis.graph.modules) == 1
+    parent_module = francis.graph().addModule('Load')
+    assert len(francis.graph().modules) == 1
 
-    francis.graph.addModule('ThresholdImage', parent_module)
-    assert len(francis.graph.modules) == 2
+    francis.graph().addModule('ThresholdImage', parent_module)
+    assert len(francis.graph().modules) == 2
 
 
 def test_show_text(qtbot, francis, load_module):
     txt = "This is a test"
     load_module.showResult(txt)
-    assert len(francis.graph.modules) == 1
+    assert len(francis.graph().modules) == 1
     assert load_module.result.toPlainText() == txt
 
 
 def test_show_image(qtbot, francis, load_module, image_test):
     """Select load image node and load the demonstration image"""
     load_module.showResult(image_test)
-    assert len(francis.graph.modules) == 1
+    assert len(francis.graph().modules) == 1
     # As the window is not displayed, the value load_node.snap.isVisible is False
     assert load_module.result.pixmap is not None
 

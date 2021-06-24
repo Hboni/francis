@@ -181,6 +181,9 @@ class View(QtWidgets.QMainWindow):
             filename, _ = dialog.getSaveFileName(self, 'Save file', defPath, filter=ext)
         return filename
 
+    def graph(self):
+        return self.tabWidget.currentWidget()
+
     def newFile(self):
         gf = graph.QGraph(self, 'horizontal')
         self.graphs[gf.name] = gf
