@@ -10,8 +10,9 @@ from PyQt5 import QtCore
 @pytest.fixture
 def francis():
     # Launch Francis
-    view = View()
+    view = View(nopopup=True)
     Presenter(view, threading_enabled=False)
+    view.newFile()
     return view
 
 
@@ -19,9 +20,8 @@ def francis():
 def load_module(qtbot, francis):
     load_module_name = 'Load'
     qtbot.addWidget(francis)
-    gf = francis.newFile()
-    gf.addModule(load_module_name)
-    return gf.modules[load_module_name]
+    francis.graph().addModule(load_module_name)
+    return francis.graph().modules[load_module_name]
 
 
 @pytest.fixture(params=[2, 3])

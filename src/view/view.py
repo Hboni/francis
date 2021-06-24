@@ -14,8 +14,9 @@ class View(QtWidgets.QMainWindow):
     closed = QtCore.pyqtSignal()
     moduleAdded = QtCore.pyqtSignal(graph_bricks.QGraphicsModule)
 
-    def __init__(self):
+    def __init__(self, nopopup=False):
         super().__init__()
+        self.nopopup = nopopup
         uic.loadUi(os.path.join(RSC_DIR, "ui", "MainView.ui"), self)
         self.resize(*DEFAULT['window_size'])
         self.move(*DEFAULT['window_position'])
@@ -210,7 +211,7 @@ class View(QtWidgets.QMainWindow):
 
     def askSaveFiles(self):
         for gf in self.graphs.values():
-            if gf.modules and (gf.getSettings() != gf.settings or not gf.savePathIsSet):
+            if gf.modules and (gf.getSettings() != gf.settings or not gf.savePathIsSet) and not self.nopopup:
                 return self.openDialog("save files", "Do you want to close without saving ?",
                                        default=QtWidgets.QMessageBox.No)
         return QtWidgets.QMessageBox.Yes
