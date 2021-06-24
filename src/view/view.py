@@ -1,9 +1,9 @@
-from PyQt5 import QtWidgets, QtCore, QtGui, uic
-from src import RSC_DIR, DEFAULT, CONFIG_DIR, KEY, update_default
-from src.view import graph, ui
-from cryptography import fernet
+from PyQt5 import QtWidgets, QtCore, uic
+from src import RSC_DIR, DEFAULT, CONFIG_DIR, update_default
+from src.view import graph
 import json
 import os
+from datetime import datetime
 
 
 class View(QtWidgets.QMainWindow):
@@ -20,18 +20,15 @@ class View(QtWidgets.QMainWindow):
         self.resize(*DEFAULT['window_size'])
         self.move(*DEFAULT['window_position'])
 
-        # set short cuts
-        self.save = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+S'), self)
-        self.save.activated.connect(self.saveSettings)
+        # connect file menu
+        self.actionNew.triggered.connect(self.newFile)
+        self.actionOpen.triggered.connect(self.openFile)
+        self.actionSave.triggered.connect(self.saveFile)
+        self.actionSaveAs.triggered.connect(self.saveAsFile)
 
-        self.restore = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+R'), self)
-        self.restore.activated.connect(self.restoreSettings)
-
-        self.newsession = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+N'), self)
-        self.newsession.activated.connect(self.openSession)
-        self.session = None
-        self._password = None
-        self.sync = True
+        self.saveName = ""
+        self.saveDir = os.path.join(RSC_DIR, "data", "out")
+        self.isSaved = False
 
         self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
         self.initStyle()
@@ -89,9 +86,6 @@ class View(QtWidgets.QMainWindow):
 
         self.settings = {'graph': {}}
 
-        self.actionOpenSession.triggered.connect(self.loadSession)
-        self.actionNewSession.triggered.connect(self.newSession)
-
         self.graph = graph.QGraph(self, 'horizontal')
         self.setCentralWidget(self.graph)
         self.setWindowState(QtCore.Qt.WindowActive)
@@ -143,116 +137,56 @@ class View(QtWidgets.QMainWindow):
         dock.raise_()
         return dock
 
-    def openSession(self):
-        """
-        open dialog to orient on load or create new session
-        """
-        dialog = ui.QCustomDialog("open session", os.path.join(RSC_DIR, "ui", "openSession.ui"), self)
-        dialog.exec()
-        if not os.path.exists(os.path.join(CONFIG_DIR, "sessions")):
-            os.makedirs(os.path.join(CONFIG_DIR, "sessions"))
-
-        if dialog.out == "Load session":
-            return self.loadSession()
-        elif dialog.out == "New session":
-            return self.newSession()
-        return False
-
-    def loadSession(self):
-        """
-        load existing session
-        """
-        sessions = [i[:-5] for i in os.listdir(os.path.join(CONFIG_DIR, "sessions")) if i != '.gitignore']
-        if DEFAULT['last_session'] in sessions:
-            session_ind = sessions.index(DEFAULT['last_session'])
+    def askCloseCurrentFile(self):
+        if self.graph.modules:
+            dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, "new file",
+                                           "Are you sure you want to close this file ?",
+                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                           parent=self)
+            dialog.setDefaultButton(QtWidgets.QMessageBox.No)
+            res = dialog.exec()
         else:
-            session_ind = 0
-        session, ok = QtWidgets.QInputDialog.getItem(self, "Sessions", 'open session:', sessions, session_ind, False)
-        if ok:
-            self._password = None
+            res = QtWidgets.QMessageBox.Yes
+        return res
+
+    def browseFile(self, mode='r', ext="*.iag"):
+        dialog = QtWidgets.QFileDialog()
+        if mode == 'r':
+            filename, _ = dialog.getOpenFileName(self, "Open file", filter=ext)
+        elif mode == 'w':
+            defPath = os.path.join(self.saveDir, self.saveName)
+            filename, _ = dialog.getSaveFileName(self, 'Save file', defPath, filter=ext)
+        return filename
+
+    def newFile(self):
+        if self.askCloseCurrentFile() == QtWidgets.QMessageBox.Yes:
             self.graph.deleteAll()
-            self.session = session
-            self.setWindowTitle(session)
-            self.loadSettings(False)
-            self.restoreSettings()
-            update_default(last_session=session)
-            return True
-        else:
-            return self.openSession()
+            self.isSaved = False
 
-    def newSession(self):
-        """
-        create new session
-        """
-        dialog = ui.QCustomDialog("new session", os.path.join(RSC_DIR, "ui", "newSession.ui"), self)
-        dialog.exec()
-        if dialog.out == 'Cancel':
-            return self.openSession()
-        elif dialog.out == 'Ok':
-            self._password = dialog.password.text() if dialog.password.text() else None
-            self.session = dialog.name.text()
-            self.setWindowTitle(self.session)
-            self.graph.deleteAll()
-            self.saveSettings()
-            return True
+    def openFile(self):
+        if self.askCloseCurrentFile() == QtWidgets.QMessageBox.Yes:
+            filename = self.browseFile('r')
+            if os.path.isfile(filename):
+                with open(filename, 'r') as fp:
+                    self.settings = json.load(fp)
+                self.graph.setSettings(self.settings['graph'])
+                self.saveDir, self.saveName = os.path.split(filename)
 
-    def loadSettings(self, append=False):
-        """
-        load settings,
-        if settings cannot be loaded ask for password to decrypt data
-        """
-        path = os.path.join(CONFIG_DIR, 'sessions', self.session + '.json')
-        if not os.path.isfile(path):
-            return
-
-        try:
-            with open(path, 'r') as fp:
-                settings = json.load(fp)
-
-        except json.decoder.JSONDecodeError:
-            password, ok = QtWidgets.QInputDialog.getText(None, "Load session", 'password:',
-                                                          QtWidgets.QLineEdit.Password)
-            if not ok:
-                return self.loadSession()
-            key = password + KEY[len(password):]
-            crypt = fernet.Fernet(key.encode('utf-8'))
-
-            self._password = password
-            with open(path, 'rb') as fp:
-                data = fp.read()
-            try:
-                decrypted_data = crypt.decrypt(data)
-            except fernet.InvalidToken:
-                return self.loadSettings(append)
-
-            settings = json.loads(decrypted_data.decode('utf-8'))
-
-        if append:
-            self.settings.update(settings)
-        else:
-            self.settings = settings            #
-
-    def saveSettings(self):
-        """
-        save settings, encrypt settings if a password is specified
-        """
-        self.settings['graph'] = self.graph.getSettings()
-
-        if self._password is not None:
-            key = self._password + KEY[len(self._password):]
-            settings = json.dumps(self.settings).encode('utf-8')
-            crypt = fernet.Fernet(key.encode('utf-8'))
-
-            encrypted_settings = crypt.encrypt(settings)
-            with open(os.path.join(CONFIG_DIR, 'sessions', self.session + '.json'), 'wb') as fp:
-                fp.write(encrypted_settings)
-
-        else:
-            with open(os.path.join(CONFIG_DIR, 'sessions', self.session + '.json'), 'w') as fp:
+    def saveFile(self):
+        if self.isSaved:
+            self.settings['graph'] = self.graph.getSettings()
+            with open(os.path.join(self.saveDir, self.saveName), 'w') as fp:
                 json.dump(self.settings, fp, indent=4)
+        else:
+            return self.saveAsFile()
 
-    def restoreSettings(self):
-        self.graph.setSettings(self.settings['graph'])
+    def saveAsFile(self):
+        self.saveName = "save_{}.iag".format(datetime.now().strftime('%d%m%Y_%Hh%Mm%S'))
+        filename = self.browseFile('w')
+        if filename:
+            self.saveDir, self.saveName = os.path.split(filename)
+            self.isSaved = True
+            self.saveFile()
 
     def closeEvent(self, event):
         self.closed.emit()

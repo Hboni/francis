@@ -20,6 +20,5 @@ def main():
     Presenter(view, model)
 
     # open session
-    # if view.openSession():
     view.show()
     app.exec()

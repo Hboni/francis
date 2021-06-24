@@ -89,6 +89,7 @@ class QGraphicsModule(QtWidgets.QWidget):
             effect.setBlurRadius(20)
             self._item.setGraphicsEffect(effect)
         self.isFront = not self.isFront
+        self.focusModule(True)
 
     def getNparents(self):
         return len(self.parents)
@@ -227,9 +228,8 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.graph.setEnabledScroll(not boolean)
         self.graph.isFocused = boolean
         if boolean:
-            if self.graph.lastFocus is not None:
-                self.graph.lastFocus._item.setZValue(0)
-            self._item.setZValue(1)
+            self.graph.higherZValue += 1
+            self._item.setZValue(self.graph.higherZValue + self.isFront * 1000)
             self.graph.lastFocus = self
 
     def getChilds(self):
