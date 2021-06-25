@@ -17,15 +17,13 @@ class QGraphicsModule(QtWidgets.QWidget):
 
     Parameters
     ----------
-    graph: Graph
+    graph: QGraph
     type: str
-        type of node associated to specific widget and functions
+        type of module associated to specific widget and functions
     name: str
         unique name
     parents: list of Module, default=[]
-        nodes whose outputs are self input
-    position: tuple, default=(0,0)
-        position of the node in the graphic view
+        modules whose outputs are self input
 
     """
     def __init__(self, graph, type, name, parents=[], *args, **kwargs):
@@ -117,6 +115,9 @@ class QGraphicsModule(QtWidgets.QWidget):
         return QtWidgets.QWidget.leaveEvent(self, event)
 
     def footerMousePressEvent(self, event):
+        """
+        send module to front when footer is clicked
+        """
         self.sendFront()
         return QtWidgets.QWidget.mousePressEvent(self.footer, event)
 
@@ -149,11 +150,21 @@ class QGraphicsModule(QtWidgets.QWidget):
                 self._parent.positionChanged.emit()
             return QtWidgets.QGraphicsRectItem.itemChange(self, change, value)
 
-    def setState(self, state=None):
+    def setState(self, state=None, suspendable=True):
+        """
+        set state of the progress bar and of pause, pplay, stop buttons
+
+        Parameters
+        ----------
+        state: {'loading', 'pause', 'valid', 'fail', None}, default=None
+        suspendable: bool, default=True
+            if True, 'pause' button is shown and process is suspendable
+
+        """
         self.state = state
         if state == 'loading':
             self.play.hide()
-            self.pause.show()
+            self.pause.setVisible(suspendable)
             self.stop.show()
             col, maxi = QtGui.QColor(0, 0, 0, 0), 0
         elif state == "pause":
@@ -173,10 +184,12 @@ class QGraphicsModule(QtWidgets.QWidget):
             else:
                 col = QtGui.QColor(0, 0, 0, 0)
 
+        # set background color of the progress bar
         pal = QtGui.QPalette()
         pal.setColor(QtGui.QPalette.Background, col)
         self.loading.setAutoFillBackground(True)
         self.loading.setPalette(pal)
+        # if maxi to 0, the progress bar will run over and over
         self.loading.setMaximum(maxi)
 
     def isSelected(self):
@@ -210,7 +223,7 @@ class QGraphicsModule(QtWidgets.QWidget):
 
     def delete(self):
         """
-        delete itself and all related graphic items (links and junctions)
+        delete itself and all related graphic items (QGraphicLinks)
         """
         # delete links
         while self.links:
@@ -228,6 +241,9 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.deleteLater()
 
     def focusModule(self, boolean):
+        """
+        if boolean is True, put this module on top of the others
+        """
         self.graph.setEnabledScroll(not boolean)
         self.graph.isFocused = boolean
         if boolean:
@@ -255,6 +271,14 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.name = new_name
 
     def setColor(self, new_color):
+        """
+        set the color of the header and footer of the module
+
+        Parameters
+        ----------
+        new_color: list of (r, g, b) or QColor
+
+        """
         if isinstance(new_color, list):
             new_color = QtGui.QColor(*new_color)
         pal = QtGui.QPalette()
@@ -272,6 +296,9 @@ class QGraphicsModule(QtWidgets.QWidget):
         dock.setWindowTitle(self.name)
 
     def connectParametersModifications(self):
+        """
+        send 'modified' signal at each time the module is moved/modified
+        """
         self.positionChanged.connect(self.modified.emit)
         self.nameChanged.connect(self.modified.emit)
         for widget in self.parameters.__dict__.values():
@@ -280,6 +307,14 @@ class QGraphicsModule(QtWidgets.QWidget):
                 modifFunction.connect(self.modified.emit)
 
     def setSettings(self, settings):
+        """
+        set settings of module (=state) and parameters widgets
+
+        Parameters
+        ----------
+        settings: dict
+
+        """
         if settings is None:
             return
         for name, w in sorted(self.parameters.__dict__.items()):
@@ -291,6 +326,9 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.graph.colorizeModule(self, state['color'])
 
     def getSettings(self):
+        """
+        get settings of module (=state) and parameters widgets
+        """
         settings = {'parameters': {}}
         for name, w in self.parameters.__dict__.items():
             value = utils.getValue(w)
@@ -309,9 +347,20 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.parameters.setVisible(self.parameters.isHidden())
         self.updateHeight(force=True)
 
+    def releaseData(self):
+        self.graph.releaseData(self)
+        self.showResult("Data released")
+
+    def getBranch(self, branch=[]):
+        for node in self.childs + self.parents:
+            if node not in branch:
+                branch.append(node)
+                node.getBranch(branch)
+        return branch
+
     def showResult(self, result=None):
         """
-        This function create widget from result and show it. The created widget6
+        This function create widget from result and show it. The created widget
         depends on the result type
 
         Parameters
@@ -351,7 +400,7 @@ class QGraphicsModule(QtWidgets.QWidget):
 
     def snapMousePressEvent(self, event):
         """
-        update pixel value and position labels when clicking snap view
+        update pixel value and position labels when clicking image view
         """
         # set ratio between image and qpixmap
         im = self.graph.resultStack.get(self.name)
@@ -376,13 +425,6 @@ class QGraphicsModule(QtWidgets.QWidget):
                 # click outside image
                 print(e)
 
-    def getBranch(self, branch=[]):
-        for node in self.childs + self.parents:
-            if node not in branch:
-                branch.append(node)
-                node.getBranch(branch)
-        return branch
-
     def synchronizeImages(self):
         for node in self.getBranch():
             res = node.result
@@ -393,10 +435,6 @@ class QGraphicsModule(QtWidgets.QWidget):
                 elif res.axis != self.result.axis:
                     res.axis = self.result.axis
                     res.updateSnap()
-
-    def releaseData(self):
-        self.graph.releaseData(self)
-        self.showResult("Data released")
 
 
 def ceval(arg):

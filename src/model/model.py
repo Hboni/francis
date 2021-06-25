@@ -18,7 +18,17 @@ imageio.core.util._precision_warn = silence_imageio_warning
 class Model:
     def load(self, path):
         """
-        load file
+        this method has a vocation to load any type of file
+
+        Parameters
+        ----------
+        path: str
+            handled extensions: nii, nii.gz, png, jpg, txt, pkl
+
+        Return
+        ------
+        data: any type of data
+
         """
         root, ext = os.path.splitext(path)
         if ext == '.txt':
@@ -37,7 +47,18 @@ class Model:
 
     def save(self, data, path):
         """
-        save any type of data...
+        this method has a vocation to save any type of file
+
+        Parameters
+        ----------
+        data: any type of data
+        path: str
+
+        Return
+        ------
+        result: str
+            message to inform the saved path
+
         """
         root, ext = os.path.splitext(path)
         if ext == '.txt':
@@ -50,6 +71,7 @@ class Model:
             ni_img = nib.Nifti1Image(data, None)
             nib.save(ni_img, path)
         elif ext in ['.png', '.jpg']:
+            # 3D image can be saved as a list of 2D images in a directory
             if len(data.shape) == 3:
                 if not os.path.exists(root):
                     os.makedirs(root)
@@ -87,10 +109,10 @@ class Model:
         im: 2d/3d numpy array
         size: int
             Generate an element of size (size*2+1)
+        operation: {'erosion', 'dilation', 'binary_erosion', 'binary_dilation'}, default='erosion'
         round_shape: str, default=True
             If True the element is ball (3d) or disk (2d),
             else the element is cube (3d) or square (2d)
-        operation: {'erosion', 'dilation', 'binary_erosion', 'binary_dilation'}, default='erosion'
 
         Returns
         -------
@@ -120,7 +142,7 @@ class Model:
 
         Return
         ------
-        result: 2d/3d array
+        arr: 2d/3d array
 
         """
         if not isinstance(elements, list):

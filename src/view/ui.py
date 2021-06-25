@@ -8,6 +8,9 @@ import copy
 
 
 def setButtonIcon(button, img, append=False):
+    """
+    set image to the specified button
+    """
     icon = QtGui.QIcon()
     icon.addPixmap(QtGui.QPixmap(os.path.join(RSC_DIR, "icon", img)), QtGui.QIcon.Normal, QtGui.QIcon.On)
     if not append:

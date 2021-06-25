@@ -19,7 +19,7 @@ class QGraph(QtWidgets.QGraphicsView):
     ----------
     mainwin: MainWindow
         QMainWindow where the graph is displayed
-    direction: {'horizontal', 'vertical'}, default='horizontal'
+    direction: {'horizontal', 'vertical'}, default='vertical'
         direction of the pipeline;
         horizontal is left to right, vertical is top to bottom
 
@@ -59,7 +59,7 @@ class QGraph(QtWidgets.QGraphicsView):
 
         Parameters
         ----------
-        parent, child: Module
+        parent, child: QGraphicsModule
             modules to visually bind
         """
 
@@ -89,7 +89,7 @@ class QGraph(QtWidgets.QGraphicsView):
 
         Return
         ------
-        result: list of Module
+        result: list of QGraphicsModule
         """
         return [n for n in self.modules.values() if n.isSelected() and n not in exceptions]
 
@@ -274,6 +274,7 @@ class QGraph(QtWidgets.QGraphicsView):
         parents: list of QGraphicsModule or QGraphicsModule
 
         """
+        # initialize
         if name is None:
             name = self.getUniqueName(type)
         if width is None:
@@ -289,9 +290,11 @@ class QGraph(QtWidgets.QGraphicsView):
         elif not isinstance(parents, list):
             parents = [parents]
 
+        # create module
         module = QGraphicsModule(self, type, name, parents)
         module.addToScene(self.scene)
 
+        # bind module to parents and find best position
         if not parents:
             x, y = self._mouse_position.x(), self._mouse_position.y()
         else:
@@ -313,15 +316,14 @@ class QGraph(QtWidgets.QGraphicsView):
                 x = max_x_parent.pos().x() + max_x_parent.width() + DEFAULT['space_between_modules'][0]
                 y = max_x_parent.pos().y() if not Ys else max(Ys) + DEFAULT['space_between_modules'][1]
 
-        # set state
         if position is not None:
             x, y = position
 
+        # set state
         module.moveBy(x, y)
         self.modules[name] = module
         self._view.moduleAdded.emit(module)
         module.modified.connect(lambda: self.updateName(False))
-
         module.resize(width, 1)
         module.setColor(color)
         module.modified.emit()
@@ -378,6 +380,9 @@ class QGraph(QtWidgets.QGraphicsView):
         return os.path.join(self.saveDir, saveName)
 
     def updateName(self, isSaved=True):
+        """
+        update the name of the graph based on the save name
+        """
         new_name = os.path.splitext(self.saveName)[0]
         index = self._view.tabWidget.indexOf(self)
         if not isSaved or not self.savePathIsSet:
@@ -394,6 +399,9 @@ class QGraph(QtWidgets.QGraphicsView):
             return self._view.openDialog("save file", "Do you want to save the current file ?")
 
     def restore(self, filename):
+        """
+        restore graph modules, name and save path
+        """
         if not os.path.isfile(filename):
             return
         with open(filename, 'r') as fp:
@@ -404,6 +412,9 @@ class QGraph(QtWidgets.QGraphicsView):
         self.updateName()
 
     def saveFile(self, filename=None):
+        """
+        save graph modules as save path
+        """
         if self.savePathIsSet:
             filename = os.path.join(self.saveDir, self.saveName)
         if filename:

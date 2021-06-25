@@ -2,7 +2,6 @@ import os
 from src import RSC_DIR
 from src.presenter import utils
 from PyQt5 import QtWidgets
-import psutil
 import numpy as np
 
 
@@ -13,8 +12,10 @@ class Presenter():
 
     Parameters
     ----------
-    model: model.Model
     view: view.View
+    model: model.Model, default=None
+    threading_enabled: bool, default=True
+        if False, disable threading handled by the manager =(thread_mode=0)
 
     """
     def __init__(self, view, model=None, threading_enabled=True):
@@ -28,29 +29,37 @@ class Presenter():
         self._view.restoreTabs()
 
     # ---------------------------- process handle -----------------------------#
-    def getProc(self, module):
-        if module.runner is not None and module.runner.proc is not None:
-            return psutil.Process(module.runner.proc.pid)
-
     def terminateProcesses(self):
+        """
+        Terminates all running processes
+        """
         for graph in self._view.graphs.values():
             for module in graph.modules.values():
-                proc = self.getProc(module)
-                if proc:
-                    proc.terminate()
+                if module.runner:
+                    module.runner.terminate()
 
     # --------------------- PRIOR  AND POST FUNCTION CALL ---------------------#
-    def prior_manager(self, module):
+    def prior_manager(self, module, thread_mode=0):
         """
-        This method is called by the utils.manager before the function call
+        This method is called by the manager before the model method process
 
         Parameters
         ----------
-        module: QWidget
+        module: QGraphicsModule
+        thread_mode: {0, 1, 2}, default=0
+
+        Return
+        ------
+        result: bool
+            if False, do not process
+
         """
 
         # start loading
-        module.setState('loading')
+        if thread_mode == 1:
+            module.setState('loading', suspendable=False)
+        elif thread_mode == 2:
+            module.setState('loading')
 
         # store signal propagation
         for parent in module.parents:
@@ -62,13 +71,14 @@ class Presenter():
 
     def post_manager(self, module, output):
         """
-        This method manage the output of a model function based on the output type
-        it is called by the utils.manager at the end of the model process
+        This method is called by the manager after the model method process
+        It manage the output of the model method based on the output type
 
         Parameters
         ----------
-        module: QWidget
-        output: exception, str, pd.DataFrame, np.array, ...
+        module: QGraphicsModule
+        output: Exception, str, pd.DataFrame, np.array, ...
+
         """
         if output is not None:
             module.graph.storeData(module.name, output)
@@ -90,12 +100,11 @@ class Presenter():
     def init_module_connections(self, module):
         """
         initialize module parameters if necessary
-        create connections between view widgets and functions
+        connect play, pause and stop buttons to model method handling
 
         Parameters
         ----------
-        module_name: str
-            name of the loaded module
+        module: QGraphicsModule
 
         """
         parameters = self._view.getParameters(module.type)
@@ -104,24 +113,20 @@ class Presenter():
         # connect start, pause, stop buttons
         def play():
             if module.state == "pause":
-                proc = self.getProc(module)
-                if proc:
-                    proc.resume()
+                if module.runner:
+                    module.runner.resume()
+                module.setState("loading")
             elif self._model is not None:
                 activation_function(module)
-            module.setState("loading")
 
         def pause():
-            proc = self.getProc(module)
-            if proc:
-                proc.suspend()
+            if module.runner:
+                module.runner.suspend()
             module.setState("pause")
 
         def stop():
-            proc = self.getProc(module)
-            if proc:
-                proc.terminate()
-            module.setState()
+            if module.runner:
+                module.runner.terminate()
 
         module.play.clicked.connect(play)
         module.pause.clicked.connect(pause)
@@ -130,6 +135,15 @@ class Presenter():
         self.init_module_custom_connections(module)
 
     def init_module_custom_connections(self, module):
+        """
+        initialize connections between module widgets and custom functions
+        initialize widgets updating if necessary
+
+        Parameters
+        ----------
+        module: QGraphicsModule
+
+        """
         if module.type == "Save":
             module.parameters.browse.clicked.connect(lambda: self.browse_savepath(module))
 
@@ -160,41 +174,42 @@ class Presenter():
     # ----------------------------- utils -------------------------------------#
     def browse_savepath(self, module):
         """
-        open a browse window to define the nifti save path
+        open a browse window to define the data save path based on the parent
+        data type. Any type of data can be saved as .pkl
         """
         name = module.get_parent_name()
         result = module.getData(name)
 
+        # init extensions and
         if isinstance(result, np.ndarray):
             extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)"]
             dim = len(result.shape)
             if dim == 2:
-                initfilter = extensions[0]
+                init_extension = extensions[0]
             elif dim == 3:
-                initfilter = extensions[1]
+                init_extension = extensions[1]
         elif result is None or isinstance(result, Exception):
             extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)", "TEXT (*.txt)"]
-            initfilter = None
+            init_extension = None
         else:
             extensions = ["TEXT (*.txt)"]
-            initfilter = extensions[0]
+            init_extension = extensions[0]
 
         extensions.append("compressed (*.pkl)")
-        if initfilter is None:
-            initfilter = extensions[-1]
+        if init_extension is None:
+            init_extension = extensions[-1]
 
         filename, extension = QtWidgets.QFileDialog.getSaveFileName(module.graph, 'Save file',
                                                                     os.path.join(self._out_dir, name),
                                                                     filter=";;".join(extensions),
-                                                                    initialFilter=initfilter)
+                                                                    initialFilter=init_extension)
         if filename:
             module.parameters.path.setText(filename)
             module.parameters.path.setToolTip(filename)
 
     def browse_path(self, module):
         """
-        open a browse window to select a nifti file
-        then update path in the corresponding QLineEdit
+        open a browse window to select a file and update path widget
         """
         dialog = QtWidgets.QFileDialog()
         filename, ok = dialog.getOpenFileName(module.graph, "Select a file...", self._data_dir,
@@ -204,7 +219,7 @@ class Presenter():
             module.parameters.path.setToolTip(filename)
 
     # ----------------------------- MODEL CALL --------------------------------#
-    @utils.manager(True)
+    @utils.manager(1)
     def call_save(self, module):
         """
         save the parent image as nifti file at specified path
@@ -215,7 +230,7 @@ class Presenter():
                 "path": module.parameters.path.text()}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_load(self, module):
         """
         load any type of data
@@ -224,8 +239,11 @@ class Presenter():
         args = {"path": module.parameters.path.text()}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_get_img_infos(self, module):
+        """
+        get image info
+        """
         parent_name = module.get_parent_name()
 
         function = self._model.get_img_infos
@@ -233,7 +251,7 @@ class Presenter():
                 "info": module.parameters.infos.currentText()}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_apply_threshold(self, module):
         """
         compute 3d thresholding on the parent image
@@ -247,8 +265,11 @@ class Presenter():
                 "reverse": module.parameters.reversed.isChecked()}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_apply_operation(self, module):
+        """
+        compute operations between multiple images
+        """
         parent_names = module.get_parent_names()
         ref_parent_name = module.parameters.reference.currentText()
         parent_names.remove(ref_parent_name)
@@ -259,8 +280,11 @@ class Presenter():
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_apply_simple_operation(self, module):
+        """
+        compute simple operations between an image and a float
+        """
         parent_name = module.get_parent_name()
 
         function = self._model.apply_operation
@@ -269,7 +293,7 @@ class Presenter():
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @utils.manager(True)
+    @utils.manager(1)
     def call_apply_basic_morpho(self, module):
         """
         compute 3d morphological operation on the parent image
