@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from src import RSC_DIR
+from src import TMP_DIR
 import functools
 from multiprocessing import Process
 import os
@@ -51,7 +51,7 @@ class Runner(QtCore.QThread):
         super().__init__()
         self.target = target
         self.args = args
-        self.tmp_path = os.path.join(RSC_DIR, "data", "tmp", str(datetime.now().timestamp()))
+        self.tmp_path = os.path.join(TMP_DIR, str(datetime.now().timestamp()))
         self.in_process = in_process
         self.proc = None
 

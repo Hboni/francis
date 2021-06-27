@@ -1,8 +1,9 @@
 import os
-from src import RSC_DIR
+from src import RSC_DIR, TMP_DIR
 from src.presenter import utils
 from PyQt5 import QtWidgets
 import numpy as np
+import shutil
 
 
 class Presenter():
@@ -27,6 +28,12 @@ class Presenter():
         self._view.moduleAdded.connect(lambda m: self.init_module_connections(m))
         self._view.closed.connect(self.terminateProcesses)
         self._view.restoreTabs()
+        self.init_tmp_dir()
+
+    def init_tmp_dir(self):
+        if os.path.exists(TMP_DIR):
+            shutil.rmtree(TMP_DIR)
+        os.makedirs(TMP_DIR)
 
     # ---------------------------- process handle -----------------------------#
     def terminateProcesses(self):

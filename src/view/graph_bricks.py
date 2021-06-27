@@ -373,7 +373,7 @@ class QGraphicsModule(QtWidgets.QWidget):
             return
         elif isinstance(result, Exception):
             new_widget = QtWidgets.QTextBrowser()
-            new_widget.setPlainText(type(result).__name__)
+            new_widget.setPlainText(type(result).__name__+"\n"+str(result))
             new_widget.setStyleSheet("color: red;")
             ui.showError("Warning", result)
         elif isinstance(result, pd.DataFrame):

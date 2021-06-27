@@ -6,6 +6,7 @@ import json
 MAIN_DIR = os.path.abspath(".")
 RSC_DIR = os.path.join(MAIN_DIR, "resources")
 CONFIG_DIR = os.path.join(MAIN_DIR, "config")
+TMP_DIR = os.path.join(RSC_DIR, "data", "tmp")
 
 # base key for json session encryption
 KEY = 'CchfHeEVsE1hMldggpUEXduYH29pUp2ujYE7LPjZhOA='
