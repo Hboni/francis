@@ -1,11 +1,11 @@
 {
     "window_size": [
-        958,
-        1003
+        1920,
+        1013
     ],
     "window_position": [
-        960,
-        0
+        -48,
+        39
     ],
     "module_width": 250,
     "space_between_modules": [
@@ -32,7 +32,7 @@
     "style": "Default",
     "theme": "bright",
     "filenames": [
-        "C:\\Users\\jean\\Desktop\\francis\\resources\\data\\out\\# not saved"
+        "C:/Users/jean/Desktop/francis/resources/data/out\\graph_27062021 15h22m54.iag"
     ],
     "current_tab": 0
 }

@@ -405,22 +405,28 @@ class QGraphicsModule(QtWidgets.QWidget):
         # set ratio between image and qpixmap
         im = self.graph.resultStack.get(self.name)
         if im is not None:
-            if len(im.shape) == 2:
-                ratio = im.shape[1] / self.result.width()
-            else:
+            if self.result.slicable:
                 ratio = im.shape[int(self.result.axis == 0)] / self.result.width()
+            else:
+                ratio = im.shape[1] / self.result.width()
+
             # get click position
             click_pos = np.array([event.pos().y(), event.pos().x()])
             # define position in image
             true_pos = np.rint(click_pos * ratio).astype(int)
             try:
-                if len(im.shape) == 2:
+                if im.ndim == 2:
                     x, y, z = *true_pos, ''
+                    value = im[x, y]
                     self.rightfoot.setText("%d " % im[x, y])
-                else:
+                elif self.result.slicable:
                     x, y, z = np.insert(true_pos, self.result.axis, self.result.currentSlice)
-                    self.rightfoot.setText("%d " % im[x, y, z])
+                    value = im[x, y, z]
+                else:
+                    x, y, z = *true_pos, ''
+                    value = "(" + " ".join(im[x, y].astype(str)) + ")"
                 self.leftfoot.setText("{0} {1} {2}".format(x, y, z))
+                self.rightfoot.setText(str(value))
             except IndexError as e:
                 # click outside image
                 print(e)

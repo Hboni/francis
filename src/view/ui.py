@@ -189,10 +189,9 @@ class QImageRenderer(QtWidgets.QLabel):
     def __init__(self, img, parent):
         QtWidgets.QWidget.__init__(self)
         self.img = self.formatImage(img)
-        self.dimension = len(self.img.shape)
-        if self.dimension == 3:
-            self.axis = 0
-            self.currentSlice = None
+
+        self.getImageType()
+
         self.pixmap = None
         self._parent = parent
         self.updateSnap()
@@ -216,7 +215,7 @@ class QImageRenderer(QtWidgets.QLabel):
         return img
 
     def wheelEvent(self, event):
-        if self.dimension != 3:
+        if not self.slicable:
             return
         if self.currentSlice is not None:
             step = 1
@@ -231,7 +230,7 @@ class QImageRenderer(QtWidgets.QLabel):
         """
         update image axis on double click above image view
         """
-        if self.dimension != 3:
+        if not self.slicable:
             return
         if self.axis == 2:
             self.axis = 0
@@ -240,37 +239,54 @@ class QImageRenderer(QtWidgets.QLabel):
         self.updateSnap()
         self.syncSignal.emit()
 
+    def getImageType(self):
+        self.slicable = False
+        self.imgType = QtGui.QImage.Format_Grayscale8
+        if self.img.ndim == 3:
+            if self.img.shape[-1] == 3:
+                self.imgType = QtGui.QImage.Format_RGB888
+            elif self.img.shape[-1] == 4:
+                self.imgType = QtGui.QImage.Format_RGBA8888
+            else:
+                self.slicable = True
+
+        if self.slicable:
+            self.axis = 0
+            self.currentSlice = None
+
     def getSliceParams(self):
-        if self.dimension == 2:
-            return self.img, self.img.shape[1], self.img.shape[0]
-        elif self.dimension == 3:
-            s = self.img.shape[self.axis]
+        if self.img.ndim == 2:
+            return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1]
+        elif self.img.ndim == 3:
+            if not self.slicable:
+                return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1] * self.img.shape[2]
+            else:
+                s = self.img.shape[self.axis]
 
-            # set current slice
-            if self.currentSlice is None:
-                self.currentSlice = int(s / 2)
-            elif self.currentSlice < 0:
-                self.currentSlice = 0
-            elif self.currentSlice >= s:
-                self.currentSlice = s-1
+                # set current slice
+                if self.currentSlice is None:
+                    self.currentSlice = int(s / 2)
+                elif self.currentSlice < 0:
+                    self.currentSlice = 0
+                elif self.currentSlice >= s:
+                    self.currentSlice = s-1
 
-            # snap axis slice
-            if self.axis == 0:
-                im_slice = self.img[self.currentSlice].copy()
-                _, h, w = self.img.shape
-            elif self.axis == 1:
-                im_slice = self.img[:, self.currentSlice].copy()
-                h, _, w = self.img.shape
-            elif self.axis == 2:
-                im_slice = self.img[:, :, self.currentSlice].copy()
-                h, w, _ = self.img.shape
+                # snap axis slice
+                if self.axis == 0:
+                    im_slice = self.img[self.currentSlice].copy()
+                    _, h, w = self.img.shape
+                elif self.axis == 1:
+                    im_slice = self.img[:, self.currentSlice].copy()
+                    h, _, w = self.img.shape
+                elif self.axis == 2:
+                    im_slice = self.img[:, :, self.currentSlice].copy()
+                    h, w, _ = self.img.shape
 
-            return im_slice, w, h
+                return im_slice, w, h, w
 
     def updateSnap(self):
-        im, w, h = self.getSliceParams()
-        qim = QtGui.QImage(im, w, h, w, QtGui.QImage.Format_Indexed8)
-        qim.setColorTable([QtGui.qRgba(255, 0, 0, 255)]+[QtGui.qRgba(i, i, i, 255) for i in range(1, 256)])
+        im, w, h, bytesPerLine = self.getSliceParams()
+        qim = QtGui.QImage(im, w, h, bytesPerLine, self.imgType)
         self.pixmap = QtGui.QPixmap(qim)
         self.pixmap = self.pixmap.scaledToWidth(self._parent.width() - 2,
                                                 QtCore.Qt.FastTransformation)

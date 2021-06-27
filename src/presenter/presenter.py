@@ -226,7 +226,7 @@ class Presenter():
             module.parameters.path.setToolTip(filename)
 
     # ----------------------------- MODEL CALL --------------------------------#
-    @utils.manager(1)
+    @utils.manager(2)
     def call_save(self, module):
         """
         save the parent image as nifti file at specified path
@@ -237,7 +237,7 @@ class Presenter():
                 "path": module.parameters.path.text()}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_load(self, module):
         """
         load any type of data
@@ -246,7 +246,7 @@ class Presenter():
         args = {"path": module.parameters.path.text()}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_get_img_infos(self, module):
         """
         get image info
@@ -258,7 +258,7 @@ class Presenter():
                 "info": module.parameters.infos.currentText()}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_apply_threshold(self, module):
         """
         compute 3d thresholding on the parent image
@@ -272,7 +272,7 @@ class Presenter():
                 "reverse": module.parameters.reversed.isChecked()}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_apply_operation(self, module):
         """
         compute operations between multiple images
@@ -287,7 +287,7 @@ class Presenter():
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_apply_simple_operation(self, module):
         """
         compute simple operations between an image and a float
@@ -300,7 +300,7 @@ class Presenter():
                 "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
         return function, args
 
-    @utils.manager(1)
+    @utils.manager(2)
     def call_apply_basic_morpho(self, module):
         """
         compute 3d morphological operation on the parent image
