@@ -1,7 +1,9 @@
 # Test of basic application usage
 
 import pytest
+import os
 from src.view.view import View
+from src.model.model import Model
 from src.presenter.presenter import Presenter
 import numpy as np
 from PyQt5 import QtCore
@@ -11,7 +13,8 @@ from PyQt5 import QtCore
 def francis():
     # Launch Francis
     view = View(nopopup=True)
-    Presenter(view, threading_enabled=False)
+    model = Model()
+    Presenter(view, model, threading_enabled=False)
     view.newFile()
     return view
 
@@ -33,6 +36,14 @@ def image_test(request):
         img = np.zeros((100, 100, 100))
         img[25:75, 25:75, 25:75] = 1
     return img
+
+
+@pytest.fixture(params=[
+    os.path.join(os.getcwd(), 'resources/data/Lena.png'),
+    os.path.join(os.getcwd(), 'resources/data/cvs_avg35_inMNI152.nii.gz'),
+])
+def image_filepath(request):
+    return request.param
 
 
 def test_francis_launch(qtbot, francis):
@@ -69,10 +80,13 @@ def test_show_image(qtbot, francis, load_module, image_test):
     assert load_module.result.pixmap is not None
 
 
-def test_image_click(qtbot, francis, load_module, image_test):
+def test_image_click(qtbot, francis, load_module, image_filepath):
     assert not load_module.rightfoot.text()
     assert not load_module.leftfoot.text()
-    load_module.showResult(image_test)
+
+    qtbot.keyClicks(load_module.parameters.path, image_filepath)
+    with qtbot.waitSignal(load_module.displayed, timeout=10000):
+        qtbot.mouseClick(load_module.play, QtCore.Qt.LeftButton)
     # Click on the image
     qtbot.mouseClick(load_module.result, QtCore.Qt.LeftButton)
 

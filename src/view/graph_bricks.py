@@ -12,6 +12,7 @@ class QGraphicsModule(QtWidgets.QWidget):
     positionChanged = QtCore.pyqtSignal()
     nameChanged = QtCore.pyqtSignal(str, str)
     modified = QtCore.pyqtSignal()
+    displayed = QtCore.pyqtSignal()
     """
     movable widget inside the graph associated to a pipeline's step
 
@@ -390,6 +391,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         # replace current output widget with the new one
         self.result = utils.replaceWidget(self.result, new_widget)
         self.resultArea.show()
+        self.displayed.emit()
         self.updateHeight()
 
     def updateHeight(self, force=False):
