@@ -46,6 +46,11 @@ def image_filepath(request):
     return request.param
 
 
+@pytest.fixture()
+def text_filepath():
+    return os.path.join(os.getcwd(), 'resources/data/simple_text.txt')
+
+
 def test_francis_launch(qtbot, francis):
     qtbot.addWidget(francis)
     assert not francis.graph().modules
@@ -65,11 +70,13 @@ def test_add_modules(qtbot, francis):
     assert len(francis.graph().modules) == 2
 
 
-def test_show_text(qtbot, francis, load_module):
-    txt = "This is a test"
-    load_module.showResult(txt)
+def test_show_text(qtbot, francis, load_module, text_filepath):
+    qtbot.keyClicks(load_module.parameters.path, text_filepath)
+    with qtbot.waitSignal(load_module.displayed, timeout=10000):
+        qtbot.mouseClick(load_module.play, QtCore.Qt.LeftButton)
+
     assert len(francis.graph().modules) == 1
-    assert load_module.result.toPlainText() == txt
+    assert load_module.result.toPlainText()
 
 
 def test_show_image(qtbot, francis, load_module, image_test):
