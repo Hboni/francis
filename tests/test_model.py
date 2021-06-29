@@ -56,7 +56,6 @@ def test_save_image(test_image_path, test_image_write_path):
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     else:
-        print("PRINT", test_image_path, test_image_write_path)
         assert os.path.exists(test_image_write_path)
 
 

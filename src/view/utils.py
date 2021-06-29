@@ -4,8 +4,33 @@ import numpy as np
 from src.view import ui
 
 
-def is_leaf(dic, d):
-    values = dic.get(d)
+def is_leaf(dico, key):
+    """
+    This function check if a key is the penultimate in a dictionnary depth
+
+    Example:
+    with a dictionnary with this structure:
+
+    {"Save": {
+        "arg1": "value1",
+        "arg2": "value2"},
+    "operation": {
+        "SimpleOperation": {
+                "arg1": "value1",
+                "arg2": "value2"},
+        "ComplexOperation": {
+                "arg1": "value1",
+                "arg2": "value2"},
+        "AdvancedOperation": {
+                "InterImageOperation": {
+                        "arg1": "value1",
+                        "arg2": "value2"}}}}
+
+    Leaves will be: "Save", "SimpleOperation", "ComplexOperation" and "InterImageOperation"
+    because their corresponding values are the last sub-dictionnary in depth
+    and corresponds to the module arguments.
+    """
+    values = dico.get(key)
     if isinstance(values, dict):
         for k, v in values.items():
             if isinstance(v, dict):
@@ -19,6 +44,12 @@ def connect_action(action, function):
 
 
 def menu_from_dict(dic, activation_function=None, menu=None):
+    """
+    Create a QMenu with submenus from a dictionnary of dictionnary (recursively)
+    add a delimiter if the key starts with 'delimiter'
+    and connect menu actions to activation function
+    check config/modules.json for an example
+    """
     if menu is None:
         menu = QtWidgets.QMenu()
     for k in dic:
