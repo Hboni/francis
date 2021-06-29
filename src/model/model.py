@@ -160,7 +160,7 @@ class Model:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
-    def apply_threshold(self, im, threshold, reverse=False):
+    def apply_threshold(self, im, threshold, reverse=False, thresholdInPercentage=False):
         """
         Apply binary threshold on the input image
 
@@ -171,6 +171,7 @@ class Model:
             Pixel value, image=1 above threshold, image=0 below threshold
         reverse: bool, default=False
             If True invert 0 and 1 in output
+        thresholdInPercentage: bool, default=False
 
         Returns
         -------
@@ -178,5 +179,10 @@ class Model:
             Binarized input image with same size as im
 
         """
+        if thresholdInPercentage:
+            mini, maxi = np.min(im), np.max(im)
+            threshold = mini + threshold * (maxi - mini) / 100
+            print(mini, maxi)
+        print(threshold)
         mask = im < threshold if reverse else im > threshold
         return mask.astype(np.uint8)

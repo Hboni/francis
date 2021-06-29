@@ -269,7 +269,8 @@ class Presenter():
         function = self._model.apply_threshold
         args = {"im": module.getData(parent_name),
                 "threshold": module.parameters.spin.value(),
-                "reverse": module.parameters.reversed.isChecked()}
+                "reverse": module.parameters.reversed.isChecked(),
+                "thresholdInPercentage": module.parameters.inPercentage.isChecked()}
         return function, args
 
     @utils.manager(2)

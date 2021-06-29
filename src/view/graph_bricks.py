@@ -420,7 +420,6 @@ class QGraphicsModule(QtWidgets.QWidget):
                 if im.ndim == 2:
                     x, y, z = *true_pos, ''
                     value = im[x, y]
-                    self.rightfoot.setText("%d " % im[x, y])
                 elif self.result.slicable:
                     x, y, z = np.insert(true_pos, self.result.axis, self.result.currentSlice)
                     value = im[x, y, z]
