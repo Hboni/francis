@@ -182,7 +182,5 @@ class Model:
         if thresholdInPercentage:
             mini, maxi = np.min(im), np.max(im)
             threshold = mini + threshold * (maxi - mini) / 100
-            print(mini, maxi)
-        print(threshold)
         mask = im < threshold if reverse else im > threshold
         return mask.astype(np.uint8)
