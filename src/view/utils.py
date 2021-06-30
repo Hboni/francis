@@ -6,10 +6,10 @@ from src.view import ui
 
 def is_leaf(dico, key):
     """
-    This function check if a key is the penultimate in a dictionnary depth
+    This function check if a key is the penultimate in a dictionary depth
 
     Example:
-    with a dictionnary with this structure:
+    with a dictionary with this structure:
 
     {"Save": {
         "arg1": "value1",
@@ -27,7 +27,7 @@ def is_leaf(dico, key):
                         "arg2": "value2"}}}}
 
     Leaves will be: "Save", "SimpleOperation", "ComplexOperation" and "InterImageOperation"
-    because their corresponding values are the last sub-dictionnary in depth
+    because their corresponding values are the last sub-dictionary in depth
     and corresponds to the module arguments.
     """
     values = dico.get(key)
@@ -45,7 +45,7 @@ def connect_action(action, function):
 
 def menu_from_dict(dic, activation_function=None, menu=None):
     """
-    Create a QMenu with submenus from a dictionnary of dictionnary (recursively)
+    Create a QMenu with submenus from a dictionary of dictionary (recursively)
     add a delimiter if the key starts with 'delimiter'
     and connect menu actions to activation function
     check config/modules.json for an example
