@@ -1,4 +1,7 @@
-from src import app
+from src.app import main
+import multiprocessing
+
 
 if __name__ == "__main__":
-    app.main()
+    multiprocessing.freeze_support()
+    main()

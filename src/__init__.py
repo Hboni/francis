@@ -1,16 +1,26 @@
 import os
+import json
 
-SRC_DIR = os.path.dirname(os.path.realpath(__file__))
-MAIN_DIR = os.path.join(SRC_DIR, "..")
-RESOURCE_DIR = os.path.join(MAIN_DIR, "resources")
-DATA_DIR = os.path.join(RESOURCE_DIR, "data")
-DESIGN_DIR = os.path.join(RESOURCE_DIR, "design")
+
+# directories
+MAIN_DIR = os.path.abspath(".")
+RSC_DIR = os.path.join(MAIN_DIR, "resources")
 CONFIG_DIR = os.path.join(MAIN_DIR, "config")
-UI_DIR = os.path.join(MAIN_DIR, "src", "view", "ui")
-OUT_DIR = os.path.join(DATA_DIR, "out")
+TMP_DIR = os.path.join(RSC_DIR, "data", "tmp")
 
-# contain raw images
-_IMAGES_STACK = {}
+# base key for json session encryption
+KEY = 'CchfHeEVsE1hMldggpUEXduYH29pUp2ujYE7LPjZhOA='
 
-# contain viewable images (pixel values between 0 and 255)
-IMAGES_STACK = {}
+# true results
+# RESULT_STACK = {}
+
+# load default global parameters
+with open(os.path.join(CONFIG_DIR, "default.json"), "r") as f:
+    DEFAULT = json.load(f)
+
+
+def update_default(**kwargs):
+    global DEFAULT
+    DEFAULT.update(kwargs)
+    with open(os.path.join(CONFIG_DIR, "default.json"), "w") as f:
+        json.dump(DEFAULT, f, indent=4)

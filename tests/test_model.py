@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from src.model.model import Model
+import os
 
 
 mdl = Model()
@@ -23,6 +24,43 @@ def square():
 @pytest.fixture
 def grey_scale():
     return np.array([[i]*10 for i in range(10)])
+
+
+@pytest.fixture(params=[
+    os.path.join(os.getcwd(), 'resources/data/cvs_avg35_inMNI152.nii.gz'),
+    os.path.join(os.getcwd(), 'resources/data/Lena.png')
+])
+def test_image_path(request):
+    return request.param
+
+
+@pytest.fixture(scope='module', params=[
+    os.path.join(os.getcwd(), 'resources/data/out/saved_image.nii'),
+    os.path.join(os.getcwd(), 'resources/data/out/saved_image.png')
+    ])
+def test_image_write_path(request):
+    if os.path.exists(request.param):
+        os.remove(request.param)
+    return request.param
+
+
+def test_load_image(test_image_path):
+    assert isinstance(mdl.load(test_image_path).shape, tuple)
+
+
+def test_save_image(test_image_path, test_image_write_path):
+    img = mdl.load(test_image_path)
+    mdl.save(img, test_image_write_path)
+    root, ext = os.path.splitext(test_image_write_path)
+    if ext == '.png' and test_image_path.endswith('.nii.gz'):
+        assert os.path.exists(root)
+        assert os.path.exists(os.path.join(root, "saved_image0.png"))
+    else:
+        assert os.path.exists(test_image_write_path)
+
+
+def test_get_img_infos(square):
+    assert mdl.get_img_infos(square, info="max") == 1
 
 
 def test_erode(cube, square):

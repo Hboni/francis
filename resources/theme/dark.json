@@ -1,0 +1,17 @@
+{
+    "qss": {
+        "mainback_color":   "rgba(33, 37, 43, 255)",
+        "viewback_color":   "rgba(40, 44, 52, 255)",
+        "editback_color":   "rgba(27, 29, 35, 255)",
+        "buttonback_color": "rgba(58, 63, 75, 255)",
+
+        "feature_color":    "rgba(77, 120, 204, 255)",
+        "maintext_color":   "rgba(116, 121, 132, 255)",
+        "normaltext_color": "rgba(157, 165, 180, 255)",
+        "hightext_color":   "rgba(246, 248, 252, 255)",
+
+        "warning_color":    "rgba(234, 93, 68, 255)",
+        "info_color":       "rgba(221, 186, 137, 255)",
+        "valid_color":      "rgba(115, 201, 144, 255)"
+    }
+}

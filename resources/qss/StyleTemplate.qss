@@ -1,0 +1,180 @@
+QMainWindow {
+    background-color: %(mainback_color)s;
+}
+
+QViewWidget {
+    background-color: %(mainback_color)s;
+}
+
+QGraphicsView {
+    background-color: %(viewback_color)s;
+}
+
+QToolButton {
+    background-color: transparent;
+    border-radius : 2px;
+    color: %(normaltext_color)s;
+    border: 0px;
+}
+QToolButton:hover {
+    background-color: %(feature_color)s;
+    color: %(mainback_color)s;
+}
+QSpinBox::up-button:hover, QSpinBox::down-button:hover {
+    background-color: %(buttonback_color)s;
+}
+
+QPushButton {
+    border-radius : 2px;
+    background-color: %(buttonback_color)s;
+    color: %(maintext_color)s;
+    border-style: solid;
+    border-color: %(buttonback_color)s;
+    border-width: 2px;
+    padding: 3px;
+}
+QPushButton:hover {
+    color: %(normaltext_color)s;
+}
+QPushButton:pressed {
+    background-color: %(viewback_color)s;
+    border-color: %(feature_color)s;
+}
+QPushButton:checked {
+    background-color: %(viewback_color)s;
+    border-color: %(feature_color)s;
+}
+
+QPushButton#button {
+    padding: 6px;
+    border-radius : 0px;
+    font: bold 14px;
+}
+
+QLineEdit, QSpinBox, QComboBox {
+    border-radius : 2px;
+    background-color: %(editback_color)s;
+    color: %(normaltext_color)s;
+    selection-background-color: %(feature_color)s;
+    border: 0px;
+    padding: 3px;
+}
+QLineEdit:focus, QComboBox:focus {
+    border: 2px solid;
+    border-color: %(feature_color)s;
+}
+
+QComboBox::down-arrow {
+    image: url(resources/icon/DropDownArrow.png);
+    width: 10px;
+    height: 10px;
+}
+
+QCheckBox, QRadioButton {
+    color: %(maintext_color)s;
+}
+
+QCheckBox::indicator {
+    border : 1px solid %(feature_color)s;
+}
+QCheckBox::indicator:checked{
+    background-color: %(feature_color)s;
+}
+QCheckBox::indicator:unchecked {
+    background-color: %(editback_color)s;
+}
+
+QRadioButton::indicator {
+    height: 12px;
+    width: 12px;
+    border-style:solid;
+    border-radius:8px;
+    border-width: 2px;
+    border-color: %(feature_color)s;
+}
+QRadioButton::indicator:checked {
+    background-color: %(feature_color)s;
+}
+QRadioButton::indicator:unchecked {
+    background-color: %(editback_color)s;
+}
+
+QToolTip {
+    color: white;
+    background-color: %(feature_color)s;
+    border: none;
+}
+
+QLabel {
+    color: %(maintext_color)s;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+Junction {
+    color: feature_color;
+    background-color: feature_color;
+}
+
+
+QScrollBar:horizontal {
+	max-height: 10px;
+	border: 1px transparent;
+	margin: 0px 20px 0px 20px;
+	background: transparent;
+}
+QScrollBar:vertical {
+	max-width: 10px;
+	border: 1px transparent;
+	margin: 20px 0px 20px 0px;
+	background: transparent;
+}
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+	background: %(buttonback_color)s;
+	border-style: transparent;
+	border-radius: 4px;
+	min-height: 25px;
+}
+QScrollBar::handle:horizontal:hover, QScrollBar::handle:vertical:hover {
+	background: %(feature_color)s;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal, QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QProgressBar {
+    max-height: 2px;
+    border-color: transparent;
+    background-color: transparent;
+}
+
+QProgressBar::chunk {
+    background-color: qlineargradient(spread:pad, x1:0, x2:1, stop:0 transparent, stop:0.5 %(feature_color)s, stop:1 transparent);
+}
+
+
+QHeaderView::section{
+    border-top:0px solid black;
+    border-left:0px solid black;
+    border-right:1px solid black;
+    border-bottom: 1px solid black;
+    background-color:white;
+    color: black;
+    padding:4px;
+}
+
+QTableCornerButton::section{
+    border-top:0px solid black;
+    border-left:0px solid black;
+    border-right:1px solid black;
+    border-bottom: 1px solid black;
+    background-color:white;
+}

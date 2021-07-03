@@ -1,8 +1,38 @@
 from PyQt5 import QtCore
-from src import _IMAGES_STACK, IMAGES_STACK
-import numpy as np
-import copy
-RUNNERS = []
+from src import TMP_DIR
+import functools
+from multiprocessing import Process
+import os
+import pickle
+import psutil
+from datetime import datetime
+
+
+def call_target(target, args, tmp_path=None):
+    """
+    call a function with arguments, if an error occurs return the exception
+
+    Parameters
+    ----------
+    target: function or class method
+    args: dict
+        argument of the target
+    tmp_path: str, default=None
+        if specified, save the target result as a temporary .pkl file
+
+    Return
+    ------
+    res: target result or Exception
+
+    """
+    try:
+        res = target(**args)
+    except Exception as e:
+        res = e
+    if tmp_path is not None:
+        with open(tmp_path, 'wb') as f:
+            pickle.dump(res, f)
+    return res
 
 
 class Runner(QtCore.QThread):
@@ -11,91 +41,128 @@ class Runner(QtCore.QThread):
 
     Parameters
     ----------
-    target: function
-    *args, **kwargs: function arguments
+    target: function or class method
+    args: target arguments
+    mode: bool, default=False
+        if True, call the target inside a Process
+
     """
-    def __init__(self, target, *args, **kwargs):
+    def __init__(self, target, args, in_process=False):
         super().__init__()
-        self._target = target
-        self._args = args
-        self._kwargs = kwargs
+        self.target = target
+        self.args = args
+        self.tmp_path = os.path.join(TMP_DIR, str(datetime.now().timestamp()))
+        self.in_process = in_process
+        self.proc = None
 
         # where the function result is stored
         self.out = None
 
+    def suspend(self):
+        if self.proc:
+            psutil.Process(self.proc.pid).suspend()
+
+    def resume(self):
+        if self.proc:
+            psutil.Process(self.proc.pid).resume()
+
+    def terminate(self):
+        if self.proc:
+            psutil.Process(self.proc.pid).terminate()
+        else:
+            return QtCore.QThread.terminate(self)
+
     def run(self):
-        self.out = self._target(*self._args, **self._kwargs)
+        if self.in_process:
+            self.proc = Process(target=call_target, args=[self.target, self.args, self.tmp_path])
+            self.proc.start()
+            self.proc.join()
+        else:
+            call_target(self.target, self.args, self.tmp_path)
+
+        self.receive()
+
+    def receive(self):
+        """
+        load the result saved in the temporary file by the 'call_target' function
+        and delete the file.
+        """
+        if os.path.isfile(self.tmp_path):
+            with open(self.tmp_path, 'rb') as f:
+                self.out = pickle.load(f)
+            try:
+                os.remove(self.tmp_path)
+            except PermissionError as e:
+                print("cannot delete {0}, {1}".format(self.tmp_path, e))
 
 
-def view_manager(threadable=True):
+def delete_runner(module):
+    del module.runner.out
+    module.runner = None
+
+
+def manager(thread_mode=0):
     """
-    this decorator manage the loading gif and threading
+    this decorator manage threading
 
     Parameters
     ----------
-    threadable: bool, default=True
-        if True, the model function will be processed inside a QThread (if allowed)
+    thread_mode: {0, 1, 2}, default=0
+        0: no thread nor subprocess
+        1: thread enabled (terminate thread when possible)
+            warning: termination may be dangerous
+        2: subprocess enabled (suspend, resume and terminate process instantly)
+            warning: use 2 more seconds at each time to build the Process
 
     """
     def decorator(foo):
-        def inner(presenter, widget):
-            # start gif animation
-            widget.node.gif.start()
-
-            function, args = foo(presenter, widget)
-
-            def updateView(output):
-                if isinstance(output, Exception):
-                    widget.node.gif.fail("[{0}] {1}".format(type(output).__name__, output))
-                else:
-                    store_image(output, widget.node.name)
-                    widget.node.updateSnap()
-                    widget.node.gif.stop()
+        @functools.wraps(foo)
+        def inner(presenter, module):
+            cont = presenter.prior_manager(module, thread_mode)
+            if not cont:
+                return
+            function, args = foo(presenter, module)
 
             # start the process inside a QThread
-            if threadable and presenter.threading_enabled:
-                runner = Runner(function, **args)
-                RUNNERS.append(runner)  # needed to keep a trace of the QThread
-                runner.finished.connect(lambda: updateView(runner.out))
-                runner.finished.connect(lambda: RUNNERS.remove(runner))
-                runner.start()
+            if not presenter.threading_enabled or thread_mode == 0:
+                presenter.post_manager(module, call_target(function, args))
             else:
-                updateView(function(**args))
+                module.runner = Runner(function, args, thread_mode == 2)
+                module.runner.finished.connect(lambda: (presenter.post_manager(module, module.runner.out),
+                                                        delete_runner(module)))
+                module.runner.start()
         return inner
     return decorator
 
 
-def get_image(name):
-    if name not in _IMAGES_STACK:
-        print("'{}' not in image stack".format(name))
-        return None
-    return _IMAGES_STACK[name]
-
-
-def store_image(im, name):
+def get_checked(widget, names=None, first_only=True):
     """
-    store raw sparsed image and (0, 255)-scaled image, 0 is nan values
+    get checked childs of a widget
 
     Parameters
     ----------
-    im: numpy.array
-    name: str
+    widget: QWidget
+        parent widget
+    names: list of str, default=None
+        names of checkable widget child
+    first_only: bool, default=True
+        if True return only the first checked widget name
+
+    Return
+    ------
+    result: str or list of str
+
     """
-    # initialize
-    _IMAGES_STACK[name] = im
-    im_c = im.astype(np.float64) if im.dtype != np.float64 else copy.copy(im)
-    im_c[np.isinf(im_c)] = np.nan
-
-    # scale image in range (1, 255)
-    mini, maxi = np.nanmin(im_c), np.nanmax(im_c)
-    if mini == maxi:
-        mini = 0
-        maxi = max(maxi, 1)
-    im_c = (im_c - mini) / (maxi - mini) * 254 + 1
-
-    # set 0 as nan values
-    im_c[np.isnan(im_c)] = 0
-
-    # convert and store
-    im_c = im_c.astype(np.uint8)
-    IMAGES_STACK[name] = im_c
+    checked = []
+    if names is None:
+        for name, w in widget.__dict__.items():
+            if w.isChecked():
+                checked.append(name)
+    else:
+        for name in names:
+            w = widget.__dict__.get(name)
+            if w and w.isChecked():
+                if first_only:
+                    return name
+                checked.append(name)
+    return checked

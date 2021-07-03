@@ -1,78 +1,230 @@
-from PyQt5 import QtWidgets, uic, QtGui
-from src.view.graph import Graph
-from src import UI_DIR, CONFIG_DIR, utils
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
+from src import RSC_DIR, DEFAULT, CONFIG_DIR, update_default
+from src.view import graph, graph_bricks
 import json
 import os
 
 
 class View(QtWidgets.QMainWindow):
     """
-    main window where widgets and menu are displayed
+    this class is a part of the MVP app design, it shows all the user interface
+    and send signals for specific actions
+
     """
-    def __init__(self):
+    closed = QtCore.pyqtSignal()
+    moduleAdded = QtCore.pyqtSignal(graph_bricks.QGraphicsModule)
+
+    def __init__(self, nopopup=False):
         super().__init__()
-        uic.loadUi(os.path.join(UI_DIR, "Home.ui"), self)
-        self.settings = {}
+        self.nopopup = nopopup
+        uic.loadUi(os.path.join(RSC_DIR, "ui", "MainView.ui"), self)
+        self.resize(*DEFAULT['window_size'])
+        self.move(*DEFAULT['window_position'])
+
+        # connect file menu
+        self.actionNew.triggered.connect(self.newFile)
+        self.actionSave.triggered.connect(self.saveFile)
+        self.actionOpen.triggered.connect(lambda b: self.openFile())
+        self.actionSaveAs.triggered.connect(self.saveAsFile)
+        self.initNewFile.clicked.connect(self.newFile)
+
+        self.modules = json.load(open(os.path.join(CONFIG_DIR, "modules.json"), "rb"))
+        self.initStyle()
         self.initUI()
 
     def initUI(self):
         """
-        initialize graph and basic connections/shortcuts
+        This method init widgets UI for the main window
         """
-        self.graph = Graph(self, 'horizontal')
-        self.graph.nodeClicked.connect(self.showHideParameters)
-        self.setCentralWidget(self.graph)
+        self.setTabPosition(QtCore.Qt.RightDockWidgetArea, QtWidgets.QTabWidget.West)
+        self.setTabPosition(QtCore.Qt.LeftDockWidgetArea, QtWidgets.QTabWidget.East)
 
-        save_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+S'), self)
-        save_sc.activated.connect(self.guisave)
+        self.graphs = {}
 
-        restore_sc = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+R'), self)
-        restore_sc.activated.connect(self.guirestore)
+        self.tabWidget.clear()
+        self.tabWidget.tabCloseRequested.connect(self.closeTab)
+        self.tabWidget.hide()
 
-    def initMenu(self, modules):
-        """
-        create right-clic menu from modules
-        """
-        # initalize right-clic-menu
-        self.menu = {}
-        for k, values in modules.items():
-            lst = [values['type']]
-            if 'menu' in values:
-                lst += values['menu'].split('/')
-            lst.append(k)
-            utils.dict_from_list(self.menu, lst)
+        self.setWindowState(QtCore.Qt.WindowActive)
+        self.setWindowTitle("Francis")
 
-    def guirestore(self):
+    def initStyle(self):
         """
-        restore graph architecture and node settings
+        This method initialize styles and useful icons
         """
-        # restore graph architecture
-        graph_settings_path = os.path.join(CONFIG_DIR, 'graph.json')
-        if os.path.isfile(graph_settings_path):
-            with open(graph_settings_path, 'r') as infile:
-                settings = json.load(infile)
-                self.graph.restoreGraph(settings)
+        # create menu and actions for stylesheet and themes
+        self.theme, self.style = None, None
 
-    def guisave(self):
-        """
-        save graph architecture and node settings
-        """
-        # save graph architecture
-        with open(os.path.join(CONFIG_DIR, 'graph.json'), 'w') as outfile:
-            json.dump(self.graph.settings, outfile, sort_keys=False, indent=4)
+        def getAction(name, function):
+            name = os.path.splitext(name)[0]
+            act = QtWidgets.QAction(name, self)
+            act.triggered.connect(lambda: function(name))
+            return act
 
-    def showHideParameters(self, node):
+        # add menus
+        menuStyles = self.menuPreferences.addMenu('Styles')
+        for style in os.listdir(os.path.join(RSC_DIR, 'qss')):
+            menuStyles.addAction(getAction(style, self.loadStyle))
+
+        menuThemes = self.menuPreferences.addMenu('Themes')
+        for theme in os.listdir(os.path.join(RSC_DIR, 'theme')):
+            menuThemes.addAction(getAction(theme, self.loadTheme))
+
+        # load default style and theme
+        self.loadTheme()
+        self.loadStyle()
+
+    def loadTheme(self, theme=DEFAULT['theme']):
+        with open(os.path.join(RSC_DIR, "theme", theme + ".json"), "r") as f:
+            self.theme = json.load(f)
+        if self.style is not None:
+            QtWidgets.qApp.setStyleSheet(self.style % self.theme['qss'])
+
+    def loadStyle(self, style=DEFAULT['style']):
+        if style is None:
+            return QtWidgets.qApp.setStyleSheet('')
+
+        with open(os.path.join(RSC_DIR, "qss", style+".qss"), "r") as f:
+            self.style = f.read()
+        if self.theme is not None:
+            QtWidgets.qApp.setStyleSheet(self.style % self.theme['qss'])
+        else:
+            QtWidgets.qApp.setStyleSheet(self.style)
+
+    def getParameters(self, key, dic=None):
+        if dic is None:
+            dic = self.modules
+        if isinstance(dic, dict):
+            if key in dic:
+                return dic.get(key)
+            for v in dic.values():
+                par = self.getParameters(key, v)
+                if par is not None:
+                    return par
+
+    def addWidgetInDock(self, widget, side=QtCore.Qt.RightDockWidgetArea, unique=True):
         """
-        show or hide node parameters
+        put widget inside a qdock widget
 
         Parameters
         ----------
-        node: graph.Node
-            the node from Graph that contains parameters
+        widget: QWidget
+
+        Return
+        ------
+        dock: QDockWidget
+
         """
-        if node.parameters.itemAt(0) is not None:
-            widget = node.parameters.itemAt(0).widget()
-            if widget.isHidden():
-                widget.show()
-            else:
-                widget.hide()
+        if unique and isinstance(widget.parent(), QtWidgets.QDockWidget):
+            dock = widget.parent()
+            self.restoreDockWidget(dock)
+        else:
+            dock = QtWidgets.QDockWidget()
+            dock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+            dock.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
+
+            docks = self.findChildren(QtWidgets.QDockWidget)
+
+            dock.setWidget(widget)
+            self.addDockWidget(side, dock)
+
+            # tabify dock to existant docks
+            for dk in docks:
+                if self.dockWidgetArea(dk) == side:
+                    self.tabifyDockWidget(dk, dock)
+                    break
+
+        dock.show()
+        dock.raise_()
+        return dock
+
+    def openDialog(self, name, question, default=QtWidgets.QMessageBox.Yes):
+        dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, name, question,
+                                       QtWidgets.QMessageBox.Yes |
+                                       QtWidgets.QMessageBox.No |
+                                       QtWidgets.QMessageBox.Cancel,
+                                       parent=self)
+        dialog.setDefaultButton(default)
+        return dialog.exec()
+
+    def colorizeBackground(self, new_color=None):
+        if new_color is None:
+            new_color = QtWidgets.QColorDialog.getColor(QtGui.QColor(*DEFAULT.get("background_color")))
+        for gf in self.graphs.values():
+            gf.setBackgroundBrush(new_color)
+        DEFAULT["background_color"] = [new_color.red(), new_color.green(), new_color.blue()]
+
+    def closeTab(self, index):
+        graph = self.tabWidget.widget(index)
+        resp = graph.askSaveFile()
+        if resp == QtWidgets.QMessageBox.Yes:
+            graph.saveFile()
+        elif resp == QtWidgets.QMessageBox.No:
+            del self.graphs[graph.name]
+            self.tabWidget.removeTab(index)
+        if self.tabWidget.count() == 0:
+            self.tabWidget.hide()
+            self.initNewFile.show()
+
+    def restoreTabs(self):
+        filenames = DEFAULT.get('filenames')
+        for filename in filenames:
+            self.openFile(filename)
+        currentTabInd = DEFAULT.get('current_tab')
+        self.tabWidget.setCurrentIndex(currentTabInd)
+
+    def browseFile(self, mode='r', ext="*.iag"):
+        dialog = QtWidgets.QFileDialog()
+        if mode == 'r':
+            filename, _ = dialog.getOpenFileName(self, "Open file", filter=ext)
+        elif mode == 'w':
+            defPath = self.tabWidget.currentWidget().getDefaultPath()
+            filename, _ = dialog.getSaveFileName(self, 'Save file', defPath, filter=ext)
+        return filename
+
+    def graph(self):
+        return self.tabWidget.currentWidget()
+
+    def newFile(self):
+        gf = graph.QGraph(self, 'horizontal')
+        self.graphs[gf.name] = gf
+        gf.setBackgroundBrush(QtGui.QColor(*DEFAULT.get("background_color")))
+        self.tabWidget.addTab(gf, gf.saveName)
+        self.tabWidget.setCurrentWidget(gf)
+        self.tabWidget.show()
+        self.initNewFile.hide()
+        gf.updateName(False)
+        return gf
+
+    def openFile(self, filename=None):
+        if filename is None:
+            filename = self.browseFile('r')
+        if os.path.isfile(filename):
+            gf = self.newFile()
+            gf.restore(filename)
+
+    def saveFile(self):
+        self.tabWidget.currentWidget().saveFile()
+
+    def saveAsFile(self):
+        self.tabWidget.currentWidget().saveAsFile()
+
+    def askSaveFiles(self):
+        for gf in self.graphs.values():
+            if gf.modules and (gf.getSettings() != gf.settings or not gf.savePathIsSet) and not self.nopopup:
+                return self.openDialog("save files", "Do you want to close without saving ?",
+                                       default=QtWidgets.QMessageBox.No)
+        return QtWidgets.QMessageBox.Yes
+
+    def closeEvent(self, event):
+        resp = self.askSaveFiles()
+        if resp == QtWidgets.QMessageBox.Yes:
+            self.closed.emit()
+            update_default(window_size=[self.size().width(), self.size().height()],
+                           window_position=[self.pos().x(), self.pos().y()],
+                           current_tab=self.tabWidget.currentIndex(),
+                           filenames=[self.tabWidget.widget(i).getSavePath()
+                                      for i in range(self.tabWidget.count())])
+            QtWidgets.QMainWindow.closeEvent(self, event)
+        else:
+            event.ignore()

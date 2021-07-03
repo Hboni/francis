@@ -1,0 +1,9 @@
+QProgressBar {
+    max-height: 2px;
+    border-color: transparent;
+    background-color: transparent;
+}
+
+QProgressBar::chunk {
+    background-color: qlineargradient(spread:pad, x1:0, x2:1, stop:0 transparent, stop:0.5 green, stop:1 transparent);
+}

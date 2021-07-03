@@ -1,311 +1,392 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from src import DESIGN_DIR
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from src.view import utils
+from src import RSC_DIR
 import os
+import numpy as np
+import traceback
+import copy
 
 
-def get_parent_names(widget):
+def setButtonIcon(button, img, append=False):
     """
-    get parent names of the node associated to the widget
+    set image to the specified button
     """
-    return [p.name for p in widget.node.parents]
+    icon = QtGui.QIcon()
+    icon.addPixmap(QtGui.QPixmap(os.path.join(RSC_DIR, "icon", img)), QtGui.QIcon.Normal, QtGui.QIcon.On)
+    if not append:
+        button.setText("")
+    button.setIcon(icon)
+    button.setFlat(True)
+    button.setCursor(QtCore.Qt.PointingHandCursor)
 
 
-def menu_from_dict(acts, activation_function=None, menu=None):
+def showError(level, error):
     """
-    create a menu on right-click, based on 'acts' dictionnary
-
-    Parameters
-    ----------
-    acts: dict
-        actions to insert in menu
-    activation_function: function, optionnal
-        function that takes a QAction as argument and apply the requested action
-    menu: QMenu, optionnal
-        menu to fill
-
-    Return
-    ------
-    menu: QMenu
-
+    level: {NoIcon, Qestion, Information, Warning, Critical}
     """
-    if menu is None:
-        menu = QtWidgets.QMenu()
-    for a, subacts in acts.items():
-        if not subacts:
-            act = menu.addAction(a)
-            if activation_function is not None:
-                def connect(action):
-                    action.triggered.connect(lambda: activation_function(action))
-                connect(act)
-        else:
-            submenu = menu.addMenu(a)
-            menu_from_dict(subacts, activation_function, submenu)
-    return menu
+    msg = "{0}\n{1}".format(type(error).__name__, error)
+    dialog = QtWidgets.QMessageBox(eval("QtWidgets.QMessageBox."+level),
+                                   level, msg, QtWidgets.QMessageBox.Ok, QtWidgets.qApp.activeWindow())
+    dialog.setDetailedText("".join(traceback.format_tb(error.__traceback__)[1:]))
+    dialog.exec()
 
 
-def delete_layout(layout):
-    """
-    delete the selected layout
+class QGrap(QtWidgets.QWidget):
 
-    Parameters
-    ----------
-    layout: QLayout
-
-    """
-    if layout is None:
-        return
-    empty_layout(layout)
-    layout.deleteLater()
-    QtCore.QObjectCleanupHandler().add(layout)
-
-
-def empty_layout(layout):
-    """
-    delete all children (widget and layout) of the selected layout
-
-    Parameters
-    ----------
-    layout: QLayout
-    """
-    if layout is None:
-        return
-    while layout.count():
-        item = layout.takeAt(0)
-        widget = item.widget()
-        if widget is not None:
-            widget.deleteLater()
-        else:
-            delete_layout(item.layout())
-
-
-def get_checked_radiobutton(widget, sub_widget_names):
-    for name in sub_widget_names:
-        if widget.__dict__[name].isChecked():
-            return name
-
-
-class QViewWidget(QtWidgets.QWidget):
-    """
-    resizable and movable widget inside QGraphicsScene
-
-    Parameters
-    ----------
-    resizable: bool, default=True
-        if True add a grip at the bootom right corner to resize the widget
-    handleSize: tuple of 4 float, default=(0, -20, 0, 0)
-        size of the handle to move the view widget (left, top, right, bottom)
-    handleColor: QtGui.QColor, default=(180, 200, 180)
-        rgb color of the handle
-
-    """
-    sizeChanged = QtCore.pyqtSignal()
-    positionChanged = QtCore.pyqtSignal()
-    focused = QtCore.pyqtSignal(bool)
-
-    def __init__(self, resizable=True, handleSize=(0, -20, 0, 0), handleColor=None):
+    def __init__(self):
         super().__init__()
-        self.handleSize = handleSize
-        self.handleColor = handleColor
-        self._state = None
-        self.currentPosition = None
-        self.state = 'released'
-        self.initUI(resizable)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.installEventFilter(self)
 
-    def initUI(self, resizable):
-        """
-        initialize widget with footer and handle
-
-        Parameters
-        ----------
-        resizable: bool
-            if True add sizegrip to footer
-        """
-        vbox = QtWidgets.QVBoxLayout()
-        vbox.setSpacing(0)
-        vbox.setContentsMargins(0, 0, 0, 0)
-
-        # create left and right footer
-        hbox = QtWidgets.QHBoxLayout()
-        self.leftfoot = QtWidgets.QLabel()
-        self.rightfoot = QtWidgets.QLabel()
-        hbox.addWidget(self.leftfoot)
-        hbox.addStretch(0)
-        hbox.addWidget(self.rightfoot)
-
-        # add size gripto footer  if rezizable
-        if resizable:
-            self.sizeGrip = QtWidgets.QSizeGrip(self)
-            self.sizeGrip.mouseMoveEvent = self._mouseMoveEvent
-            hbox.addWidget(self.sizeGrip)
-
-        vbox.addWidget(QtWidgets.QWidget())
-        vbox.addLayout(hbox)
-        self.setLayout(vbox)
-
-        # create handle to move widget
-        self.handle = self.RectItem(self)
-        self.handle.setPen(QtGui.QPen(QtCore.Qt.transparent))
-        if self.handleColor is not None:
-            self.handle.setBrush(self.handleColor)
-
-        # initialize self function from handle functions
-        self.moveBy = self.handle.moveBy
-        self.pos = self.handle.pos
-
-        self.proxy = QtWidgets.QGraphicsProxyWidget(self.handle)
-        self.proxy.setWidget(self)
-
-    def _mouseMoveEvent(self, event):
-        self.resize(self.width()+event.pos().x(), self.height()+event.pos().y())
-
-    def setWidget(self, widget):
-        """
-        update the central widget with new widget
-
-        Parameters
-        ----------
-        widget: QWidget
-        """
-        inter = set(widget.__dict__).intersection(set(self.__dict__))
-        if inter:
-            return print("FAILED setWidget: you cannot set widget in QViewWidget " +
-                         "containing parameters like:\n " + " ".join(list(inter)))
-
-        self.layout().replaceWidget(self.layout().itemAt(0).widget(), widget)
-        self.__dict__.update(widget.__dict__)
-
-    class RectItem(QtWidgets.QGraphicsRectItem):
-        """
-        graphic item which allow to move the widget in graphic view
-
-        Parameters
-        ----------
-        parent: QViewWidget
-        """
-        def __init__(self, parent):
-            super().__init__()
-            self.parent = parent
-            self.setAcceptHoverEvents(True)
-            self.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable |
-                          QtWidgets.QGraphicsItem.ItemIsFocusable |
-                          QtWidgets.QGraphicsItem.ItemIsSelectable |
-                          QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges)
-
-        def itemChange(self, change, value):
-            if change in [QtWidgets.QGraphicsItem.ItemPositionChange,
-                          QtWidgets.QGraphicsItem.ItemVisibleChange]:
-                self.parent.positionChanged.emit()
-                self.parent.currentPosition = self.parent.handle.pos()
-            return QtWidgets.QGraphicsRectItem.itemChange(self, change, value)
-
-        def mousePressEvent(self, event=None):
-            self.parent.state = 'pressed'
-            self.setSelected(True)
-            return QtWidgets.QGraphicsRectItem.mousePressEvent(self, event)
-
-        def mouseReleaseEvent(self, event=None):
-            self.parent.state = 'released'
-            self.setSelected(False)
-            return QtWidgets.QGraphicsRectItem.mouseReleaseEvent(self, event)
-
-        def hoverEnterEvent(self, event):
-            self.parent.focused.emit(True)
-            return QtWidgets.QGraphicsRectItem.hoverEnterEvent(self, event)
-
-        def hoverLeaveEvent(self, event):
-            self.parent.focused.emit(False)
-            return QtWidgets.QGraphicsRectItem.hoverLeaveEvent(self, event)
-
-    def enterEvent(self, event):
-        self.focused.emit(True)
-        return QtWidgets.QWidget.enterEvent(self, event)
-
-    def leaveEvent(self, event):
-        self.focused.emit(False)
-        return QtWidgets.QWidget.leaveEvent(self, event)
-
-    def resizeEvent(self, event):
-        self.sizeChanged.emit()
-        return QtWidgets.QWidget.resizeEvent(self, event)
-
-    def addToScene(self, scene):
-        """
-        add widget to a specified scene
-
-        Parameters
-        ----------
-        handle_size: tuple of size 4
-            (left, top, right, bottom)
-        """
-        self.sizeChanged.connect(lambda: self.handle.setRect(QtCore.QRectF(self.geometry().adjusted(*self.handleSize))))
-        self.sizeChanged.emit()
-        scene.addItem(self.handle)
+    def eventFilter(self, obj, event):
+        if obj is self:
+            if event.type() == QtCore.QEvent.Leave:
+                QtWidgets.QApplication.restoreOverrideCursor()
+            if event.type() in [QtCore.QEvent.Enter, QtCore.QEvent.MouseButtonRelease]:
+                # !!! mouse release is not detected because its event is rejected !!!
+                QtWidgets.QApplication.restoreOverrideCursor()
+                QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.OpenHandCursor)
+            elif event.type() == QtCore.QEvent.MouseButtonPress:
+                QtWidgets.QApplication.restoreOverrideCursor()
+                QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ClosedHandCursor)
+        return QtWidgets.QWidget.eventFilter(self, obj, event)
 
 
-class Gif(QtWidgets.QWidget):
-    """
-    GIF QWidget
-
-    Parameters
-    ----------
-    size: tuple, default=(15, 15)
-        size of the GIF
-    gif_pathname: str
-        path to the gif file
-    fail_pathname: str
-        path to the fail image, useful if GIF state is set to 'fail'
-    end_pathname: str
-        path to the end image, useful if GIF state is set to 'stop'
-
-    """
-    def __init__(self, size=(15, 15), gif_pathname=os.path.join(DESIGN_DIR, "loading.gif"),
-                 fail_pathname=os.path.join(DESIGN_DIR, "fail.png"),
-                 end_pathname=os.path.join(DESIGN_DIR, "valid.png")):
+class QFormatLine(QtWidgets.QWidget):
+    def __init__(self):
         super().__init__()
-        # initialize
-        self.setFixedSize(*size)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.CustomizeWindowHint)
-        self.label = QtWidgets.QLabel(self)
+        uic.loadUi(os.path.join(RSC_DIR, 'ui', 'modules', 'bricks', 'formatLine.ui'), self)
 
-        # initialize gif
-        self.movie = QtGui.QMovie(gif_pathname)
-        self.movie.setScaledSize(QtCore.QSize(*size))
+        self.types.currentIndexChanged.connect(self.hideFormat)
+        self.format.hide()
 
-        # initialize fail and end state images
-        self.valid = QtGui.QPixmap(end_pathname)
-        self.valid = self.valid.scaled(*size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        self.error = QtGui.QPixmap(fail_pathname)
-        self.error = self.error.scaled(*size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        self.start()
-        self.clear()
+        self.types.currentIndexChanged.connect(self.hideUnit)
+        self.unit.hide()
 
-    def start(self):
-        """
-        start gif animation
-        """
-        self.clear()
-        self.label.setMovie(self.movie)
-        self.movie.start()
-        self.show()
+    def hideFormat(self):
+        self.format.show() if self.types.currentText() == 'datetime' else self.format.hide()
 
-    def stop(self):
-        """
-        replace gif animation by 'valid' image
-        """
-        self.clear()
-        self.label.setPixmap(self.valid)
+    def hideUnit(self):
+        self.unit.show() if self.types.currentText() == 'timedelta' else self.unit.hide()
 
-    def fail(self, msg=""):
-        """
-        replace gif animation by 'fail' image and add message tooltip on the image
-        """
-        self.clear()
-        self.label.setPixmap(self.error)
-        self.label.setToolTip(msg)
 
-    def clear(self):
+class QTypeForm(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.form = QtWidgets.QFormLayout()
+        self.setLayout(self.form)
+        self.rows = {}
+
+    def addRow(self, name):
+        row = uic.loadUi(os.path.join(RSC_DIR, 'ui', 'modules', 'bricks', 'formatLine.ui'))
+        row.types.currentTextChanged.connect(lambda txt: self.hideDetails(row, txt))
+        row.format.hide()
+        row.unit.hide()
+
+        self.form.addRow(name, row)
+        self.rows[name] = row
+
+    def addRows(self, names):
+        for name in names:
+            self.addRow(name)
+
+    def hideDetails(self, row, txt):
+        row.format.hide()
+        row.unit.hide()
+        if txt == 'datetime':
+            row.format.show()
+        elif txt == 'timedelta':
+            row.unit.show()
+
+
+class QGridButtonGroup(QtWidgets.QWidget):
+    def __init__(self, max_col=3, max_row=None):
+        super().__init__()
+        self._grid = QtWidgets.QGridLayout()
+        self.group = QtWidgets.QButtonGroup()
+        self.max_col = max_col
+        self.max_row = max_row
+        self._current_row, self._current_col = 0, 0
+        self.setLayout(self._grid)
+
+    def checkFirst(self):
+        if self.group.buttons():
+            self.group.buttons()[0].setChecked(True)
+
+    def checkAll(self, state=True):
+        for b in self.group.buttons():
+            b.setChecked(state)
+
+    def checkedButtonText(self):
+        checked_button = self.group.checkedButton()
+        if checked_button:
+            return checked_button.text()
+
+    def checkedButtonsText(self):
+        checked_buttons = []
+        for b in self.group.buttons():
+            if b.isChecked():
+                checked_buttons.append(b.text())
+        return checked_buttons
+
+    def computePositions(self, n):
+        if self.max_row is None and self.max_col is None:
+            return np.ceil(np.sqrt(n)), np.ceil(np.sqrt(n))
+        elif self.max_row is not None:
+            return np.ceil(n / self.max_row), self.max_row
+        elif self.max_col is not None:
+            return np.ceil(n / self.max_col), self.max_col
+
+    def addWidgets(self, widget_type, names, checkable=True):
+        if widget_type in [QtWidgets.QPushButton, QtWidgets.QCheckBox]:
+            self.group.setExclusive(False)
+        positions = self.computePositions(len(names))
+        i = 0
+        for row in range(int(positions[0])):
+            for col in range(int(positions[1])):
+                if i < len(names):
+                    widget = widget_type(names[i])
+                    if checkable and isinstance(widget, QtWidgets.QPushButton):
+                        widget.setCheckable(True)
+                    self._grid.addWidget(widget, row, col)
+                    self.group.addButton(widget)
+                    i += 1
+
+
+class QCustomTableWidget(QtWidgets.QWidget):
+    def __init__(self, data=None):
+        super().__init__()
+        uic.loadUi(os.path.join(RSC_DIR, 'ui', 'TableWidget.ui'), self)
+        setButtonIcon(self.save, "save.png")
+        setButtonIcon(self.release, "release.png")
+        setButtonIcon(self.quickPlot, "plot.png")
+
+        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+        if data is not None:
+            self.setData(data)
+
+    def updateVheader(self, index):
+        model = PandasModel(self.data, index-1)
+        proxyModel = QtCore.QSortFilterProxyModel()
+        proxyModel.setSourceModel(model)
+        self.table.setModel(proxyModel)
+
+    def setData(self, data):
+        try:
+            self.Vheader.addItems([''] + list(data.columns.astype(str)))
+        except TypeError:
+            pass
+        self.Vheader.currentIndexChanged.connect(self.updateVheader)
+        self.rightfoot.setText("{0} x {1}    ({2} {3})".format(*data.shape, *utils.getMemoryUsage(data)))
+        self.leftfoot.hide()
+        self.data = data
+        self.updateVheader(0)
+
+
+class QImageRenderer(QtWidgets.QLabel):
+    syncSignal = QtCore.pyqtSignal()
+
+    def __init__(self, img, parent):
+        QtWidgets.QWidget.__init__(self)
+        self.img = self.formatImage(img)
+
+        self.getImageType()
+
+        self.pixmap = None
+        self._parent = parent
+        self.updateSnap()
+
+    def formatImage(self, img):
+        img = img.astype(np.float64) if img.dtype != np.float64 else copy.copy(img)
+        img[np.isinf(img)] = np.nan
+
+        # scale image in range (1, 255)
+        mini, maxi = np.nanmin(img), np.nanmax(img)
+        if mini == maxi:
+            mini = 0
+            maxi = max(maxi, 1)
+        img = (img - mini) / (maxi - mini) * 254 + 1
+
+        # set 0 as nan values
+        img[np.isnan(img)] = 0
+
+        # convert and store
+        img = img.astype(np.uint8)
+        return img
+
+    def wheelEvent(self, event):
+        if not self.slicable:
+            return
+        if self.currentSlice is not None:
+            step = 1
+            if event.angleDelta().y() > 0:
+                self.currentSlice += step
+            else:
+                self.currentSlice -= step
+        self.updateSnap()
+        self.syncSignal.emit()
+
+    def mouseDoubleClickEvent(self, event):
         """
-        clear the widget and reset the tooltip
+        update image axis on double click above image view
         """
-        self.label.clear()
-        self.label.setToolTip("")
+        if not self.slicable:
+            return
+        if self.axis == 2:
+            self.axis = 0
+        else:
+            self.axis += 1
+        self.updateSnap()
+        self.syncSignal.emit()
+
+    def getImageType(self):
+        self.slicable = False
+        self.imgType = QtGui.QImage.Format_Grayscale8
+        if self.img.ndim == 3:
+            if self.img.shape[-1] == 3:
+                self.imgType = QtGui.QImage.Format_RGB888
+            elif self.img.shape[-1] == 4:
+                self.imgType = QtGui.QImage.Format_RGBA8888
+            else:
+                self.slicable = True
+
+        if self.slicable:
+            self.axis = 0
+            self.currentSlice = None
+
+    def getSliceParams(self):
+        if self.img.ndim == 2:
+            return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1]
+        elif self.img.ndim == 3:
+            if not self.slicable:
+                return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1] * self.img.shape[2]
+            else:
+                s = self.img.shape[self.axis]
+
+                # set current slice
+                if self.currentSlice is None:
+                    self.currentSlice = int(s / 2)
+                elif self.currentSlice < 0:
+                    self.currentSlice = 0
+                elif self.currentSlice >= s:
+                    self.currentSlice = s-1
+
+                # snap axis slice
+                if self.axis == 0:
+                    im_slice = self.img[self.currentSlice].copy()
+                    _, h, w = self.img.shape
+                elif self.axis == 1:
+                    im_slice = self.img[:, self.currentSlice].copy()
+                    h, _, w = self.img.shape
+                elif self.axis == 2:
+                    im_slice = self.img[:, :, self.currentSlice].copy()
+                    h, w, _ = self.img.shape
+
+                return im_slice, w, h, w
+
+    def updateSnap(self):
+        im, w, h, bytesPerLine = self.getSliceParams()
+        qim = QtGui.QImage(im, w, h, bytesPerLine, self.imgType)
+        self.pixmap = QtGui.QPixmap(qim)
+        self.pixmap = self.pixmap.scaledToWidth(self._parent.width() - 2,
+                                                QtCore.Qt.FastTransformation)
+        self.setPixmap(self.pixmap)
+        self.update()
+
+
+class PandasModel(QtCore.QAbstractTableModel):
+    """
+    Class to populate a table view with a pandas dataframe
+    """
+    def __init__(self, df, header_index=-1, parent=None):
+        QtCore.QAbstractTableModel.__init__(self, parent)
+        if header_index == -1:
+            self._data = df
+        else:
+            header_colname = df.columns[header_index]
+            self._data = df.set_index(header_colname)
+
+    def format(self, value):
+        return '' if str(value) in ['nan', 'NaT'] else str(value)
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parent=None):
+        return self._data.shape[1]
+
+    def data(self, index, role):
+        if index.isValid():
+            if role == QtCore.Qt.DisplayRole:
+                return self.format(self._data.iloc[index.row(), index.column()])
+
+    def headerData(self, col, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self.format(self._data.columns[col])
+        elif orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            return self.format(self._data.index[col])
+
+
+class QMultiWidget(QtWidgets.QWidget):
+    def __init__(self, widgets=[], names=[]):
+        super().__init__()
+        layout = QtWidgets.QVBoxLayout()
+        self.tab = QtWidgets.QTabWidget()
+        layout.addWidget(self.tab)
+        self.apply = QtWidgets.QPushButton('apply')
+        layout.addWidget(self.apply)
+        self.setLayout(layout)
+        self.widgets = {}
+        for widget, name in zip(widgets, names):
+            self.addWidget(widget, name)
+
+    def addWidget(self, widget, name):
+        self.tab.addTab(widget, name)
+        self.tab.setCurrentIndex(0)
+        self.widgets[name] = widget
+        return widget
+
+
+class QCustomSizeGrip(QtWidgets.QSizeGrip):
+    def __init__(self, parent):
+        super(QCustomSizeGrip, self).__init__(parent)
+        self._parent = parent
+
+    def mouseMoveEvent(self, event=None):
+        if event is None:
+            x, y = 0, 0
+        else:
+            x, y = event.pos().x(), event.pos().y()
+
+        if self._parent.resultArea.isHidden():
+            height = 1
+        elif isinstance(self._parent.result, QImageRenderer):
+            s = self._parent.result.pixmap.size()
+            areaWidth = self._parent.resultArea.width()
+            calculatedAreaHeight = areaWidth * s.height() / s.width()
+            height = calculatedAreaHeight + self._parent.height() - self._parent.resultArea.height()
+            self._parent.result.updateSnap()
+        else:
+            height = self._parent.height() + y
+
+        self._parent.resize(self._parent.width() + x, height)
+
+
+class QCustomDialog(QtWidgets.QDialog):
+    def __init__(self, title, uipath, parent=None):
+        super(QCustomDialog, self).__init__(parent)
+        uic.loadUi(uipath, self)
+        self.setWindowTitle(title)
+        self.out = None
+        self.initConnections()
+
+    def initConnections(self):
+        def connect(widget):
+            w.clicked.connect(lambda: self.accept(widget.text()))
+        for w in self.__dict__.values():
+            if isinstance(w, QtWidgets.QPushButton):
+                connect(w)
+
+    def accept(self, out):
+        self.out = out
+        QtWidgets.QDialog.accept(self)

@@ -1,0 +1,36 @@
+{
+    "window_size": [
+        1920,
+        1013
+    ],
+    "window_position": [
+        15,
+        -9
+    ],
+    "module_width": 250,
+    "space_between_modules": [
+        50,
+        50
+    ],
+    "background_color": [
+        216,
+        255,
+        217
+    ],
+    "arrow": {
+        "width": 2,
+        "arrowWidth": 6,
+        "arrowLen": 6,
+        "space": [
+            0,
+            10
+        ],
+        "color": "QtGui.QColor(77, 120, 204)",
+        "borderWidth": 0,
+        "borderColor": "QtGui.QColor(77, 120, 204)"
+    },
+    "style": "Default",
+    "theme": "bright",
+    "filenames": [],
+    "current_tab": -1
+}
