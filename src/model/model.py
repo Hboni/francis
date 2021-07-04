@@ -43,10 +43,10 @@ class Model:
             data = imageio.imread(path)
             if data.ndim == 3:
                 # remove alpha channel if same value everywhere
-                if data.shape[2] == 4 and (data[:, :, 3] == data[0, 0, 3]).all():
+                if data.shape[2] == 4:
                     data = data[:, :, :3]
                 # convert to gray if same value everywhere in each r, g, b canal
-                if data.shape[2] in [3, 4] and (data[:, :, 0] == data[:, :, 1]).all() \
+                if data.shape[2] == 3 and (data[:, :, 0] == data[:, :, 1]).all() \
                         and (data[:, :, 1] == data[:, :, 2]).all():
                     data = data[:, :, 0]
         else:
@@ -98,31 +98,25 @@ class Model:
             imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
-    def extract_channel(self, im, red=True, green=True, blue=True, alpha=True):
+    def extract_channel(self, im, channel='red'):
         """
         extract channel from image
 
         Parameters
         ----------
         im: 2D numpy array
-        red, green, blue, alpha: bool, default=True
-            if False, drop this channel
+        channel: {'red', 'green', 'blue'}, default='red'
 
         Return
         ------
         result: 2D numpy array
 
         """
-        if im.shape[2] == 4:
-            selected_channels = [i for i, ch in enumerate([red, green, blue, alpha]) if ch]
-        elif im.shape[2] == 3:
-            selected_channels = [i for i, ch in enumerate([red, green, blue]) if ch]
-        if len(selected_channels) == 1:
-            selected_channels = selected_channels[0]
-        elif len(selected_channels) == 0:
-            raise ValueError("No channel has been selected")
-        im = im[:, :, selected_channels]
-        return im
+        if im.ndim != 3 or im.shape[2] != 3:
+            raise Exception("You cannot extract red, green or blue channel from this image")
+        for i, c in enumerate(['red', 'green', 'blue']):
+            if c == channel:
+                return im[:, :, i]
 
     def get_img_infos(self, im, info='max'):
         """

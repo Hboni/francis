@@ -157,12 +157,6 @@ class Presenter():
         elif module.type == "Load":
             module.parameters.browse.clicked.connect(lambda: self.browse_path(module))
 
-        elif module.type == "ExtractChannels":
-            module.parents[0].displayed.connect(lambda: self.init_module_custom_connections(module))
-            parent_im = module.getData(module.get_parent_name())
-            if isinstance(parent_im, np.ndarray) and parent_im.ndim == 3:
-                module.parameters.alpha.setVisible(parent_im.shape[2] == 4)
-
         elif module.type == "Operation":
             for rb in [module.parameters.add, module.parameters.multiply]:
                 rb.clicked.connect(lambda: module.parameters.reference.setEnabled(False))
@@ -260,10 +254,7 @@ class Presenter():
         parent_name = module.get_parent_name()
         function = self._model.extract_channel
         args = {"im": module.getData(parent_name),
-                "red": module.parameters.red.isChecked(),
-                "green": module.parameters.green.isChecked(),
-                "blue": module.parameters.blue.isChecked(),
-                "alpha": module.parameters.alpha.isChecked()}
+                "channel": utils.get_checked(module.parameters, ['red', 'green', 'blue'])}
         return function, args
 
     @utils.manager(2)

@@ -15,7 +15,7 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
-    <widget class="QCheckBox" name="red">
+    <widget class="QRadioButton" name="red">
      <property name="text">
       <string>red</string>
      </property>
@@ -25,34 +25,21 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="green">
+    <widget class="QRadioButton" name="green">
      <property name="text">
       <string>green</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="blue">
+    <widget class="QRadioButton" name="blue">
      <property name="text">
       <string>blue</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="alpha">
-     <property name="text">
-      <string>alpha</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <property name="autoExclusive">
       <bool>false</bool>
      </property>
     </widget>
