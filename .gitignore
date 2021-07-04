@@ -1,6 +1,7 @@
 # output folder
 resources/data/out/*
 resources/data/tmp/*
+config/usr_default.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
