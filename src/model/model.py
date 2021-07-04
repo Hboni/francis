@@ -160,6 +160,10 @@ class Model:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
+    def apply_formula(self, elements, formula):
+        print(formula)
+        return
+
     def apply_threshold(self, im, threshold, reverse=False, thresholdInPercentage=False):
         """
         Apply binary threshold on the input image
