@@ -1,11 +1,11 @@
 {
     "window_size": [
-        1920,
-        1013
+        1143,
+        621
     ],
     "window_position": [
-        15,
-        -9
+        298,
+        225
     ],
     "module_width": 250,
     "space_between_modules": [
@@ -13,9 +13,9 @@
         50
     ],
     "background_color": [
-        216,
         255,
-        217
+        255,
+        255
     ],
     "arrow": {
         "width": 2,
@@ -31,6 +31,7 @@
     },
     "style": "Default",
     "theme": "bright",
-    "filenames": [],
+    "filenames": [
+    ],
     "current_tab": -1
 }
