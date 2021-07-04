@@ -3,7 +3,7 @@
         "Load": {
             "label": "importer",
             "function": "call_load",
-            "color": [255, 198, 179, 255]
+            "color": [255, 255, 255, 0]
         },
         "delimiter_1": {},
         "colorBackground": {
@@ -16,40 +16,40 @@
             "ThresholdImage": {
                 "label": "standard",
                 "function": "call_apply_threshold",
-                "color": [255, 198, 179, 255]
+                "color": [255, 255, 255, 0]
             }
         },
         "opération": {
             "SimpleOperation": {
                 "label": "standard",
                 "function": "call_apply_simple_operation",
-                "color": [255, 198, 179, 255]
+                "color": [255, 255, 255, 0]
             },
             "Operation": {
                 "label": "inter-images",
                 "function": "call_apply_operation",
                 "nparents": -1,
-                "color": [255, 198, 179, 255]
+                "color": [255, 255, 255, 0]
             }
         },
         "description": {
             "GetInfo": {
                 "label": "min/max/mean",
                 "function": "call_get_img_infos",
-                "color": [255, 198, 179, 255]
+                "color": [255, 255, 255, 0]
             }
         },
         "morphologie math.": {
             "MorphoBasics": {
                 "label": "standard",
                 "function": "call_apply_basic_morpho",
-                "color": [255, 198, 179, 255]
+                "color": [255, 255, 255, 0]
             }
         },
         "Save": {
             "label": "enregistrer",
             "function": "call_save",
-            "color": [255, 198, 179, 255]
+            "color": [255, 255, 255, 0]
         },
         "delimiter_1": {},
 
