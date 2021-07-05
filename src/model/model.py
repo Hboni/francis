@@ -42,7 +42,7 @@ class Model:
         elif ext in ['.png', '.jpg']:
             data = imageio.imread(path)
             if data.ndim == 3:
-                # remove alpha channel if same value everywhere
+                # remove alpha channel
                 if data.shape[2] == 4:
                     data = data[:, :, :3]
                 # convert to gray if same value everywhere in each r, g, b canal
@@ -114,9 +114,8 @@ class Model:
         """
         if im.ndim != 3 or im.shape[2] != 3:
             raise Exception("You cannot extract red, green or blue channel from this image")
-        for i, c in enumerate(['red', 'green', 'blue']):
-            if c == channel:
-                return im[:, :, i]
+        idx = ['red', 'green', 'blue'].index(channel)
+        return im[:, :, idx]
 
     def get_img_infos(self, im, info='max'):
         """
