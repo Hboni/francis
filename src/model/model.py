@@ -196,6 +196,7 @@ class Model:
 
         # initialize formula
         if initialize:
+            formula = formula.replace(',', '.')
             # add space
             formula = list(formula)
             for i, f in enumerate(formula):
