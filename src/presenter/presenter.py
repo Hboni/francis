@@ -325,8 +325,8 @@ class Presenter():
         """
         parent_names = module.get_parent_names()
         function = self._model.apply_formula
-        args = {"elements": module.getData(parent_names),
-                "operation": module.parameters.formula.text()}
+        args = {"elements": {name: module.getData(name) for name in parent_names},
+                "formula": module.parameters.formula.text()}
         return function, args
 
     @utils.manager(2)

@@ -160,9 +160,91 @@ class Model:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
-    def apply_formula(self, elements, formula):
-        print(formula)
-        return
+    def apply_formula(self, elements, formula, initialize=True, id=0):
+        """
+        This function calculate complexe operations between float/int and images
+        it handles parenthesis grouping and operator priorities.
+        And it calls "apply_operation" to do pear operations recursively.
+
+        Parameters
+        ----------
+        elements: dict
+            this dictionary contains data (image or float/int...)
+        formula: str or list of str
+
+        Return
+        ------
+        result: np.ndarray or int/float
+            the result type depends on the formula.
+
+        Example
+        -------
+        formula = "( 3 x [key_1] + 4 x [key_2] ) ÷ [key_3]"
+        elements = {'key_1': np.array([...]),   # image
+                    'key_2': np.array([...]),   # image
+                    'key_3': 2}                 # integer
+
+        This will recursively apply (call self.apply_operation method):
+            - M1 = multiplication of key_1 image and 3
+            - M2 = multiplication of key_2 image and 4
+            - A1 = addition of M1 and M2
+            - result = division of A1 and key_3 value
+        """
+        # initialize formula
+        if initialize:
+            if isinstance(formula, str):
+                formula = formula.split(' ')
+            while '' in formula:
+                formula.remove('')
+
+        # operations ordered on priorities
+        operations = ['multiply', 'divide', 'add', 'subtract']
+        signs = ['x', '÷', '+', '-']
+
+        # apply pear operation (with one operator and two elements)
+        # example [Load_1] x 5
+        if len(formula) == 3:
+            op_sign = formula.pop(1)
+            for i, f in enumerate(formula):
+                if f.startswith('['):
+                    formula[i] = elements[f[1:-1]]
+                else:
+                    formula[i] = eval(f)
+            for operation, sign in zip(operations, signs):
+                if op_sign == sign:
+                    res = self.apply_operation(formula[0], formula[1], operation)
+        else:
+            # recursively apply formula on group in parenthesis
+            if '(' in formula:
+                for i, f in enumerate(formula):
+                    if f == '(':
+                        start = i
+                    elif f == ')':
+                        end = i + 1
+                        break
+                sub_formula = formula[start+1:end-1]
+
+            # recursively apply formula on prioritary pear operations
+            else:
+                for sign in signs:
+                    if sign in formula:
+                        start = formula.index(sign) - 1
+                        end = formula.index(sign) + 2
+                        break
+                sub_formula = formula[start:end]
+
+            # do recusrsivity
+            name = "_ID{}".format(id)
+            id += 1
+            res, id = self.apply_formula(elements, sub_formula, False, id)
+            elements[name] = res
+            formula = formula[:start] + ["[{}]".format(name)] + formula[end:]
+            res, id = self.apply_formula(elements, formula, False, id)
+
+        if not initialize:
+            return res, id
+
+        return res
 
     def apply_threshold(self, im, threshold, reverse=False, thresholdInPercentage=False):
         """
