@@ -160,7 +160,7 @@ class Presenter():
         elif module.type == "Calculator":
             for i, name in enumerate(module.get_parent_names()):
                 button = QtWidgets.QPushButton(name)
-                button.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Expanding)
+                button.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
                 module.parameters.grid.addWidget(button, 0, i)
                 module.parameters.__dict__["[{}]".format(name)] = button
 

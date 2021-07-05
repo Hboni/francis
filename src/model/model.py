@@ -170,7 +170,7 @@ class Model:
         ----------
         elements: dict
             this dictionary contains data (image or float/int...)
-        formula: str or list of str
+        formula: str
 
         Return
         ------
@@ -190,16 +190,28 @@ class Model:
             - A1 = addition of M1 and M2
             - result = division of A1 and key_3 value
         """
+        # operations ordered on priorities
+        operations = ['multiply', 'divide', 'add', 'subtract']
+        signs = ['x', '÷', '+', '-']
+
         # initialize formula
         if initialize:
+            # add space
+            formula = list(formula)
+            for i, f in enumerate(formula):
+                if f in signs + ['(', ')']:
+                    formula[i] = " {} ".format(f)
+                elif f == '[':
+                    formula[i] = " " + f
+                elif f == ']':
+                    formula[i] = f + " "
+            formula = "".join(formula)
+
+            # convert formula to list
             if isinstance(formula, str):
                 formula = formula.split(' ')
             while '' in formula:
                 formula.remove('')
-
-        # operations ordered on priorities
-        operations = ['multiply', 'divide', 'add', 'subtract']
-        signs = ['x', '÷', '+', '-']
 
         # apply pear operation (with one operator and two elements)
         # example [Load_1] x 5
