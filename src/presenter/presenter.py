@@ -166,7 +166,12 @@ class Presenter():
 
             def fill_formula(button, txt):
                 formula = module.parameters.formula
-                button.clicked.connect(lambda: formula.setText(formula.text() + txt))
+                if txt == "🠔":
+                    button.clicked.connect(lambda: formula.setText(formula.text()[:-1]))
+                elif txt == "C":
+                    button.clicked.connect(lambda: formula.setText(""))
+                else:
+                    button.clicked.connect(lambda: formula.setText(formula.text() + txt))
 
             for name, button in module.parameters.__dict__.items():
                 if isinstance(button, QtWidgets.QToolButton):
@@ -325,8 +330,8 @@ class Presenter():
         """
         parent_names = module.get_parent_names()
         function = self._model.apply_formula
-        args = {"elements": {name: module.getData(name) for name in parent_names},
-                "formula": module.parameters.formula.text()}
+        args = {"formula": module.parameters.formula.text(),
+                "elements": {name: module.getData(name) for name in parent_names}}
         return function, args
 
     @utils.manager(2)
