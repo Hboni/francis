@@ -1,8 +1,8 @@
-import pytest
-import numpy as np
-from src.model.model import Model
 import os
 
+import numpy as np
+import pytest
+from src.model.model import Model
 
 mdl = Model()
 
@@ -23,7 +23,7 @@ def square():
 
 @pytest.fixture
 def grey_scale():
-    return np.array([[i]*10 for i in range(10)])
+    return np.array([[i] * 10 for i in range(10)])
 
 
 @pytest.fixture(params=[
@@ -55,11 +55,19 @@ def test_load_file(test_file_path):
         assert isinstance(mdl.load(test_file_path).shape, tuple)
 
 
+<<<<<<< HEAD
 def test_save_image(test_file_path, test_file_write_path):
     file = mdl.load(test_file_path)
     root, ext = os.path.splitext(test_file_write_path)
     if ext == '.png' and test_file_path.endswith('.nii.gz'):
         mdl.save(file, test_file_write_path)
+=======
+def test_save_image(test_image_path, test_image_write_path):
+    img = mdl.load(test_image_path)
+    mdl.save(img, test_image_write_path)
+    root, ext = os.path.splitext(test_image_write_path)
+    if ext == ".png" and test_image_path.endswith(".nii.gz"):
+>>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     elif test_file_path.endswith(ext):
@@ -72,6 +80,7 @@ def test_get_img_infos(square):
 
 
 def test_erode(cube, square):
+<<<<<<< HEAD
     assert np.sum(mdl.apply_basic_morpho(cube, 0, 'erosion', round_shape=False)) == 6**3
     assert np.sum(mdl.apply_basic_morpho(cube, 1, 'erosion', round_shape=False)) == 4**3
     assert np.sum(mdl.apply_basic_morpho(cube, 2, 'erosion', round_shape=False)) == 2**3
@@ -79,19 +88,40 @@ def test_erode(cube, square):
     assert np.sum(mdl.apply_basic_morpho(square, 0, 'erosion', round_shape=False)) == 6**2
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'erosion', round_shape=True)) == 4**2
     assert np.sum(mdl.apply_basic_morpho(square, 2, 'erosion', round_shape=True)) == 2**2
+=======
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 1, "erosion", round_shape=False)) == 4**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 2, "erosion", round_shape=False)) == 2**3
+    )
 
-    assert np.array_equal(mdl.apply_basic_morpho(square, 1, 'erosion', round_shape=True),
-                          mdl.apply_basic_morpho(square, 1, 'erosion', round_shape=False))
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True)) == 4**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 2, "erosion", round_shape=True)) == 2**2
+    )
+>>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
+
+    assert np.array_equal(
+        mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True),
+        mdl.apply_basic_morpho(square, 1, "erosion", round_shape=False),
+    )
 
     assert np.array_equal(
         mdl.apply_basic_morpho(
-            mdl.apply_basic_morpho(cube, 1, 'dilation', round_shape=False),
-            1, 'erosion', round_shape=False
+            mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=False),
+            1,
+            "erosion",
+            round_shape=False,
         ),
-        cube)
+        cube,
+    )
 
 
 def test_dilation(cube, square):
+<<<<<<< HEAD
     assert np.sum(mdl.apply_basic_morpho(cube, 0, 'dilation', round_shape=False)) == 6**3
     assert np.sum(mdl.apply_basic_morpho(cube, 1, 'dilation', round_shape=False)) == 8**3
     assert np.sum(mdl.apply_basic_morpho(cube, 2, 'dilation', round_shape=False)) == 10**3
@@ -102,16 +132,44 @@ def test_dilation(cube, square):
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=False)) == 8**2
     assert np.sum(mdl.apply_basic_morpho(square, 2, 'dilation', round_shape=False)) == 10**2
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=True)) == 8**2 - 4
+=======
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=False)) == 8**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=False))
+        == 10**3
+    )
+    assert np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=True)) == 432
+    assert np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=True)) == 728
+
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=False))
+        == 8**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 2, "dilation", round_shape=False))
+        == 10**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=True))
+        == 8**2 - 4
+    )
+>>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
 
     assert np.array_equal(
         mdl.apply_basic_morpho(
-            mdl.apply_basic_morpho(cube, 1, 'erosion', round_shape=False),
-            1, 'dilation', round_shape=False
+            mdl.apply_basic_morpho(cube, 1, "erosion", round_shape=False),
+            1,
+            "dilation",
+            round_shape=False,
         ),
-        cube)
+        cube,
+    )
 
 
 def test_threshold(grey_scale):
+<<<<<<< HEAD
     assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4*10
@@ -119,50 +177,73 @@ def test_threshold(grey_scale):
     assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 50, thresholdInPercentage=True) > 0) == 5*10
     assert np.sum(mdl.apply_threshold(grey_scale, 50, True, thresholdInPercentage=True) > 0) == 5*10
+=======
+    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 4, True) > 0) == 4 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7 * 10
+>>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
 
 
 def test_add_value(cube, square):
-    assert np.max(mdl.apply_operation(square, 2, operation='add')) == np.max(square) + 2
-    assert np.max(mdl.apply_operation(square, 0, operation='add')) == np.max(square)
-    assert np.max(mdl.apply_operation(cube, 2, operation='add')) == np.max(cube) + 2
-    assert np.max(mdl.apply_operation(cube, 0, operation='add')) == np.max(cube)
+    assert np.max(mdl.apply_operation(square, 2, operation="add")) == np.max(square) + 2
+    assert np.max(mdl.apply_operation(square, 0, operation="add")) == np.max(square)
+    assert np.max(mdl.apply_operation(cube, 2, operation="add")) == np.max(cube) + 2
+    assert np.max(mdl.apply_operation(cube, 0, operation="add")) == np.max(cube)
 
 
 def test_add_image(cube, square):
-    assert np.sum(mdl.apply_operation(square, square, operation='add')) == 2 * np.sum(square)
-    assert np.sum(mdl.apply_operation(square, [square, square, square], operation='add')) == 4 * np.sum(square)
-    assert np.sum(mdl.apply_operation(cube, cube, operation='add')) == 2 * np.sum(cube)
-    assert np.sum(mdl.apply_operation(cube, [cube, cube, cube], operation='add')) == 4 * np.sum(cube)
+    assert np.sum(mdl.apply_operation(square, square, operation="add")) == 2 * np.sum(
+        square
+    )
+    assert np.sum(
+        mdl.apply_operation(square, [square, square, square], operation="add")
+    ) == 4 * np.sum(square)
+    assert np.sum(mdl.apply_operation(cube, cube, operation="add")) == 2 * np.sum(cube)
+    assert np.sum(
+        mdl.apply_operation(cube, [cube, cube, cube], operation="add")
+    ) == 4 * np.sum(cube)
 
 
 def test_subtract_value(cube, square):
-    assert np.max(mdl.apply_operation(square, 2, operation='subtract')) == np.max(square) - 2
-    assert np.max(mdl.apply_operation(square, 0, operation='subtract')) == np.max(square)
-    assert np.max(mdl.apply_operation(cube, 2, operation='subtract')) == np.max(cube) - 2
-    assert np.max(mdl.apply_operation(cube, 0, operation='subtract')) == np.max(cube)
+    assert (
+        np.max(mdl.apply_operation(square, 2, operation="subtract"))
+        == np.max(square) - 2
+    )
+    assert np.max(mdl.apply_operation(square, 0, operation="subtract")) == np.max(
+        square
+    )
+    assert (
+        np.max(mdl.apply_operation(cube, 2, operation="subtract")) == np.max(cube) - 2
+    )
+    assert np.max(mdl.apply_operation(cube, 0, operation="subtract")) == np.max(cube)
 
 
 def test_subtract_image(cube, square):
-    assert np.sum(mdl.apply_operation(square, square, operation='subtract')) == 0
-    assert np.sum(mdl.apply_operation(square, [square, square, square], operation='subtract')) == -2 * np.sum(square)
-    assert np.sum(mdl.apply_operation(cube, cube, operation='subtract')) == 0
-    assert np.sum(mdl.apply_operation(cube, [cube, cube, cube], operation='subtract')) == -2 * np.sum(cube)
+    assert np.sum(mdl.apply_operation(square, square, operation="subtract")) == 0
+    assert np.sum(
+        mdl.apply_operation(square, [square, square, square], operation="subtract")
+    ) == -2 * np.sum(square)
+    assert np.sum(mdl.apply_operation(cube, cube, operation="subtract")) == 0
+    assert np.sum(
+        mdl.apply_operation(cube, [cube, cube, cube], operation="subtract")
+    ) == -2 * np.sum(cube)
 
 
 def test_multiply_value(cube, square):
-    assert np.max(mdl.apply_operation(square, 5, operation='multiply')) == 5
-    assert np.min(mdl.apply_operation(square, -4, operation='multiply')) == -4
-    assert np.max(mdl.apply_operation(square, 0, operation='multiply')) == 0
-    assert np.max(mdl.apply_operation(cube, 5, operation='multiply')) == 5
-    assert np.min(mdl.apply_operation(cube, -4, operation='multiply')) == -4
-    assert np.max(mdl.apply_operation(cube, 0, operation='multiply')) == 0
+    assert np.max(mdl.apply_operation(square, 5, operation="multiply")) == 5
+    assert np.min(mdl.apply_operation(square, -4, operation="multiply")) == -4
+    assert np.max(mdl.apply_operation(square, 0, operation="multiply")) == 0
+    assert np.max(mdl.apply_operation(cube, 5, operation="multiply")) == 5
+    assert np.min(mdl.apply_operation(cube, -4, operation="multiply")) == -4
+    assert np.max(mdl.apply_operation(cube, 0, operation="multiply")) == 0
 
 
 def test_multiply_image(cube, square):
-    self_multiply = mdl.apply_operation(square, square, operation='multiply')
+    self_multiply = mdl.apply_operation(square, square, operation="multiply")
     assert np.array_equal(self_multiply, square)
 
 
 def test_divide_value(cube, square):
-    assert np.max(mdl.apply_operation(square, 2, operation='divide')) == 0.5
-    assert np.min(mdl.apply_operation(square, -2, operation='divide')) == -0.5
+    assert np.max(mdl.apply_operation(square, 2, operation="divide")) == 0.5
+    assert np.min(mdl.apply_operation(square, -2, operation="divide")) == -0.5

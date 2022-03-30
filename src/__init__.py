@@ -1,6 +1,5 @@
-import os
 import json
-
+import os
 
 # directories
 MAIN_DIR = os.path.abspath(".")
@@ -9,7 +8,7 @@ CONFIG_DIR = os.path.join(MAIN_DIR, "config")
 TMP_DIR = os.path.join(RSC_DIR, "data", "tmp")
 
 # base key for json session encryption
-KEY = 'CchfHeEVsE1hMldggpUEXduYH29pUp2ujYE7LPjZhOA='
+KEY = "CchfHeEVsE1hMldggpUEXduYH29pUp2ujYE7LPjZhOA="
 
 # load intial default parameters
 with open(os.path.join(CONFIG_DIR, "default.json"), "r") as f:

@@ -1,9 +1,11 @@
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import os
-from src import RSC_DIR
-from src.view import utils, ui
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
+from src import RSC_DIR
+from src.view import ui, utils
 
 
 class QGraphicsModule(QtWidgets.QWidget):
@@ -27,6 +29,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         modules whose outputs are self input
 
     """
+
     def __init__(self, graph, type, name, parents=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.graph = graph
@@ -36,52 +39,37 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.childs = []
         self.links = []
         self.color = None
-
         self.last_position = QtCore.QPointF(0, 0)
         self.initialPosition = None
-
         self._item = self.QCustomRectItem(self)
         self._proxy = QtWidgets.QGraphicsProxyWidget(self._item)
         self._proxy.setWidget(self)
-
         self.moveBy = self._item.moveBy
         self.pos = self._item.pos
-
         self.getData = self.graph.getData
-
         self.propagation_child = None
         self.heights = {}
-
         self.runner = None
-
         self.setToolTip(type)
         self.initUI(name)
 
     def initUI(self, name):
         uic.loadUi(os.path.join(RSC_DIR, "ui", "ModuleTemplate.ui"), self)
-
         self.sizeGrip = utils.replaceWidget(self.sizeGrip, ui.QCustomSizeGrip(self))
-
         self.grap = utils.replaceWidget(self.grap, ui.QGrap())
         self.openButton.setText(name)
         self._item.setRect(QtCore.QRectF(self.geometry().adjusted(0, 0, 0, 0)))
-
-        params = uic.loadUi(os.path.join(RSC_DIR, 'ui', 'modules', self.type+'.ui'))
+        params = uic.loadUi(os.path.join(RSC_DIR, "ui", "modules", self.type + ".ui"))
         self.parameters = utils.replaceWidget(self.parameters, params)
-
         self.parameters.hide()
         self.resultArea.hide()
-
         self.footer.mousePressEvent = self.footerMousePressEvent
         self.isFront = False
-
         ui.setButtonIcon(self.play, "play.png")
         ui.setButtonIcon(self.stop, "stop.png")
         ui.setButtonIcon(self.pause, "pause.png")
-
         self.initConnections()
         self.setState()
-
         self.connectParametersModifications()
 
     def sendFront(self):
@@ -136,14 +124,17 @@ class QGraphicsModule(QtWidgets.QWidget):
         ----------
         parent: QViewWidget
         """
+
         def __init__(self, parent):
             super().__init__()
             self._parent = parent
             self.setZValue(0)
             self.setAcceptHoverEvents(True)
-            self.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable |
-                          QtWidgets.QGraphicsItem.ItemIsFocusable |
-                          QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges)
+            self.setFlags(
+                QtWidgets.QGraphicsItem.ItemIsMovable
+                | QtWidgets.QGraphicsItem.ItemIsFocusable
+                | QtWidgets.QGraphicsItem.ItemSendsScenePositionChanges
+            )
 
         def itemChange(self, change, value):
             if change == QtWidgets.QGraphicsItem.ItemPositionChange:
@@ -163,7 +154,7 @@ class QGraphicsModule(QtWidgets.QWidget):
 
         """
         self.state = state
-        if state == 'loading':
+        if state == "loading":
             self.play.hide()
             self.pause.setVisible(suspendable)
             self.stop.show()
@@ -178,9 +169,9 @@ class QGraphicsModule(QtWidgets.QWidget):
             self.play.show()
             self.pause.hide()
             self.stop.hide()
-            if state == 'valid':
+            if state == "valid":
                 col = QtGui.QColor(0, 200, 0, 255)
-            elif state == 'fail':
+            elif state == "fail":
                 col = QtGui.QColor(255, 0, 0, 255)
             else:
                 col = QtGui.QColor(0, 0, 0, 0)
@@ -220,7 +211,7 @@ class QGraphicsModule(QtWidgets.QWidget):
 
     @property
     def mid_pos(self):
-        return self.width()/2, self.height()/2
+        return self.width() / 2, self.height() / 2
 
     def delete(self):
         """
@@ -319,28 +310,35 @@ class QGraphicsModule(QtWidgets.QWidget):
         if settings is None:
             return
         for name, w in sorted(self.parameters.__dict__.items()):
-            if name in settings['parameters']:
-                utils.setValue(w, settings['parameters'][name])
+            if name in settings["parameters"]:
+                utils.setValue(w, settings["parameters"][name])
 
-        state = settings['state']
-        self.graph.renameModule(self, state['name'])
-        self.graph.colorizeModule(self, state['color'])
+        state = settings["state"]
+        self.graph.renameModule(self, state["name"])
+        self.graph.colorizeModule(self, state["color"])
 
     def getSettings(self):
         """
         get settings of module (=state) and parameters widgets
         """
-        settings = {'parameters': {}}
+        settings = {"parameters": {}}
         for name, w in self.parameters.__dict__.items():
             value = utils.getValue(w)
             if value is not None:
-                settings['parameters'][name] = value
-        settings['state'] = {'name': self.name,
-                             'type': self.type,
-                             'parentNames': [p.name for p in self.parents],
-                             'position': [self.pos().x(), self.pos().y()],
-                             'width': self.width(),
-                             'color': [self.color.red(), self.color.green(), self.color.blue(), self.color.alpha()]}
+                settings["parameters"][name] = value
+        settings["state"] = {
+            "name": self.name,
+            "type": self.type,
+            "parentNames": [p.name for p in self.parents],
+            "position": [self.pos().x(), self.pos().y()],
+            "width": self.width(),
+            "color": [
+                self.color.red(),
+                self.color.green(),
+                self.color.blue(),
+                self.color.alpha(),
+            ],
+        }
 
         return settings
 
@@ -374,7 +372,7 @@ class QGraphicsModule(QtWidgets.QWidget):
             return
         elif isinstance(result, Exception):
             new_widget = QtWidgets.QTextBrowser()
-            new_widget.setPlainText(type(result).__name__+"\n"+str(result))
+            new_widget.setPlainText(type(result).__name__ + "\n" + str(result))
             new_widget.setStyleSheet("color: red;")
             ui.showError("Warning", result)
         elif isinstance(result, pd.DataFrame):
@@ -418,13 +416,15 @@ class QGraphicsModule(QtWidgets.QWidget):
             true_pos = np.rint(click_pos * ratio).astype(int)
             try:
                 if im.ndim == 2:
-                    x, y, z = *true_pos, ''
+                    x, y, z = *true_pos, ""
                     value = im[x, y]
                 elif self.result.slicable:
-                    x, y, z = np.insert(true_pos, self.result.axis, self.result.currentSlice)
+                    x, y, z = np.insert(
+                        true_pos, self.result.axis, self.result.currentSlice
+                    )
                     value = im[x, y, z]
                 else:
-                    x, y, z = *true_pos, ''
+                    x, y, z = *true_pos, ""
                     value = "(" + " ".join(im[x, y].astype(str)) + ")"
                 self.leftfoot.setText("{0} {1} {2}".format(x, y, z))
                 self.rightfoot.setText(str(value))
@@ -475,8 +475,19 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         color of the arrow border
 
     """
-    def __init__(self, parent, child, width=5, arrowWidth=10, arrowLen=10, space=[0, 20],
-                 color=QtGui.QColor(0, 150, 0), borderWidth=2, borderColor=QtGui.QColor(0, 150, 0)):
+
+    def __init__(
+        self,
+        parent,
+        child,
+        width=5,
+        arrowWidth=10,
+        arrowLen=10,
+        space=[0, 20],
+        color=QtGui.QColor(0, 150, 0),
+        borderWidth=2,
+        borderColor=QtGui.QColor(0, 150, 0),
+    ):
         super().__init__()
         self._parent = parent
         self._child = child
@@ -508,9 +519,16 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         result: QPointF
             first position found of the intersection
         """
-        points = [rect.bottomLeft(), rect.bottomRight(), rect.topRight(), rect.topLeft()]
+        points = [
+            rect.bottomLeft(),
+            rect.bottomRight(),
+            rect.topRight(),
+            rect.topLeft(),
+        ]
         for i in range(4):
-            border = QtCore.QLineF(ref_position + points[i-1], ref_position + points[i])
+            border = QtCore.QLineF(
+                ref_position + points[i - 1], ref_position + points[i]
+            )
             try:
                 intersection_type, intersection_point = line.intersects(border)
             except AttributeError:
@@ -535,12 +553,16 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         """
         # build direction line
         r1, r2 = self._parent.rect(), self._child.rect()
-        line = QtCore.QLineF(self._parent.pos() + r1.center(),
-                             self._child.pos() + r2.center())
+        line = QtCore.QLineF(
+            self._parent.pos() + r1.center(), self._child.pos() + r2.center()
+        )
 
         # build unit vectors
-        unit = (line.unitVector().p2() - line.unitVector().p1())
-        normal = (line.normalVector().unitVector().p2() - line.normalVector().unitVector().p1())
+        unit = line.unitVector().p2() - line.unitVector().p1()
+        normal = (
+            line.normalVector().unitVector().p2()
+            - line.normalVector().unitVector().p1()
+        )
 
         # get arrow point
         p1 = self.intersects(line, r1, self._parent.pos()) + unit * self.space[0]
@@ -553,7 +575,9 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         p24 = p2 - normal * self.arrowWidth - unit * self.arrowLen
 
         # build arrow
-        if np.sign((p22 - p12).x()) == np.sign(unit.x()) and np.sign((p22 - p12).y()) == np.sign(unit.y()):
+        if np.sign((p22 - p12).x()) == np.sign(unit.x()) and np.sign(
+            (p22 - p12).y()
+        ) == np.sign(unit.y()):
             self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
         else:
             self.setPolygon(QtGui.QPolygonF())

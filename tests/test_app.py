@@ -1,12 +1,14 @@
 # Test of basic application usage
 
-import pytest
 import os
-from src.view.view import View
+
+import numpy as np
+import pytest
+from PyQt5 import QtCore
+
 from src.model.model import Model
 from src.presenter.presenter import Presenter
-import numpy as np
-from PyQt5 import QtCore
+from src.view.view import View
 
 
 @pytest.fixture
@@ -21,7 +23,7 @@ def francis():
 
 @pytest.fixture
 def load_module(qtbot, francis):
-    load_module_name = 'Load'
+    load_module_name = "Load"
     qtbot.addWidget(francis)
     francis.graph().addModule(load_module_name)
     return francis.graph().modules[load_module_name]
@@ -38,17 +40,19 @@ def image_test(request):
     return img
 
 
-@pytest.fixture(params=[
-    os.path.join(os.getcwd(), 'resources/data/Lena.png'),
-    os.path.join(os.getcwd(), 'resources/data/cvs_avg35_inMNI152.nii.gz'),
-])
+@pytest.fixture(
+    params=[
+        os.path.join(os.getcwd(), "resources/data/Lena.png"),
+        os.path.join(os.getcwd(), "resources/data/cvs_avg35_inMNI152.nii.gz"),
+    ]
+)
 def image_filepath(request):
     return request.param
 
 
 @pytest.fixture()
 def text_filepath():
-    return os.path.join(os.getcwd(), 'resources/data/simple_text.txt')
+    return os.path.join(os.getcwd(), "resources/data/simple_text.txt")
 
 
 def test_francis_launch(qtbot, francis):
@@ -63,10 +67,10 @@ def test_delete_module(qtbot, load_module, francis):
 
 def test_add_modules(qtbot, francis):
     qtbot.addWidget(francis)
-    parent_module = francis.graph().addModule('Load')
+    parent_module = francis.graph().addModule("Load")
     assert len(francis.graph().modules) == 1
 
-    francis.graph().addModule('ThresholdImage', parent_module)
+    francis.graph().addModule("ThresholdImage", parent_module)
     assert len(francis.graph().modules) == 2
 
 

@@ -1,12 +1,14 @@
 import os
-from src import RSC_DIR, TMP_DIR
-from src.presenter import utils
-from PyQt5 import QtWidgets
-import numpy as np
 import shutil
 
+import numpy as np
+from PyQt5 import QtWidgets
 
-class Presenter():
+from src import RSC_DIR, TMP_DIR
+from src.presenter import utils
+
+
+class Presenter:
     """
     This class is part of the MVP app design, it acts as a bridge between
     the Model and the View
@@ -19,6 +21,7 @@ class Presenter():
         if False, disable threading handled by the manager =(thread_mode=0)
 
     """
+
     def __init__(self, view, model=None, threading_enabled=True):
         self._model = model
         self._view = view
@@ -64,9 +67,9 @@ class Presenter():
 
         # start loading
         if thread_mode == 1:
-            module.setState('loading', suspendable=False)
+            module.setState("loading", suspendable=False)
         elif thread_mode == 2:
-            module.setState('loading')
+            module.setState("loading")
 
         # store signal propagation
         for parent in module.parents:
@@ -92,9 +95,9 @@ class Presenter():
         if output is None:
             module.setState()
         elif isinstance(output, Exception):
-            module.setState('fail')
+            module.setState("fail")
         else:
-            module.setState('valid')
+            module.setState("valid")
         module.showResult(output)
 
         # retropropagate signal between modules
@@ -115,7 +118,7 @@ class Presenter():
 
         """
         parameters = self._view.getParameters(module.type)
-        activation_function = eval('self.'+parameters['function'])
+        activation_function = eval("self." + parameters["function"])
 
         # connect start, pause, stop buttons
         def play():
@@ -152,14 +155,18 @@ class Presenter():
 
         """
         if module.type == "Save":
-            module.parameters.browse.clicked.connect(lambda: self.browse_savepath(module))
+            module.parameters.browse.clicked.connect(
+                lambda: self.browse_savepath(module)
+            )
 
         elif module.type == "Load":
             module.parameters.browse.clicked.connect(lambda: self.browse_path(module))
 
         elif module.type == "Operation":
             for rb in [module.parameters.add, module.parameters.multiply]:
-                rb.clicked.connect(lambda: module.parameters.reference.setEnabled(False))
+                rb.clicked.connect(
+                    lambda: module.parameters.reference.setEnabled(False)
+                )
             for rb in [module.parameters.divide, module.parameters.subtract]:
                 rb.clicked.connect(lambda: module.parameters.reference.setEnabled(True))
             module.parameters.add.clicked.emit()
@@ -173,6 +180,7 @@ class Presenter():
                 module.parameters.reference.removeItem(ind)
                 module.parameters.reference.insertItem(ind, new_name)
                 module.parameters.reference.setCurrentIndex(current_index)
+
             for parent in module.parents:
                 parent.nameChanged.connect(updateParentName)
 
@@ -196,7 +204,12 @@ class Presenter():
             elif dim == 3:
                 init_extension = extensions[1]
         elif result is None or isinstance(result, Exception):
-            extensions = ["PNG (*.png)", "NIFTI (*.nii)", "JPEG (*.jpg)", "TEXT (*.txt)"]
+            extensions = [
+                "PNG (*.png)",
+                "NIFTI (*.nii)",
+                "JPEG (*.jpg)",
+                "TEXT (*.txt)",
+            ]
             init_extension = None
         else:
             extensions = ["TEXT (*.txt)"]
@@ -206,10 +219,13 @@ class Presenter():
         if init_extension is None:
             init_extension = extensions[-1]
 
-        filename, extension = QtWidgets.QFileDialog.getSaveFileName(module.graph, 'Save file',
-                                                                    os.path.join(self._out_dir, name),
-                                                                    filter=";;".join(extensions),
-                                                                    initialFilter=init_extension)
+        filename, extension = QtWidgets.QFileDialog.getSaveFileName(
+            module.graph,
+            "Save file",
+            os.path.join(self._out_dir, name),
+            filter=";;".join(extensions),
+            initialFilter=init_extension,
+        )
         if filename:
             module.parameters.path.setText(filename)
             module.parameters.path.setToolTip(filename)
@@ -219,8 +235,12 @@ class Presenter():
         open a browse window to select a file and update path widget
         """
         dialog = QtWidgets.QFileDialog()
-        filename, ok = dialog.getOpenFileName(module.graph, "Select a file...", self._data_dir,
-                                              filter="*.nii.gz *.nii *.png *.jpg *.txt *.pkl")
+        filename, ok = dialog.getOpenFileName(
+            module.graph,
+            "Select a file...",
+            self._data_dir,
+            filter="*.nii.gz *.nii *.png *.jpg *.txt *.pkl",
+        )
         if ok:
             module.parameters.path.setText(filename)
             module.parameters.path.setToolTip(filename)
@@ -233,8 +253,10 @@ class Presenter():
         """
         parent_name = module.get_parent_name()
         function = self._model.save
-        args = {"data": module.getData(parent_name),
-                "path": module.parameters.path.text()}
+        args = {
+            "data": module.getData(parent_name),
+            "path": module.parameters.path.text(),
+        }
         return function, args
 
     @utils.manager(2)
@@ -254,8 +276,10 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.get_img_infos
-        args = {"im": module.getData(parent_name),
-                "info": module.parameters.infos.currentText()}
+        args = {
+            "im": module.getData(parent_name),
+            "info": module.parameters.infos.currentText(),
+        }
         return function, args
 
     @utils.manager(2)
@@ -267,10 +291,12 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.apply_threshold
-        args = {"im": module.getData(parent_name),
-                "threshold": module.parameters.spin.value(),
-                "reverse": module.parameters.reversed.isChecked(),
-                "thresholdInPercentage": module.parameters.inPercentage.isChecked()}
+        args = {
+            "im": module.getData(parent_name),
+            "threshold": module.parameters.spin.value(),
+            "reverse": module.parameters.reversed.isChecked(),
+            "thresholdInPercentage": module.parameters.inPercentage.isChecked(),
+        }
         return function, args
 
     @utils.manager(2)
@@ -283,9 +309,13 @@ class Presenter():
         parent_names.remove(ref_parent_name)
 
         function = self._model.apply_operation
-        args = {"arr": module.getData(ref_parent_name),
-                "elements": module.getData(parent_names),
-                "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
+        args = {
+            "arr": module.getData(ref_parent_name),
+            "elements": module.getData(parent_names),
+            "operation": utils.get_checked(
+                module.parameters, ["add", "multiply", "subtract", "divide"]
+            ),
+        }
         return function, args
 
     @utils.manager(2)
@@ -296,9 +326,13 @@ class Presenter():
         parent_name = module.get_parent_name()
 
         function = self._model.apply_operation
-        args = {"arr": module.getData(parent_name),
-                "elements": float(module.parameters.value.text()),
-                "operation": utils.get_checked(module.parameters, ['add', 'multiply', 'subtract', 'divide'])}
+        args = {
+            "arr": module.getData(parent_name),
+            "elements": float(module.parameters.value.text()),
+            "operation": utils.get_checked(
+                module.parameters, ["add", "multiply", "subtract", "divide"]
+            ),
+        }
         return function, args
 
     @utils.manager(2)
@@ -308,13 +342,17 @@ class Presenter():
         and store the modified image into image stack dictionnaries
         """
         parent_name = module.get_parent_name()
-        operation = utils.get_checked(module.parameters, ['erosion', 'dilation', 'opening', 'closing'])
+        operation = utils.get_checked(
+            module.parameters, ["erosion", "dilation", "opening", "closing"]
+        )
         if module.parameters.binary.isChecked():
             operation = "binary_" + operation
 
         function = self._model.apply_basic_morpho
-        args = {"im": module.getData(parent_name),
-                "size": module.parameters.size.value(),
-                "operation": operation,
-                "round_shape": True}
+        args = {
+            "im": module.getData(parent_name),
+            "size": module.parameters.size.value(),
+            "operation": operation,
+            "round_shape": True,
+        }
         return function, args

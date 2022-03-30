@@ -1,10 +1,12 @@
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from src.view import utils
-from src import RSC_DIR
-import os
-import numpy as np
-import traceback
 import copy
+import os
+import traceback
+
+import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
+from src import RSC_DIR
+from src.view import utils
 
 
 def setButtonIcon(button, img, append=False):
@@ -12,7 +14,11 @@ def setButtonIcon(button, img, append=False):
     set image to the specified button
     """
     icon = QtGui.QIcon()
-    icon.addPixmap(QtGui.QPixmap(os.path.join(RSC_DIR, "icon", img)), QtGui.QIcon.Normal, QtGui.QIcon.On)
+    icon.addPixmap(
+        QtGui.QPixmap(os.path.join(RSC_DIR, "icon", img)),
+        QtGui.QIcon.Normal,
+        QtGui.QIcon.On,
+    )
     if not append:
         button.setText("")
     button.setIcon(icon)
@@ -25,17 +31,23 @@ def showError(level, error):
     level: {NoIcon, Qestion, Information, Warning, Critical}
     """
     msg = "{0}\n{1}".format(type(error).__name__, error)
-    dialog = QtWidgets.QMessageBox(eval("QtWidgets.QMessageBox."+level),
-                                   level, msg, QtWidgets.QMessageBox.Ok, QtWidgets.qApp.activeWindow())
+    dialog = QtWidgets.QMessageBox(
+        eval("QtWidgets.QMessageBox." + level),
+        level,
+        msg,
+        QtWidgets.QMessageBox.Ok,
+        QtWidgets.qApp.activeWindow(),
+    )
     dialog.setDetailedText("".join(traceback.format_tb(error.__traceback__)[1:]))
     dialog.exec()
 
 
 class QGrap(QtWidgets.QWidget):
-
     def __init__(self):
         super().__init__()
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.installEventFilter(self)
 
     def eventFilter(self, obj, event):
@@ -55,7 +67,9 @@ class QGrap(QtWidgets.QWidget):
 class QFormatLine(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        uic.loadUi(os.path.join(RSC_DIR, 'ui', 'modules', 'bricks', 'formatLine.ui'), self)
+        uic.loadUi(
+            os.path.join(RSC_DIR, "ui", "modules", "bricks", "formatLine.ui"), self
+        )
 
         self.types.currentIndexChanged.connect(self.hideFormat)
         self.format.hide()
@@ -64,10 +78,10 @@ class QFormatLine(QtWidgets.QWidget):
         self.unit.hide()
 
     def hideFormat(self):
-        self.format.show() if self.types.currentText() == 'datetime' else self.format.hide()
+        self.format.show() if self.types.currentText() == "datetime" else self.format.hide()
 
     def hideUnit(self):
-        self.unit.show() if self.types.currentText() == 'timedelta' else self.unit.hide()
+        self.unit.show() if self.types.currentText() == "timedelta" else self.unit.hide()
 
 
 class QTypeForm(QtWidgets.QWidget):
@@ -78,7 +92,9 @@ class QTypeForm(QtWidgets.QWidget):
         self.rows = {}
 
     def addRow(self, name):
-        row = uic.loadUi(os.path.join(RSC_DIR, 'ui', 'modules', 'bricks', 'formatLine.ui'))
+        row = uic.loadUi(
+            os.path.join(RSC_DIR, "ui", "modules", "bricks", "formatLine.ui")
+        )
         row.types.currentTextChanged.connect(lambda txt: self.hideDetails(row, txt))
         row.format.hide()
         row.unit.hide()
@@ -93,9 +109,9 @@ class QTypeForm(QtWidgets.QWidget):
     def hideDetails(self, row, txt):
         row.format.hide()
         row.unit.hide()
-        if txt == 'datetime':
+        if txt == "datetime":
             row.format.show()
-        elif txt == 'timedelta':
+        elif txt == "timedelta":
             row.unit.show()
 
 
@@ -156,28 +172,32 @@ class QGridButtonGroup(QtWidgets.QWidget):
 class QCustomTableWidget(QtWidgets.QWidget):
     def __init__(self, data=None):
         super().__init__()
-        uic.loadUi(os.path.join(RSC_DIR, 'ui', 'TableWidget.ui'), self)
+        uic.loadUi(os.path.join(RSC_DIR, "ui", "TableWidget.ui"), self)
         setButtonIcon(self.save, "save.png")
         setButtonIcon(self.release, "release.png")
         setButtonIcon(self.quickPlot, "plot.png")
 
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+        self.table.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.Interactive
+        )
         if data is not None:
             self.setData(data)
 
     def updateVheader(self, index):
-        model = PandasModel(self.data, index-1)
+        model = PandasModel(self.data, index - 1)
         proxyModel = QtCore.QSortFilterProxyModel()
         proxyModel.setSourceModel(model)
         self.table.setModel(proxyModel)
 
     def setData(self, data):
         try:
-            self.Vheader.addItems([''] + list(data.columns.astype(str)))
+            self.Vheader.addItems([""] + list(data.columns.astype(str)))
         except TypeError:
             pass
         self.Vheader.currentIndexChanged.connect(self.updateVheader)
-        self.rightfoot.setText("{0} x {1}    ({2} {3})".format(*data.shape, *utils.getMemoryUsage(data)))
+        self.rightfoot.setText(
+            "{0} x {1}    ({2} {3})".format(*data.shape, *utils.getMemoryUsage(data))
+        )
         self.leftfoot.hide()
         self.data = data
         self.updateVheader(0)
@@ -259,7 +279,12 @@ class QImageRenderer(QtWidgets.QLabel):
             return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1]
         elif self.img.ndim == 3:
             if not self.slicable:
-                return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1] * self.img.shape[2]
+                return (
+                    self.img,
+                    self.img.shape[1],
+                    self.img.shape[0],
+                    self.img.shape[1] * self.img.shape[2],
+                )
             else:
                 s = self.img.shape[self.axis]
 
@@ -269,7 +294,7 @@ class QImageRenderer(QtWidgets.QLabel):
                 elif self.currentSlice < 0:
                     self.currentSlice = 0
                 elif self.currentSlice >= s:
-                    self.currentSlice = s-1
+                    self.currentSlice = s - 1
 
                 # snap axis slice
                 if self.axis == 0:
@@ -288,8 +313,9 @@ class QImageRenderer(QtWidgets.QLabel):
         im, w, h, bytesPerLine = self.getSliceParams()
         qim = QtGui.QImage(im, w, h, bytesPerLine, self.imgType)
         self.pixmap = QtGui.QPixmap(qim)
-        self.pixmap = self.pixmap.scaledToWidth(self._parent.width() - 2,
-                                                QtCore.Qt.FastTransformation)
+        self.pixmap = self.pixmap.scaledToWidth(
+            self._parent.width() - 2, QtCore.Qt.FastTransformation
+        )
         self.setPixmap(self.pixmap)
         self.update()
 
@@ -298,6 +324,7 @@ class PandasModel(QtCore.QAbstractTableModel):
     """
     Class to populate a table view with a pandas dataframe
     """
+
     def __init__(self, df, header_index=-1, parent=None):
         QtCore.QAbstractTableModel.__init__(self, parent)
         if header_index == -1:
@@ -307,7 +334,7 @@ class PandasModel(QtCore.QAbstractTableModel):
             self._data = df.set_index(header_colname)
 
     def format(self, value):
-        return '' if str(value) in ['nan', 'NaT'] else str(value)
+        return "" if str(value) in ["nan", "NaT"] else str(value)
 
     def rowCount(self, parent=None):
         return self._data.shape[0]
@@ -333,7 +360,7 @@ class QMultiWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         self.tab = QtWidgets.QTabWidget()
         layout.addWidget(self.tab)
-        self.apply = QtWidgets.QPushButton('apply')
+        self.apply = QtWidgets.QPushButton("apply")
         layout.addWidget(self.apply)
         self.setLayout(layout)
         self.widgets = {}
@@ -364,7 +391,11 @@ class QCustomSizeGrip(QtWidgets.QSizeGrip):
             s = self._parent.result.pixmap.size()
             areaWidth = self._parent.resultArea.width()
             calculatedAreaHeight = areaWidth * s.height() / s.width()
-            height = calculatedAreaHeight + self._parent.height() - self._parent.resultArea.height()
+            height = (
+                calculatedAreaHeight
+                + self._parent.height()
+                - self._parent.resultArea.height()
+            )
             self._parent.result.updateSnap()
         else:
             height = self._parent.height() + y
@@ -383,6 +414,7 @@ class QCustomDialog(QtWidgets.QDialog):
     def initConnections(self):
         def connect(widget):
             w.clicked.connect(lambda: self.accept(widget.text()))
+
         for w in self.__dict__.values():
             if isinstance(w, QtWidgets.QPushButton):
                 connect(w)
