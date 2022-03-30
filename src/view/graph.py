@@ -1,14 +1,15 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from src.view.utils import menu_from_dict
-from src.view.graph_bricks import QGraphicsModule, QGraphicsLink
-from src import DEFAULT, RSC_DIR
 import copy
-from datetime import datetime
-import os
 import json
+import os
+from datetime import datetime
 
+from PyQt5 import QtCore, QtGui, QtWidgets
+from src import DEFAULT, RSC_DIR
+from src.view.graph_bricks import QGraphicsLink, QGraphicsModule
+from src.view.utils import menu_from_dict
 
 # stack under, raise, show
+
 
 class QGraph(QtWidgets.QGraphicsView):
     """
@@ -24,7 +25,8 @@ class QGraph(QtWidgets.QGraphicsView):
         horizontal is left to right, vertical is top to bottom
 
     """
-    def __init__(self, mainwin, direction='vertical'):
+
+    def __init__(self, mainwin, direction="vertical"):
         super().__init__()
         self._view = mainwin
         self.direction = direction
@@ -33,10 +35,8 @@ class QGraph(QtWidgets.QGraphicsView):
         self.setRenderHint(QtGui.QPainter.Antialiasing)
         self.setScene(self.scene)
         self.contextMenuEvent = lambda e: self.openMenu()
-
-        self.selectAll = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+A'), self)
+        self.selectAll = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+A"), self)
         self.selectAll.activated.connect(self.selectModules)
-
         self.installEventFilter(self)
         self.holdShift = False
         self.holdCtrl = False
@@ -45,13 +45,11 @@ class QGraph(QtWidgets.QGraphicsView):
         self.lastFocus = None
         self.isFocused = False
         self.higherZValue = 0
-
         self.settings = {}
         self.saveName = self.getUniqueName("# not saved", dic=self._view.graphs)
         self.name = self.saveName
         self.saveDir = os.path.join(RSC_DIR, "data", "out")
         self.savePathIsSet = False
-
         self.resultStack = {}
 
     def bind(self, parent, child):
@@ -64,11 +62,9 @@ class QGraph(QtWidgets.QGraphicsView):
             modules to visually bind
         """
 
-        link = QGraphicsLink(parent, child, **DEFAULT['arrow'])
-
+        link = QGraphicsLink(parent, child, **DEFAULT["arrow"])
         parent.positionChanged.connect(link.updatePos)
         child.positionChanged.connect(link.updatePos)
-
         parent.links.append(link)
         child.links.append(link)
         self.scene.addItem(link)
@@ -92,7 +88,9 @@ class QGraph(QtWidgets.QGraphicsView):
         ------
         result: list of QGraphicsModule
         """
-        return [n for n in self.modules.values() if n.isSelected() and n not in exceptions]
+        return [
+            n for n in self.modules.values() if n.isSelected() and n not in exceptions
+        ]
 
     def eventFilter(self, obj, event):
         """
@@ -184,7 +182,7 @@ class QGraph(QtWidgets.QGraphicsView):
             elif type == "colorBackground":
                 self._view.colorizeBackground()
             else:
-                nparents = self._view.getParameters(type).get('nparents')
+                nparents = self._view.getParameters(type).get("nparents")
                 if not parents:
                     self.addModule(type)
                 else:
@@ -194,16 +192,20 @@ class QGraph(QtWidgets.QGraphicsView):
                     elif nparents == -1 or nparents == len(parents):
                         self.addModule(type, parents)
                     else:
-                        self._view.setStatusTip("This module must have {0} \
-                                                 parents, got {1}".format(nparents, len(parents)))
+                        self._view.setStatusTip(
+                            "This module must have {0} \
+                                                 parents, got {1}".format(
+                                nparents, len(parents)
+                            )
+                        )
 
         # build and connect right-click menu
         if self.isFocused:
-            menu = menu_from_dict(self._view.modules.get('secondary'), activate)
+            menu = menu_from_dict(self._view.modules.get("secondary"), activate)
             parents += [self.lastFocus] + self.getSelectedModules()
             parents = list(set(parents))
         else:
-            menu = menu_from_dict(self._view.modules.get('primary'), activate)
+            menu = menu_from_dict(self._view.modules.get("primary"), activate)
 
         # show menu at mouse position
         pos = QtGui.QCursor.pos()
@@ -212,8 +214,9 @@ class QGraph(QtWidgets.QGraphicsView):
 
     def renameModule(self, module, new_name=None):
         if new_name is None:
-            new_name, valid = QtWidgets.QInputDialog.getText(self, "user input", "new name",
-                                                             QtWidgets.QLineEdit.Normal, module.name)
+            new_name, valid = QtWidgets.QInputDialog.getText(
+                self, "user input", "new name", QtWidgets.QLineEdit.Normal, module.name
+            )
             if not valid:
                 return
         new_name = self.getUniqueName(new_name, exception=module.name)
@@ -272,7 +275,16 @@ class QGraph(QtWidgets.QGraphicsView):
     def storeData(self, name, data):
         self.resultStack[name] = data
 
-    def addModule(self, type, parents=None, parentNames=None, position=None, width=None, color=None, name=None):
+    def addModule(
+        self,
+        type,
+        parents=None,
+        parentNames=None,
+        position=None,
+        width=None,
+        color=None,
+        name=None,
+    ):
         """
         create a module with specified parent modules
 
@@ -287,9 +299,9 @@ class QGraph(QtWidgets.QGraphicsView):
         if name is None:
             name = self.getUniqueName(type)
         if width is None:
-            width = DEFAULT['module_width']
+            width = DEFAULT["module_width"]
         if color is None:
-            color = self._view.getParameters(type).get('color')
+            color = self._view.getParameters(type).get("color")
 
         if parents is None:
             if parentNames is not None:
@@ -316,14 +328,38 @@ class QGraph(QtWidgets.QGraphicsView):
                     max_y_parent = parent
                 self.bind(parent, module)
                 parent.childs.append(module)
-            if self.direction == 'vertical':
-                Xs = [c.pos().x() + c.width() for c in max_y_parent.childs if c is not module]
-                x = max_y_parent.pos().x() if not Xs else max(Xs) + DEFAULT['space_between_modules'][0]
-                y = max_y_parent.pos().y() + max_y_parent.height() + DEFAULT['space_between_modules'][1]
+            if self.direction == "vertical":
+                Xs = [
+                    c.pos().x() + c.width()
+                    for c in max_y_parent.childs
+                    if c is not module
+                ]
+                x = (
+                    max_y_parent.pos().x()
+                    if not Xs
+                    else max(Xs) + DEFAULT["space_between_modules"][0]
+                )
+                y = (
+                    max_y_parent.pos().y()
+                    + max_y_parent.height()
+                    + DEFAULT["space_between_modules"][1]
+                )
             else:
-                Ys = [c.pos().y() + c.height() for c in max_x_parent.childs if c is not module]
-                x = max_x_parent.pos().x() + max_x_parent.width() + DEFAULT['space_between_modules'][0]
-                y = max_x_parent.pos().y() if not Ys else max(Ys) + DEFAULT['space_between_modules'][1]
+                Ys = [
+                    c.pos().y() + c.height()
+                    for c in max_x_parent.childs
+                    if c is not module
+                ]
+                x = (
+                    max_x_parent.pos().x()
+                    + max_x_parent.width()
+                    + DEFAULT["space_between_modules"][0]
+                )
+                y = (
+                    max_x_parent.pos().y()
+                    if not Ys
+                    else max(Ys) + DEFAULT["space_between_modules"][1]
+                )
 
         if position is not None:
             x, y = position
@@ -349,7 +385,7 @@ class QGraph(QtWidgets.QGraphicsView):
 
         """
         for name, values in settings.items():
-            module = self.addModule(**values.get('state'))
+            module = self.addModule(**values.get("state"))
             if not isinstance(module, Exception):
                 module.setSettings(values)
         return settings
@@ -376,7 +412,7 @@ class QGraph(QtWidgets.QGraphicsView):
         return settings
 
     def getDateName(self):
-        return "graph_{}.iag".format(datetime.now().strftime('%d%m%Y %Hh%Mm%S'))
+        return "graph_{}.iag".format(datetime.now().strftime("%d%m%Y %Hh%Mm%S"))
 
     def getSavePath(self):
         return os.path.join(self.saveDir, self.saveName)
@@ -402,10 +438,16 @@ class QGraph(QtWidgets.QGraphicsView):
         self.name = new_name
 
     def askSaveFile(self):
-        if self.getSettings() == self.settings and self.savePathIsSet or not self.modules:
+        if (
+            self.getSettings() == self.settings
+            and self.savePathIsSet
+            or not self.modules
+        ):
             return QtWidgets.QMessageBox.No
         else:
-            return self._view.openDialog("save file", "Do you want to save the current file ?")
+            return self._view.openDialog(
+                "save file", "Do you want to save the current file ?"
+            )
 
     def restore(self, filename):
         """
@@ -413,7 +455,7 @@ class QGraph(QtWidgets.QGraphicsView):
         """
         if not os.path.isfile(filename):
             return
-        with open(filename, 'r') as fp:
+        with open(filename, "r") as fp:
             settings = json.load(fp)
         self.settings = self.setSettings(settings)
         self.saveDir, self.saveName = os.path.split(filename)
@@ -428,7 +470,7 @@ class QGraph(QtWidgets.QGraphicsView):
             filename = os.path.join(self.saveDir, self.saveName)
         if filename:
             self.settings = self.getSettings()
-            with open(filename, 'w') as fp:
+            with open(filename, "w") as fp:
                 json.dump(self.settings, fp, indent=4)
             self.saveDir, self.saveName = os.path.split(filename)
             self.savePathIsSet = True
@@ -439,6 +481,6 @@ class QGraph(QtWidgets.QGraphicsView):
     def saveAsFile(self, findNewName=True):
         if findNewName or not self.saveName:
             self.saveName = self.getDateName()
-        filename = self._view.browseFile('w')
+        filename = self._view.browseFile("w")
         if filename:
             self.saveFile(filename)
