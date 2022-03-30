@@ -1,12 +1,13 @@
-from PyQt5 import QtCore
-from src import TMP_DIR
 import functools
-from multiprocessing import Process
 import os
 import pickle
-import psutil
-from datetime import datetime
 import traceback
+from datetime import datetime
+from multiprocessing import Process
+
+import psutil
+from PyQt5 import QtCore
+from src import TMP_DIR
 
 
 def call_target(target, args, tmp_path=None):
@@ -32,7 +33,7 @@ def call_target(target, args, tmp_path=None):
         res = e
         print("".join(traceback.format_tb(res.__traceback__)[1:]))
     if tmp_path is not None:
-        with open(tmp_path, 'wb') as f:
+        with open(tmp_path, "wb") as f:
             pickle.dump(res, f)
     return res
 
@@ -49,6 +50,7 @@ class Runner(QtCore.QThread):
         if True, call the target inside a Process
 
     """
+
     def __init__(self, target, args, in_process=False):
         super().__init__()
         self.target = target
@@ -76,7 +78,9 @@ class Runner(QtCore.QThread):
 
     def run(self):
         if self.in_process:
-            self.proc = Process(target=call_target, args=[self.target, self.args, self.tmp_path])
+            self.proc = Process(
+                target=call_target, args=[self.target, self.args, self.tmp_path]
+            )
             self.proc.start()
             self.proc.join()
         else:
@@ -90,7 +94,7 @@ class Runner(QtCore.QThread):
         and delete the file.
         """
         if os.path.isfile(self.tmp_path):
-            with open(self.tmp_path, 'rb') as f:
+            with open(self.tmp_path, "rb") as f:
                 self.out = pickle.load(f)
             try:
                 os.remove(self.tmp_path)
@@ -117,6 +121,7 @@ def manager(thread_mode=0):
             warning: use 2 more seconds at each time to build the Process
 
     """
+
     def decorator(foo):
         @functools.wraps(foo)
         def inner(presenter, module):
@@ -130,10 +135,16 @@ def manager(thread_mode=0):
                 presenter.post_manager(module, call_target(function, args))
             else:
                 module.runner = Runner(function, args, thread_mode == 2)
-                module.runner.finished.connect(lambda: (presenter.post_manager(module, module.runner.out),
-                                                        delete_runner(module)))
+                module.runner.finished.connect(
+                    lambda: (
+                        presenter.post_manager(module, module.runner.out),
+                        delete_runner(module),
+                    )
+                )
                 module.runner.start()
+
         return inner
+
     return decorator
 
 

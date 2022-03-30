@@ -1,10 +1,11 @@
-from skimage import morphology
-import numpy as np
-import nibabel as nib
-import imageio
 import os
 import pickle
+
+import imageio
 import imageio.core.util
+import nibabel as nib
+import numpy as np
+from skimage import morphology
 
 
 # remove imageio warnings
@@ -31,15 +32,15 @@ class Model:
 
         """
         root, ext = os.path.splitext(path)
-        if ext == '.txt':
-            with open(path, 'r') as f:
+        if ext == ".txt":
+            with open(path, "r") as f:
                 data = f.read()
-        elif ext == '.pkl':
-            with open(path, 'rb') as f:
+        elif ext == ".pkl":
+            with open(path, "rb") as f:
                 data = pickle.load(f)
-        elif ext == '.nii' or path.endswith('.nii.gz'):
+        elif ext == ".nii" or path.endswith(".nii.gz"):
             data = nib.load(path).get_fdata()
-        elif ext in ['.png', '.jpg']:
+        elif ext in [".png", ".jpg"]:
             data = imageio.imread(path)
         else:
             raise TypeError("{} not handle yet".format(ext))
@@ -61,16 +62,16 @@ class Model:
 
         """
         root, ext = os.path.splitext(path)
-        if ext == '.txt':
-            with open(path, 'w') as f:
+        if ext == ".txt":
+            with open(path, "w") as f:
                 f.write(str(data))
-        elif ext == '.pkl':
-            with open(path, 'wb') as f:
+        elif ext == ".pkl":
+            with open(path, "wb") as f:
                 pickle.dump(data, f)
-        elif ext in ['.nii.gz', '.nii']:
+        elif ext in [".nii.gz", ".nii"]:
             ni_img = nib.Nifti1Image(data, None)
             nib.save(ni_img, path)
-        elif ext in ['.png', '.jpg']:
+        elif ext in [".png", ".jpg"]:
             data = np.squeeze(data)
             if data.ndim == 3 and np.min(data.shape) < 5:
                 # save 3d image as rgb or rgba image if possible
@@ -83,14 +84,14 @@ class Model:
                     os.makedirs(root)
                 head, tail = os.path.split(root)
                 for i in range(data.shape[0]):
-                    new_path = os.path.join(root, tail+str(i)+ext)
+                    new_path = os.path.join(root, tail + str(i) + ext)
                     self.save(data[i], new_path)
                 return "images are saved in directory {}".format(root)
 
             imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
-    def get_img_infos(self, im, info='max'):
+    def get_img_infos(self, im, info="max"):
         """
         get info of the input image
 
@@ -107,7 +108,7 @@ class Model:
         value = eval("np.{0}(im)".format(info))
         return value
 
-    def apply_basic_morpho(self, im, size, operation='erosion', round_shape=True):
+    def apply_basic_morpho(self, im, size, operation="erosion", round_shape=True):
         """
         Apply basic morphological operation on the input image
 
@@ -130,14 +131,20 @@ class Model:
         if size == 0:
             return im
         if len(im.shape) == 3:
-            selem = morphology.ball(size) if round_shape else morphology.cube(size*2+1)
+            selem = (
+                morphology.ball(size) if round_shape else morphology.cube(size * 2 + 1)
+            )
         elif len(im.shape) == 2:
-            selem = morphology.disk(size) if round_shape else morphology.square(size*2+1)
+            selem = (
+                morphology.disk(size)
+                if round_shape
+                else morphology.square(size * 2 + 1)
+            )
 
-        function = eval("morphology."+operation)
+        function = eval("morphology." + operation)
         return function(im, selem)
 
-    def apply_operation(self, arr, elements=[], operation='add'):
+    def apply_operation(self, arr, elements=[], operation="add"):
         """
 
         Parameters
@@ -155,7 +162,7 @@ class Model:
         if not isinstance(elements, list):
             elements = [elements]
 
-        function = eval("np."+operation)
+        function = eval("np." + operation)
         for element in elements:
             arr = function(arr, element, dtype=np.float64)
         return arr
