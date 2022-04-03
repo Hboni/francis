@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
 from src import RSC_DIR
 from src.view import ui, utils
 
@@ -516,7 +515,7 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
 
         Return
         ------
-        result: QPointF
+        result: QPointF or None
             first position found of the intersection
         """
         points = [
@@ -536,7 +535,7 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
                 intersection_type = line.intersect(border, intersection_point)
             if intersection_type == QtCore.QLineF.BoundedIntersection:
                 return intersection_point
-        return QtCore.QPointF()
+
 
     def delete(self):
         """
@@ -547,37 +546,48 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         self._parent.links.remove(self)
         self._child.links.remove(self)
 
+
     def updatePos(self):
         """
         This method create the arrow between child and parent
+        
+                               p23
+                                 |\
+           p11 ______________ p21| \
+        p1    |                     \  p2
+              |______________       /
+           p12                p22| /
+                                 |/
+                               p24
         """
         # build direction line
         r1, r2 = self._parent.rect(), self._child.rect()
-        line = QtCore.QLineF(
-            self._parent.pos() + r1.center(), self._child.pos() + r2.center()
-        )
+        line = QtCore.QLineF(self._parent.pos() + r1.center(),
+                             self._child.pos() + r2.center())
 
         # build unit vectors
-        unit = line.unitVector().p2() - line.unitVector().p1()
-        normal = (
-            line.normalVector().unitVector().p2()
-            - line.normalVector().unitVector().p1()
-        )
+        unit = (line.unitVector().p2() - line.unitVector().p1())
+        normal = (line.normalVector().unitVector().p2() - line.normalVector().unitVector().p1())
 
-        # get arrow point
-        p1 = self.intersects(line, r1, self._parent.pos()) + unit * self.space[0]
-        p2 = self.intersects(line, r2, self._child.pos()) - unit * self.space[1]
-        p11 = p1 + normal * self.width
+        # set arrow points
+        parent_intersection = self.intersects(line, r1, self._parent.pos())
+        if parent_intersection is None:
+            self.setPolygon(QtGui.QPolygonF())
+            return
+        child_intersection = self.intersects(line, r2, self._child.pos())
+        if child_intersection is None:
+            self.setPolygon(QtGui.QPolygonF())
+            return
+        p1 = parent_intersection + unit * self.space[0]
+        p2 = child_intersection - unit * self.space[1]
         p12 = p1 - normal * self.width
-        p21 = p2 + normal * self.width - unit * self.arrowLen
         p22 = p2 - normal * self.width - unit * self.arrowLen
+        if np.sign((p22 - p12).x()) != np.sign(unit.x()) or np.sign((p22 - p12).y()) != np.sign(unit.y()):
+            self.setPolygon(QtGui.QPolygonF())
+            return
+        p11 = p1 + normal * self.width
+        p21 = p2 + normal * self.width - unit * self.arrowLen
         p23 = p2 + normal * self.arrowWidth - unit * self.arrowLen
         p24 = p2 - normal * self.arrowWidth - unit * self.arrowLen
+        self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
 
-        # build arrow
-        if np.sign((p22 - p12).x()) == np.sign(unit.x()) and np.sign(
-            (p22 - p12).y()
-        ) == np.sign(unit.y()):
-            self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
-        else:
-            self.setPolygon(QtGui.QPolygonF())
