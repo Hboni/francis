@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QLineF, QPoint, QPointF, QRect, Qt
-from PyQt5.QtWidgets import QGraphicsScene, QMessageBox, QWidget
+from PyQt5.QtWidgets import QGraphicsScene, QWidget
+
 from src import RSC_DIR
 from src.view import ui, utils
 from src.view.utils import ModuleState

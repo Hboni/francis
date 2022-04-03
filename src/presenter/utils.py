@@ -156,7 +156,7 @@ def manager(thread_mode: ThreadMode = 0):
 
 
 def get_checked(
-    widget: QWidget, names: list[str] = None, first_only: bool = True
+    widget: QWidget, names: list[str] = [], first_only: bool = True
 ) -> bool:
     """
     get checked childs of a widget
@@ -165,7 +165,7 @@ def get_checked(
     ----------
     widget: QWidget
         parent widget
-    names: list of str, default=None
+    names: list of str, default=[]
         names of checkable widget child
     first_only: bool, default=True
         if True return only the first checked widget name
@@ -176,7 +176,7 @@ def get_checked(
 
     """
     checked = []
-    if names is None:
+    if len(names) == 0:
         for name, w in widget.__dict__.items():
             if w.isChecked():
                 checked.append(name)
