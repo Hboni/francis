@@ -6,6 +6,7 @@ import imageio.core.util
 import nibabel as nib
 import numpy as np
 from skimage import morphology
+
 from src.model.types import ImageInfo, MathOperation, MorphoOperation
 
 
@@ -103,11 +104,15 @@ class Model:
 
         Returns
         -------
-        value: float
+        result: float
             info you want to extract from the image
         """
-        value = eval("np.{0}(im)".format(info))
-        return value
+        function = {
+            "min": np.min,
+            "max": np.max,
+            "mean": np.mean,
+        }.get(info)
+        return function(im)
 
     def apply_basic_morpho(
         self,
@@ -147,15 +152,20 @@ class Model:
                 if round_shape
                 else morphology.square(size * 2 + 1)
             )
-
-        function = eval("morphology." + operation)
+        function = {
+            "erosion": morphology.erosion,
+            "dilation": morphology.dilation,
+            "binary_erosion": morphology.binary_erosion,
+            "binary_dilation": morphology.binary_dilation,
+            "opening": morphology.opening,
+            "closing": morphology.opening,
+        }.get(operation)
         return function(im, selem)
 
     def apply_operation(
         self, arr: np.ndarray, elements=[], operation: MathOperation = "add"
     ) -> np.ndarray:
         """
-
         Parameters
         ----------
         arr: 2d/3d array
@@ -166,12 +176,15 @@ class Model:
         Return
         ------
         arr: 2d/3d array
-
         """
         if not isinstance(elements, list):
             elements = [elements]
-
-        function = eval("np." + operation)
+        function = {
+            "add": np.add,
+            "subtract": np.subtract,
+            "multiply": np.multiply,
+            "divide": np.divide,
+        }.get(operation)
         for element in elements:
             arr = function(arr, element, dtype=np.float64)
         return arr

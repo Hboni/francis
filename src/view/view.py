@@ -4,6 +4,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDockWidget, QMessageBox
+
 from src import CONFIG_DIR, DEFAULT, RSC_DIR, update_default
 from src.view.graph import QGraph
 from src.view.graph_bricks import QGraphicsModule

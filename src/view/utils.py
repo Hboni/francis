@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QDockWidget, QMenu, QWidget
+
 from src.view import ui
 
 
@@ -12,7 +13,7 @@ def is_leaf(dico: dict, key: str) -> bool:
     This function check if a key is the penultimate in a dictionary depth
 
     Example:
-    with a dictionary with this structure:
+    In a dictionary with this structure:
 
     {"Save": {
         "arg1": "value1",
@@ -93,26 +94,6 @@ def getMemoryUsage(object):
         if memory < 1000:
             return memory, i
         memory = int(np.round(memory / 1000, 0))
-
-
-def protector(level: str = "Warning"):
-    """
-    function used as decorator to avoid the app to crash because of basic errors
-    level: {Warning, Critical, Information, Question, NoIcon}
-    """
-
-    def decorator(foo):
-        def inner(*args, **kwargs):
-            try:
-                return foo(*args, **kwargs)
-            except Exception as e:
-                print(e)
-                ui.showError(level, e)
-                return e
-
-        return inner
-
-    return decorator
 
 
 def getModifiedFunction(widget: QWidget) -> QtCore.pyqtBoundSignal:

@@ -25,13 +25,20 @@
             0,
             10
         ],
-        "color": "QtGui.QColor(77, 120, 204)",
+        "color": [
+            77,
+            120,
+            204
+        ],
         "borderWidth": 0,
-        "borderColor": "QtGui.QColor(77, 120, 204)"
+        "borderColor": [
+            77,
+            120,
+            204
+        ]
     },
     "style": "Default",
     "theme": "bright",
-    "filenames": [
-    ],
+    "filenames": [],
     "current_tab": -1
 }

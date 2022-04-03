@@ -8,6 +8,7 @@ from multiprocessing import Process
 import psutil
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
+
 from src import TMP_DIR
 
 

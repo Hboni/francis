@@ -5,7 +5,8 @@ import traceback
 import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QAbstractButton, QWidget
+from PyQt5.QtWidgets import QAbstractButton, QMessageBox, QWidget
+
 from src import RSC_DIR
 from src.view import utils
 
@@ -32,8 +33,13 @@ def showError(level, error: TypeError):
     level: {NoIcon, Qestion, Information, Warning, Critical}
     """
     msg = "{0}\n{1}".format(type(error).__name__, error)
+    icon = {
+        "warning": QMessageBox.Warning,
+        "info": QMessageBox.Information,
+        "error": QMessageBox.Critical,
+    }.get(level)
     dialog = QtWidgets.QMessageBox(
-        eval("QtWidgets.QMessageBox." + level),
+        icon,
         level,
         msg,
         QtWidgets.QMessageBox.Ok,

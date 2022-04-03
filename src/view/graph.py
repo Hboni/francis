@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from src import DEFAULT, RSC_DIR
 from src.view.graph_bricks import QGraphicsLink, QGraphicsModule
 from src.view.utils import GraphOrientation, menu_from_dict
@@ -271,7 +272,7 @@ class QGraph(QtWidgets.QGraphicsView):
 
     def addModule(
         self,
-        module_type: str,
+        moduleType: str,
         parents: list[QGraphicsModule] = None,
         parentNames: list[str] = None,
         position: tuple[float, float] = None,
@@ -291,11 +292,11 @@ class QGraph(QtWidgets.QGraphicsView):
         """
         # initialize
         if name is None:
-            name = self.getUniqueName(module_type)
+            name = self.getUniqueName(moduleType)
         if width is None:
             width = DEFAULT["module_width"]
         if color is None:
-            color = self._view.getParameters(module_type).get("color")
+            color = self._view.getParameters(moduleType).get("color")
 
         if parents is None:
             if parentNames is not None:
@@ -306,7 +307,7 @@ class QGraph(QtWidgets.QGraphicsView):
             parents = [parents]
 
         # create module
-        module = QGraphicsModule(self, module_type, name, parents)
+        module = QGraphicsModule(self, moduleType, name, parents)
         module.addToScene(self.scene)
 
         # bind module to parents and find best position
@@ -391,7 +392,6 @@ class QGraph(QtWidgets.QGraphicsView):
         Return
         ------
         settings: dict
-
         """
         settings = {}
         orderedModules = []

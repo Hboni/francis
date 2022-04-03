@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QLineF, QPoint, QPointF, QRect, Qt
-from PyQt5.QtWidgets import QGraphicsScene, QWidget
+from PyQt5.QtWidgets import QGraphicsScene, QMessageBox, QWidget
 from src import RSC_DIR
 from src.view import ui, utils
 from src.view.utils import ModuleState
@@ -332,7 +332,7 @@ class QGraphicsModule(QtWidgets.QWidget):
                 settings["parameters"][name] = value
         settings["state"] = {
             "name": self.name,
-            "type": self.type,
+            "moduleType": self.type,
             "parentNames": [p.name for p in self.parents],
             "position": [self.pos().x(), self.pos().y()],
             "width": self.width(),
@@ -378,7 +378,7 @@ class QGraphicsModule(QtWidgets.QWidget):
             new_widget = QtWidgets.QTextBrowser()
             new_widget.setPlainText(type(result).__name__ + "\n" + str(result))
             new_widget.setStyleSheet("color: red;")
-            ui.showError("Warning", result)
+            ui.showError("warning", result)
         elif isinstance(result, pd.DataFrame):
             new_widget = ui.QCustomTableWidget(result)
             new_widget.save.clicked.connect(self.saveDataClicked.emit)
@@ -448,13 +448,6 @@ class QGraphicsModule(QtWidgets.QWidget):
                     res.updateSnap()
 
 
-def ceval(arg):
-    try:
-        return eval(arg)
-    except (NameError, TypeError):
-        return arg
-
-
 class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
     """
     graphic arrow between two graphic points
@@ -482,22 +475,22 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
 
     def __init__(
         self,
-        parent,
-        child,
-        width=5,
-        arrowWidth=10,
-        arrowLen=10,
-        space=[0, 20],
-        color=QtGui.QColor(0, 150, 0),
-        borderWidth=2,
-        borderColor=QtGui.QColor(0, 150, 0),
+        parent: QGraphicsModule,
+        child: QGraphicsModule,
+        width: float = 5,
+        arrowWidth: float = 10,
+        arrowLen: float = 10,
+        space: tuple = [0, 20],
+        color: tuple = (0, 150, 0),
+        borderWidth: int = 2,
+        borderColor: tuple = (0, 150, 0),
     ):
         super().__init__()
         self._parent = parent
         self._child = child
         self.setZValue(-1)
-        self.setPen(QtGui.QPen(ceval(borderColor), borderWidth))
-        self.setBrush(ceval(color))
+        self.setPen(QtGui.QPen(QtGui.QColor(*borderColor), borderWidth))
+        self.setBrush(QtGui.QColor(*color))
         self.width = width
         self.arrowWidth = arrowWidth
         self.arrowLen = arrowLen
