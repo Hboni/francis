@@ -3,9 +3,11 @@ import os
 import numpy as np
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
+from PyQt5.QtCore import QLineF, QPoint, QPointF, QRect, Qt
+from PyQt5.QtWidgets import QGraphicsScene, QWidget
 from src import RSC_DIR
 from src.view import ui, utils
+from src.view.utils import ModuleState
 
 
 class QGraphicsModule(QtWidgets.QWidget):
@@ -30,7 +32,7 @@ class QGraphicsModule(QtWidgets.QWidget):
 
     """
 
-    def __init__(self, graph, type, name, parents=[], *args, **kwargs):
+    def __init__(self, graph, type: str, name: str, parents=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.graph = graph
         self.type = type
@@ -53,7 +55,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.setToolTip(type)
         self.initUI(name)
 
-    def initUI(self, name):
+    def initUI(self, name: str):
         uic.loadUi(os.path.join(RSC_DIR, "ui", "ModuleTemplate.ui"), self)
         self.sizeGrip = utils.replaceWidget(self.sizeGrip, ui.QCustomSizeGrip(self))
         self.grap = utils.replaceWidget(self.grap, ui.QGrap())
@@ -83,7 +85,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.isFront = not self.isFront
         self.focusModule(True)
 
-    def getNparents(self):
+    def getNparents(self) -> int:
         return len(self.parents)
 
     def resizeEvent(self, event):
@@ -142,7 +144,7 @@ class QGraphicsModule(QtWidgets.QWidget):
                 self._parent.positionChanged.emit()
             return QtWidgets.QGraphicsRectItem.itemChange(self, change, value)
 
-    def setState(self, state=None, suspendable=True):
+    def setState(self, state: ModuleState = None, suspendable: bool = True):
         """
         set state of the progress bar and of pause, pplay, stop buttons
 
@@ -184,16 +186,16 @@ class QGraphicsModule(QtWidgets.QWidget):
         # if maxi to 0, the progress bar will run over and over
         self.loading.setMaximum(maxi)
 
-    def isSelected(self):
+    def isSelected(self) -> bool:
         return self.selected.isChecked()
 
-    def addToScene(self, scene):
+    def addToScene(self, scene: QGraphicsScene):
         scene.addItem(self._item)
 
-    def get_parent_names(self):
+    def get_parent_names(self) -> list[str]:
         return [p.name for p in self.parents]
 
-    def get_parent_name(self):
+    def get_parent_name(self) -> str:
         return self.parents[0].name
 
     def moveSelection(self):
@@ -210,7 +212,7 @@ class QGraphicsModule(QtWidgets.QWidget):
                 child.selected.setChecked(state)
 
     @property
-    def mid_pos(self):
+    def mid_pos(self) -> tuple[float, float]:
         return self.width() / 2, self.height() / 2
 
     def delete(self):
@@ -232,18 +234,18 @@ class QGraphicsModule(QtWidgets.QWidget):
         self._proxy.deleteLater()
         self.deleteLater()
 
-    def focusModule(self, boolean):
+    def focusModule(self, focus: bool = True):
         """
         if boolean is True, put this module on top of the others
         """
-        self.graph.setEnabledScroll(not boolean)
-        self.graph.isFocused = boolean
-        if boolean:
+        self.graph.setEnabledScroll(not focus)
+        self.graph.isFocused = focus
+        if focus:
             self.graph.higherZValue += 1
             self._item.setZValue(self.graph.higherZValue + self.isFront * 1000)
             self.graph.lastFocus = self
 
-    def getChilds(self):
+    def getChilds(self) -> list:
         """
         get all children
 
@@ -257,7 +259,7 @@ class QGraphicsModule(QtWidgets.QWidget):
             childs += child.getChilds()
         return childs
 
-    def rename(self, new_name):
+    def rename(self, new_name: str):
         self.openButton.setText(new_name)
         self.nameChanged.emit(self.name, new_name)
         self.name = new_name
@@ -280,7 +282,9 @@ class QGraphicsModule(QtWidgets.QWidget):
             w.setPalette(pal)
         self.color = new_color
 
-    def addWidgetInDock(self, widget, side, unique=True):
+    def addWidgetInDock(
+        self, widget: QWidget, side: Qt.DockWidgetArea, unique: bool = True
+    ):
         if widget is None:
             return
         dock = self.graph._view.addWidgetInDock(widget, side, unique)
@@ -295,10 +299,10 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.nameChanged.connect(self.modified.emit)
         for widget in self.parameters.__dict__.values():
             modifFunction = utils.getModifiedFunction(widget)
-            if modifFunction:
+            if modifFunction is not None:
                 modifFunction.connect(self.modified.emit)
 
-    def setSettings(self, settings):
+    def setSettings(self, settings: dict):
         """
         set settings of module (=state) and parameters widgets
 
@@ -317,7 +321,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.graph.renameModule(self, state["name"])
         self.graph.colorizeModule(self, state["color"])
 
-    def getSettings(self):
+    def getSettings(self) -> dict:
         """
         get settings of module (=state) and parameters widgets
         """
@@ -350,7 +354,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.graph.releaseData(self)
         self.showResult("Data released")
 
-    def getBranch(self, branch=[]):
+    def getBranch(self, branch=[]) -> list:
         for node in self.childs + self.parents:
             if node not in branch:
                 branch.append(node)
@@ -392,7 +396,7 @@ class QGraphicsModule(QtWidgets.QWidget):
         self.displayed.emit()
         self.updateHeight()
 
-    def updateHeight(self, force=False):
+    def updateHeight(self, force: bool = False):
         if force:
             QtWidgets.qApp.sendPostedEvents()
             QtWidgets.qApp.sync()
@@ -500,7 +504,7 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         self.space = space
         self.updatePos()
 
-    def intersects(self, line, rect, ref_position):
+    def intersects(self, line: QLineF, rect: QRect, ref_position: QPoint) -> QPointF:
         """
         This method find the intersection between widget rect and line
         by checking the intersection between line and each rect border line.
@@ -526,17 +530,15 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
             rect.topLeft(),
         ]
         for i in range(4):
-            border = QtCore.QLineF(
-                ref_position + points[i - 1], ref_position + points[i]
-            )
+            border = QLineF(ref_position + points[i - 1], ref_position + points[i])
             try:
                 intersection_type, intersection_point = line.intersects(border)
             except AttributeError:
-                intersection_point = QtCore.QPointF()
+                intersection_point = QPointF()
                 intersection_type = line.intersect(border, intersection_point)
-            if intersection_type == QtCore.QLineF.BoundedIntersection:
+            if intersection_type == QLineF.BoundedIntersection:
                 return intersection_point
-        return QtCore.QPointF()
+        return QPointF()
 
     def delete(self):
         """
@@ -553,9 +555,7 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         """
         # build direction line
         r1, r2 = self._parent.rect(), self._child.rect()
-        line = QtCore.QLineF(
-            self._parent.pos() + r1.center(), self._child.pos() + r2.center()
-        )
+        line = QLineF(self._parent.pos() + r1.center(), self._child.pos() + r2.center())
 
         # build unit vectors
         unit = line.unitVector().p2() - line.unitVector().p1()

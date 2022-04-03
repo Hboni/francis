@@ -6,6 +6,7 @@ import imageio.core.util
 import nibabel as nib
 import numpy as np
 from skimage import morphology
+from src.model.types import ImageInfo, MathOperation, MorphoOperation
 
 
 # remove imageio warnings
@@ -17,7 +18,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 
 
 class Model:
-    def load(self, path):
+    def load(self, path: str):
         """
         this method has a vocation to load any type of file
 
@@ -46,7 +47,7 @@ class Model:
             raise TypeError("{} not handle yet".format(ext))
         return data
 
-    def save(self, data, path):
+    def save(self, data, path: str):
         """
         this method has a vocation to save any type of file
 
@@ -91,7 +92,7 @@ class Model:
             imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
-    def get_img_infos(self, im, info="max"):
+    def get_img_infos(self, im: np.ndarray, info: ImageInfo = "max") -> float:
         """
         get info of the input image
 
@@ -108,7 +109,13 @@ class Model:
         value = eval("np.{0}(im)".format(info))
         return value
 
-    def apply_basic_morpho(self, im, size, operation="erosion", round_shape=True):
+    def apply_basic_morpho(
+        self,
+        im: np.ndarray,
+        size: int,
+        operation: MorphoOperation = "erosion",
+        round_shape: bool = True,
+    ) -> np.ndarray:
         """
         Apply basic morphological operation on the input image
 
@@ -144,7 +151,9 @@ class Model:
         function = eval("morphology." + operation)
         return function(im, selem)
 
-    def apply_operation(self, arr, elements=[], operation="add"):
+    def apply_operation(
+        self, arr: np.ndarray, elements=[], operation: MathOperation = "add"
+    ) -> np.ndarray:
         """
 
         Parameters
@@ -168,8 +177,12 @@ class Model:
         return arr
 
     def apply_threshold(
-        self, im, threshold, reverse=False, thresholdInPercentage=False
-    ):
+        self,
+        im: np.ndarray,
+        threshold: float,
+        reverse: bool = False,
+        thresholdInPercentage: bool = False,
+    ) -> np.ndarray:
         """
         Apply binary threshold on the input image
 

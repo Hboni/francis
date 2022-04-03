@@ -1,11 +1,13 @@
+from enum import Enum
+
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets
-
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QDockWidget, QMenu, QWidget
 from src.view import ui
 
 
-def is_leaf(dico, key):
+def is_leaf(dico: dict, key: str) -> bool:
     """
     This function check if a key is the penultimate in a dictionary depth
 
@@ -44,7 +46,7 @@ def connect_action(action, function):
         action.triggered.connect(lambda: function(action))
 
 
-def menu_from_dict(dic, activation_function=None, menu=None):
+def menu_from_dict(dic: dict, activation_function=None, menu: QMenu = None):
     """
     Create a QMenu with submenus from a dictionary of dictionary (recursively)
     add a delimiter if the key starts with 'delimiter'
@@ -52,7 +54,7 @@ def menu_from_dict(dic, activation_function=None, menu=None):
     check config/modules.json for an example
     """
     if menu is None:
-        menu = QtWidgets.QMenu()
+        menu = QMenu()
     for k in dic:
         label = dic.get(k).get("label")
         if label is None:
@@ -69,13 +71,13 @@ def menu_from_dict(dic, activation_function=None, menu=None):
     return menu
 
 
-def replaceWidget(prev_widget, new_widget):
+def replaceWidget(prev_widget: QWidget, new_widget: QWidget) -> QWidget:
     layout = prev_widget.parent()
-    if isinstance(layout, QtWidgets.QDockWidget):
+    if isinstance(layout, QDockWidget):
         layout.setWidget(new_widget)
         prev_widget.deleteLater()
     else:
-        if isinstance(layout, QtWidgets.QWidget):
+        if isinstance(layout, QWidget):
             layout = layout.layout()
         if layout is not None:
             layout.replaceWidget(prev_widget, new_widget)
@@ -93,7 +95,7 @@ def getMemoryUsage(object):
         memory = int(np.round(memory / 1000, 0))
 
 
-def protector(level="Warning"):
+def protector(level: str = "Warning"):
     """
     function used as decorator to avoid the app to crash because of basic errors
     level: {Warning, Critical, Information, Question, NoIcon}
@@ -113,7 +115,7 @@ def protector(level="Warning"):
     return decorator
 
 
-def getModifiedFunction(widget):
+def getModifiedFunction(widget: QWidget) -> QtCore.pyqtBoundSignal:
     if (
         isinstance(widget, (QtWidgets.QCheckBox, QtWidgets.QRadioButton))
         or isinstance(widget, QtWidgets.QPushButton)
@@ -128,7 +130,7 @@ def getModifiedFunction(widget):
         return widget.valueChanged
 
 
-def getValue(widget):
+def getValue(widget: QWidget):
     if (
         isinstance(widget, (QtWidgets.QCheckBox, QtWidgets.QRadioButton))
         or isinstance(widget, QtWidgets.QPushButton)
@@ -155,7 +157,7 @@ def getValue(widget):
         return values
 
 
-def setValue(widget, value):
+def setValue(widget: QWidget, value):
     if (
         isinstance(widget, (QtWidgets.QCheckBox, QtWidgets.QRadioButton))
         or isinstance(widget, QtWidgets.QPushButton)
@@ -180,3 +182,15 @@ def setValue(widget, value):
                 setValue(row.format, value[name][1])
                 setValue(row.unit, value[name][2])
                 setValue(row.force, value[name][3])
+
+
+class GraphOrientation(Enum):
+    VERTICAL = "vertical"
+    HORIZONTAL = "horizontal"
+
+
+class ModuleState(Enum):
+    LOADING = "loading"
+    PAUSE = "pause"
+    VALID = "valid"
+    FAIL = "fail"

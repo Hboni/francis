@@ -2,9 +2,11 @@ import json
 import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDockWidget, QMessageBox
 from src import CONFIG_DIR, DEFAULT, RSC_DIR, update_default
-from src.view import graph, graph_bricks
+from src.view.graph import QGraph
+from src.view.graph_bricks import QGraphicsModule
 
 
 class View(QtWidgets.QMainWindow):
@@ -15,9 +17,9 @@ class View(QtWidgets.QMainWindow):
     """
 
     closed = QtCore.pyqtSignal()
-    moduleAdded = QtCore.pyqtSignal(graph_bricks.QGraphicsModule)
+    moduleAdded = QtCore.pyqtSignal(QGraphicsModule)
 
-    def __init__(self, nopopup=False):
+    def __init__(self, nopopup: bool = False):
         super().__init__()
         self.nopopup = nopopup
         uic.loadUi(os.path.join(RSC_DIR, "ui", "MainView.ui"), self)
@@ -77,13 +79,13 @@ class View(QtWidgets.QMainWindow):
         self.loadTheme()
         self.loadStyle()
 
-    def loadTheme(self, theme=DEFAULT["theme"]):
+    def loadTheme(self, theme: str = DEFAULT["theme"]):
         with open(os.path.join(RSC_DIR, "theme", theme + ".json"), "r") as f:
             self.theme = json.load(f)
         if self.style is not None:
             QtWidgets.qApp.setStyleSheet(self.style % self.theme["qss"])
 
-    def loadStyle(self, style=DEFAULT["style"]):
+    def loadStyle(self, style: str = DEFAULT["style"]):
         if style is None:
             return QtWidgets.qApp.setStyleSheet("")
 
@@ -94,7 +96,7 @@ class View(QtWidgets.QMainWindow):
         else:
             QtWidgets.qApp.setStyleSheet(self.style)
 
-    def getParameters(self, key, dic=None):
+    def getParameters(self, key: str, dic: dict = None) -> str:
         if dic is None:
             dic = self.modules
         if isinstance(dic, dict):
@@ -105,7 +107,12 @@ class View(QtWidgets.QMainWindow):
                 if par is not None:
                     return par
 
-    def addWidgetInDock(self, widget, side=QtCore.Qt.RightDockWidgetArea, unique=True):
+    def addWidgetInDock(
+        self,
+        widget: QtWidgets.QWidget,
+        side: Qt.DockWidgetArea = Qt.RightDockWidgetArea,
+        unique: bool = True,
+    ) -> QDockWidget:
         """
         put widget inside a qdock widget
 
@@ -143,20 +150,23 @@ class View(QtWidgets.QMainWindow):
         dock.raise_()
         return dock
 
-    def openDialog(self, name, question, default=QtWidgets.QMessageBox.Yes):
-        dialog = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Question,
+    def openDialog(
+        self,
+        name: str,
+        question: str,
+        default: QMessageBox.StandardButton = QMessageBox.Yes,
+    ) -> QMessageBox.StandardButton:
+        dialog = QMessageBox(
+            QMessageBox.Question,
             name,
             question,
-            QtWidgets.QMessageBox.Yes
-            | QtWidgets.QMessageBox.No
-            | QtWidgets.QMessageBox.Cancel,
+            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
             parent=self,
         )
         dialog.setDefaultButton(default)
         return dialog.exec()
 
-    def colorizeBackground(self, new_color=None):
+    def colorizeBackground(self, new_color: QtGui.QColor = None):
         if new_color is None:
             new_color = QtWidgets.QColorDialog.getColor(
                 QtGui.QColor(*DEFAULT.get("background_color"))
@@ -169,7 +179,7 @@ class View(QtWidgets.QMainWindow):
             new_color.blue(),
         ]
 
-    def closeTab(self, index):
+    def closeTab(self, index: int):
         graph = self.tabWidget.widget(index)
         resp = graph.askSaveFile()
         if resp == QtWidgets.QMessageBox.Yes:
@@ -188,7 +198,7 @@ class View(QtWidgets.QMainWindow):
         currentTabInd = DEFAULT.get("current_tab")
         self.tabWidget.setCurrentIndex(currentTabInd)
 
-    def browseFile(self, mode="r", ext="*.iag"):
+    def browseFile(self, mode="r", ext: str = "*.iag") -> str:
         dialog = QtWidgets.QFileDialog()
         if mode == "r":
             filename, _ = dialog.getOpenFileName(self, "Open file", filter=ext)
@@ -197,11 +207,11 @@ class View(QtWidgets.QMainWindow):
             filename, _ = dialog.getSaveFileName(self, "Save file", defPath, filter=ext)
         return filename
 
-    def graph(self):
+    def graph(self) -> QGraph:
         return self.tabWidget.currentWidget()
 
-    def newFile(self):
-        gf = graph.QGraph(self, "horizontal")
+    def newFile(self) -> QGraph:
+        gf = QGraph(self, "horizontal")
         self.graphs[gf.name] = gf
         gf.setBackgroundBrush(QtGui.QColor(*DEFAULT.get("background_color")))
         self.tabWidget.addTab(gf, gf.saveName)
@@ -211,7 +221,7 @@ class View(QtWidgets.QMainWindow):
         gf.updateName(False)
         return gf
 
-    def openFile(self, filename=None):
+    def openFile(self, filename: str = None):
         if filename is None:
             filename = self.browseFile("r")
         if os.path.isfile(filename):
@@ -224,7 +234,7 @@ class View(QtWidgets.QMainWindow):
     def saveAsFile(self):
         self.tabWidget.currentWidget().saveAsFile()
 
-    def askSaveFiles(self):
+    def askSaveFiles(self) -> QMessageBox.StandardButton:
         for gf in self.graphs.values():
             if (
                 gf.modules
