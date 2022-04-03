@@ -8,7 +8,6 @@ from multiprocessing import Process
 import psutil
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
-
 from src import TMP_DIR
 
 
@@ -156,7 +155,7 @@ def manager(thread_mode: ThreadMode = 0):
 
 
 def get_checked(
-    widget: QWidget, names: list[str] = [], first_only: bool = True
+    widget: QWidget, names: list[str] = None, first_only: bool = True
 ) -> bool:
     """
     get checked childs of a widget
@@ -165,7 +164,7 @@ def get_checked(
     ----------
     widget: QWidget
         parent widget
-    names: list of str, default=[]
+    names: list of str, default=None
         names of checkable widget child
     first_only: bool, default=True
         if True return only the first checked widget name
@@ -176,7 +175,7 @@ def get_checked(
 
     """
     checked = []
-    if len(names) == 0:
+    if names is None:
         for name, w in widget.__dict__.items():
             if w.isChecked():
                 checked.append(name)
