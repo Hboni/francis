@@ -55,19 +55,11 @@ def test_load_file(test_file_path):
         assert isinstance(mdl.load(test_file_path).shape, tuple)
 
 
-<<<<<<< HEAD
 def test_save_image(test_file_path, test_file_write_path):
     file = mdl.load(test_file_path)
     root, ext = os.path.splitext(test_file_write_path)
     if ext == '.png' and test_file_path.endswith('.nii.gz'):
         mdl.save(file, test_file_write_path)
-=======
-def test_save_image(test_image_path, test_image_write_path):
-    img = mdl.load(test_image_path)
-    mdl.save(img, test_image_write_path)
-    root, ext = os.path.splitext(test_image_write_path)
-    if ext == ".png" and test_image_path.endswith(".nii.gz"):
->>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     elif test_file_path.endswith(ext):
@@ -80,7 +72,6 @@ def test_get_img_infos(square):
 
 
 def test_erode(cube, square):
-<<<<<<< HEAD
     assert np.sum(mdl.apply_basic_morpho(cube, 0, 'erosion', round_shape=False)) == 6**3
     assert np.sum(mdl.apply_basic_morpho(cube, 1, 'erosion', round_shape=False)) == 4**3
     assert np.sum(mdl.apply_basic_morpho(cube, 2, 'erosion', round_shape=False)) == 2**3
@@ -88,21 +79,6 @@ def test_erode(cube, square):
     assert np.sum(mdl.apply_basic_morpho(square, 0, 'erosion', round_shape=False)) == 6**2
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'erosion', round_shape=True)) == 4**2
     assert np.sum(mdl.apply_basic_morpho(square, 2, 'erosion', round_shape=True)) == 2**2
-=======
-    assert (
-        np.sum(mdl.apply_basic_morpho(cube, 1, "erosion", round_shape=False)) == 4**3
-    )
-    assert (
-        np.sum(mdl.apply_basic_morpho(cube, 2, "erosion", round_shape=False)) == 2**3
-    )
-
-    assert (
-        np.sum(mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True)) == 4**2
-    )
-    assert (
-        np.sum(mdl.apply_basic_morpho(square, 2, "erosion", round_shape=True)) == 2**2
-    )
->>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
 
     assert np.array_equal(
         mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True),
@@ -121,7 +97,6 @@ def test_erode(cube, square):
 
 
 def test_dilation(cube, square):
-<<<<<<< HEAD
     assert np.sum(mdl.apply_basic_morpho(cube, 0, 'dilation', round_shape=False)) == 6**3
     assert np.sum(mdl.apply_basic_morpho(cube, 1, 'dilation', round_shape=False)) == 8**3
     assert np.sum(mdl.apply_basic_morpho(cube, 2, 'dilation', round_shape=False)) == 10**3
@@ -132,30 +107,6 @@ def test_dilation(cube, square):
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=False)) == 8**2
     assert np.sum(mdl.apply_basic_morpho(square, 2, 'dilation', round_shape=False)) == 10**2
     assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=True)) == 8**2 - 4
-=======
-    assert (
-        np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=False)) == 8**3
-    )
-    assert (
-        np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=False))
-        == 10**3
-    )
-    assert np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=True)) == 432
-    assert np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=True)) == 728
-
-    assert (
-        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=False))
-        == 8**2
-    )
-    assert (
-        np.sum(mdl.apply_basic_morpho(square, 2, "dilation", round_shape=False))
-        == 10**2
-    )
-    assert (
-        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=True))
-        == 8**2 - 4
-    )
->>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
 
     assert np.array_equal(
         mdl.apply_basic_morpho(
@@ -169,7 +120,6 @@ def test_dilation(cube, square):
 
 
 def test_threshold(grey_scale):
-<<<<<<< HEAD
     assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4*10
@@ -177,12 +127,6 @@ def test_threshold(grey_scale):
     assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7*10
     assert np.sum(mdl.apply_threshold(grey_scale, 50, thresholdInPercentage=True) > 0) == 5*10
     assert np.sum(mdl.apply_threshold(grey_scale, 50, True, thresholdInPercentage=True) > 0) == 5*10
-=======
-    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7 * 10
-    assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4 * 10
-    assert np.sum(mdl.apply_threshold(grey_scale, 4, True) > 0) == 4 * 10
-    assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7 * 10
->>>>>>> a57bd51b7036cb5742e064b2e65eaff8cdb0accb
 
 
 def test_add_value(cube, square):
