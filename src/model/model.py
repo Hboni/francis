@@ -68,27 +68,28 @@ class Model:
         elif ext == ".pkl":
             with open(path, "wb") as f:
                 pickle.dump(data, f)
-        elif ext in [".nii.gz", ".nii"]:
-            ni_img = nib.Nifti1Image(data, None)
-            nib.save(ni_img, path)
-        elif ext in [".png", ".jpg"]:
-            data = np.squeeze(data)
-            if data.ndim == 3 and np.min(data.shape) < 5:
-                # save 3d image as rgb or rgba image if possible
-                # (smaller dimension send to the end)
-                data = np.rollaxis(data, np.argmin(data.shape), data.ndim)
-            elif data.ndim > 2:
-                # 3D image can be saved as a list of 2D images in a directory
-                # work for ndimage recursively
-                if not os.path.exists(root):
-                    os.makedirs(root)
-                head, tail = os.path.split(root)
-                for i in range(data.shape[0]):
-                    new_path = os.path.join(root, tail + str(i) + ext)
-                    self.save(data[i], new_path)
-                return "images are saved in directory {}".format(root)
+        if isinstance(data, np.ndarray):
+            if ext in [".nii.gz", ".nii"]:
+                ni_img = nib.Nifti1Image(data, None)
+                nib.save(ni_img, path)
+            elif ext in [".png", ".jpg"]:
+                data = np.squeeze(data)
+                if data.ndim == 3 and np.min(data.shape) < 5:
+                    # save 3d image as rgb or rgba image if possible
+                    # (smaller dimension send to the end)
+                    data = np.rollaxis(data, np.argmin(data.shape), data.ndim)
+                elif data.ndim > 2:
+                    # 3D image can be saved as a list of 2D images in a directory
+                    # work for ndimage recursively
+                    if not os.path.exists(root):
+                        os.makedirs(root)
+                    head, tail = os.path.split(root)
+                    for i in range(data.shape[0]):
+                        new_path = os.path.join(root, tail + str(i) + ext)
+                        self.save(data[i], new_path)
+                    return "images are saved in directory {}".format(root)
 
-            imageio.imwrite(path, data)
+                imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
     def get_img_infos(self, im, info="max"):

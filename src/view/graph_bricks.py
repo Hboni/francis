@@ -562,12 +562,16 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         """
         # build direction line
         r1, r2 = self._parent.rect(), self._child.rect()
-        line = QtCore.QLineF(self._parent.pos() + r1.center(),
-                             self._child.pos() + r2.center())
+        line = QtCore.QLineF(
+            self._parent.pos() + r1.center(), self._child.pos() + r2.center()
+        )
 
         # build unit vectors
-        unit = (line.unitVector().p2() - line.unitVector().p1())
-        normal = (line.normalVector().unitVector().p2() - line.normalVector().unitVector().p1())
+        unit = line.unitVector().p2() - line.unitVector().p1()
+        normal = (
+            line.normalVector().unitVector().p2()
+            - line.normalVector().unitVector().p1()
+        )
 
         # set arrow points
         parent_intersection = self.intersects(line, r1, self._parent.pos())
