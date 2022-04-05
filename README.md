@@ -5,6 +5,11 @@
 
 Francis is a friendly image analysis interface system.
 
+
+<p align="center">
+  <img src="https://github.com/Hboni/francis/blob/main/francis.gif?raw=true">
+</p>
+
 ## Features
 
 It allows pipeline creation with simple image analysis processes

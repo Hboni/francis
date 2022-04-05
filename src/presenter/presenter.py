@@ -3,7 +3,6 @@ import shutil
 
 import numpy as np
 from PyQt5 import QtWidgets
-
 from src import RSC_DIR, TMP_DIR
 from src.presenter import utils
 
