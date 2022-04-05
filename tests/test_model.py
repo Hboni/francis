@@ -63,7 +63,6 @@ def test_save_file(test_file_path, test_file_write_path):
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     elif test_file_path.endswith(ext):
-        mdl.save(data, test_file_write_path)
         assert os.path.exists(test_file_write_path)
 
 
