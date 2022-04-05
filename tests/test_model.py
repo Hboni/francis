@@ -55,15 +55,15 @@ def test_load_file(test_file_path):
         assert isinstance(mdl.load(test_file_path).shape, tuple)
 
 
-def test_save_image(test_image_path, test_image_write_path):
-    img = mdl.load(test_image_path)
-    mdl.save(img, test_image_write_path)
-    root, ext = os.path.splitext(test_image_write_path)
-    if ext == ".png" and test_image_path.endswith(".nii.gz"):
+def test_save_file(test_file_path, test_file_write_path):
+    data = mdl.load(test_file_path)
+    mdl.save(data, test_file_write_path)
+    root, ext = os.path.splitext(test_file_write_path)
+    if ext == ".png" and test_file_path.endswith(".nii.gz"):
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     elif test_file_path.endswith(ext):
-        mdl.save(img, test_file_write_path)
+        mdl.save(data, test_file_write_path)
         assert os.path.exists(test_file_write_path)
 
 
