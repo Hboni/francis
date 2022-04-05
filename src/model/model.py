@@ -99,6 +99,7 @@ class Model:
             imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
+<<<<<<< HEAD
     def extract_channel(self, im, channel='red'):
         """
         extract channel from image
@@ -119,6 +120,9 @@ class Model:
         return im[:, :, idx]
 
     def get_img_infos(self, im, info='max'):
+=======
+    def get_img_infos(self, im, info="max"):
+>>>>>>> fa60f6cd5d57105ec186917cacd1ace928f8ec37
         """
         get info of the input image
 
