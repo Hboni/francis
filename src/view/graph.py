@@ -39,6 +39,7 @@ class QGraph(QtWidgets.QGraphicsView):
         self.selectAll.activated.connect(self.selectModules)
         self.installEventFilter(self)
         self.holdShift = False
+        self.holdCtrl = False
         self._mouse_position = QtCore.QPoint(0, 0)
         self.modules = {}
         self.lastFocus = None
@@ -97,6 +98,8 @@ class QGraph(QtWidgets.QGraphicsView):
         """
         if obj == self:
             if event.type() == QtCore.QEvent.Wheel:
+                if self.holdCtrl:
+                    self.zoom(event)
                 return True
             if event.type() == QtCore.QEvent.MouseButtonPress:
                 self.unselectModules()
@@ -105,12 +108,18 @@ class QGraph(QtWidgets.QGraphicsView):
                     self.holdShift = True
                 elif event.key() == QtCore.Qt.Key_Control:
                     self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+                    self.holdCtrl = True
             elif event.type() == QtCore.QEvent.KeyRelease:
                 if event.key() == QtCore.Qt.Key_Shift:
                     self.holdShift = False
                 elif event.key() == QtCore.Qt.Key_Control:
                     self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+                    self.holdCtrl = False
         return QtWidgets.QGraphicsView.eventFilter(self, obj, event)
+
+    def zoom(self, event):
+        delta = event.angleDelta().y() / 300
+        return self.scale(1 + delta, 1 + delta)
 
     def unselectModules(self):
         for module in self.modules.values():
