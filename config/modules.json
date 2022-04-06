@@ -35,6 +35,12 @@
                 "function": "call_apply_operation",
                 "nparents": -1,
                 "color": [255, 255, 255, 0]
+            },
+            "Calculator": {
+                "label": "calculatrice",
+                "function": "call_apply_formula",
+                "nparents": -1,
+                "color": [255, 255, 255, 0]
             }
         },
         "description": {

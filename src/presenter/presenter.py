@@ -3,7 +3,6 @@ import shutil
 
 import numpy as np
 from PyQt5 import QtWidgets
-
 from src import RSC_DIR, TMP_DIR
 from src.presenter import utils
 
@@ -161,6 +160,28 @@ class Presenter:
 
         elif module.type == "Load":
             module.parameters.browse.clicked.connect(lambda: self.browse_path(module))
+
+        elif module.type == "Calculator":
+            for i, name in enumerate(module.get_parent_names()):
+                button = QtWidgets.QPushButton(name)
+                button.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
+                module.parameters.grid.addWidget(button, 0, i)
+                module.parameters.__dict__["[{}]".format(name)] = button
+
+            def fill_formula(button, txt):
+                formula = module.parameters.formula
+                if txt == "🠔":
+                    button.clicked.connect(lambda: formula.setText(formula.text()[:-1]))
+                elif txt == "C":
+                    button.clicked.connect(lambda: formula.setText(""))
+                else:
+                    button.clicked.connect(lambda: formula.setText(formula.text() + txt))
+
+            for name, button in module.parameters.__dict__.items():
+                if isinstance(button, QtWidgets.QToolButton):
+                    fill_formula(button, button.text())
+                if isinstance(button, QtWidgets.QPushButton):
+                    fill_formula(button, name)
 
         elif module.type == "Operation":
             for rb in [module.parameters.add, module.parameters.multiply]:
@@ -344,6 +365,17 @@ class Presenter:
                 module.parameters, ["add", "multiply", "subtract", "divide"]
             ),
         }
+        return function, args
+
+    @utils.manager(2)
+    def call_apply_formula(self, module):
+        """
+        compute formula between images and float
+        """
+        parent_names = module.get_parent_names()
+        function = self._model.apply_formula
+        args = {"formula": module.parameters.formula.text(),
+                "elements": {name: module.getData(name) for name in parent_names}}
         return function, args
 
     @utils.manager(2)

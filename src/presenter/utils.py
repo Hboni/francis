@@ -1,12 +1,12 @@
 import functools
 import os
 import pickle
+import traceback
 from datetime import datetime
 from multiprocessing import Process
 
 import psutil
 from PyQt5 import QtCore
-
 from src import TMP_DIR
 
 
@@ -31,6 +31,7 @@ def call_target(target, args, tmp_path=None):
         res = target(**args)
     except Exception as e:
         res = e
+        print("".join(traceback.format_tb(res.__traceback__)[1:]))
     if tmp_path is not None:
         with open(tmp_path, "wb") as f:
             pickle.dump(res, f)
