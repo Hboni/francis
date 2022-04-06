@@ -7,6 +7,8 @@ import nibabel as nib
 import numpy as np
 from skimage import morphology
 
+from src.model.types import ImageInfo, MathOperation, MorphoOperation
+
 
 # remove imageio warnings
 def silence_imageio_warning(*args, **kwargs):
@@ -17,7 +19,7 @@ imageio.core.util._precision_warn = silence_imageio_warning
 
 
 class Model:
-    def load(self, path):
+    def load(self, path: str):
         """
         this method has a vocation to load any type of file
 
@@ -47,14 +49,17 @@ class Model:
                 if data.shape[2] == 4:
                     data = data[:, :, :3]
                 # convert to gray if same value everywhere in each r, g, b canal
-                if data.shape[2] == 3 and (data[:, :, 0] == data[:, :, 1]).all() \
-                        and (data[:, :, 1] == data[:, :, 2]).all():
+                if (
+                    data.shape[2] == 3
+                    and (data[:, :, 0] == data[:, :, 1]).all()
+                    and (data[:, :, 1] == data[:, :, 2]).all()
+                ):
                     data = data[:, :, 0]
         else:
             raise TypeError("{} not handle yet".format(ext))
         return data
 
-    def save(self, data, path):
+    def save(self, data, path: str):
         """
         this method has a vocation to save any type of file
 
@@ -100,7 +105,7 @@ class Model:
                 imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
-    def extract_channel(self, im, channel='red'):
+    def extract_channel(self, im, channel="red"):
         """
         extract channel from image
 
@@ -115,11 +120,13 @@ class Model:
 
         """
         if im.ndim != 3 or im.shape[2] != 3:
-            raise Exception("You cannot extract red, green or blue channel from this image")
-        idx = ['red', 'green', 'blue'].index(channel)
+            raise Exception(
+                "You cannot extract red, green or blue channel from this image"
+            )
+        idx = ["red", "green", "blue"].index(channel)
         return im[:, :, idx]
 
-    def get_img_infos(self, im, info='max'):
+    def get_img_infos(self, im, info="max"):
         """
         get info of the input image
 
@@ -130,13 +137,23 @@ class Model:
 
         Return
         -------
-        value: float
+        result: float
             info you want to extract from the image
         """
-        value = eval("np.{0}(im)".format(info))
-        return value
+        function = {
+            "min": np.min,
+            "max": np.max,
+            "mean": np.mean,
+        }.get(info)
+        return function(im)
 
-    def apply_basic_morpho(self, im, size, operation="erosion", round_shape=True):
+    def apply_basic_morpho(
+        self,
+        im: np.ndarray,
+        size: int,
+        operation: MorphoOperation = "erosion",
+        round_shape: bool = True,
+    ) -> np.ndarray:
         """
         Apply basic morphological operation on the input image
 
@@ -168,13 +185,20 @@ class Model:
                 if round_shape
                 else morphology.square(size * 2 + 1)
             )
-
-        function = eval("morphology." + operation)
+        function = {
+            "erosion": morphology.erosion,
+            "dilation": morphology.dilation,
+            "binary_erosion": morphology.binary_erosion,
+            "binary_dilation": morphology.binary_dilation,
+            "opening": morphology.opening,
+            "closing": morphology.opening,
+        }.get(operation)
         return function(im, selem)
 
-    def apply_operation(self, arr, elements=[], operation="add"):
+    def apply_operation(
+        self, arr: np.ndarray, elements=[], operation: MathOperation = "add"
+    ) -> np.ndarray:
         """
-
         Parameters
         ----------
         arr: 2d/3d array
@@ -185,118 +209,26 @@ class Model:
         Return
         ------
         arr: 2d/3d array
-
         """
         if not isinstance(elements, list):
             elements = [elements]
-
-        function = eval("np." + operation)
+        function = {
+            "add": np.add,
+            "subtract": np.subtract,
+            "multiply": np.multiply,
+            "divide": np.divide,
+        }.get(operation)
         for element in elements:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
-    def apply_formula(self, formula, elements):
-        """
-        This function calculate complexe operations between float/int and images
-        it handles parenthesis grouping and operator priorities.
-        And it calls "apply_operation" to do pear operations recursively.
-
-        Parameters
-        ----------
-        formula: str
-        elements: dict
-            this dictionary contains data (image or float/int...)
-
-        Return
-        ------
-        result: np.ndarray or int/float
-            the result type depends on the formula.
-
-        Example
-        -------
-        formula = "( 3 x [key_1] + 4 x [key_2] ) ÷ [key_3]"
-        elements = {'key_1': np.array([...]),   # image
-                    'key_2': np.array([...]),   # image
-                    'key_3': 2}                 # integer
-
-        This will recursively apply (call self.apply_operation method):
-            - M1 = multiplication of key_1 image and 3
-            - M2 = multiplication of key_2 image and 4
-            - A1 = addition of M1 and M2
-            - result = division of A1 and key_3 value
-        """
-        # operations ordered on priorities
-        operations = ['multiply', 'divide', 'add', 'subtract']
-        signs = ['x', '÷', '+', '-']
-
-        # initialize formula
-        formula = formula.replace(',', '.')
-        formula = formula.replace(' ', '')
-
-        # add space where we need to split formula
-        formula = list(formula)
-        for i, f in reversed(list(enumerate(formula))):
-            # check if '-' is minus and not subtract
-            if f == '-' and (i == 0 or formula[i-1] in signs + ['(']):
-                formula[i] = "-1 x "
-            elif f in signs + ['(', ')']:
-                formula[i] = " {} ".format(f)
-        formula = "".join(formula)
-        # split formula
-        formula = formula.split(' ')
-        formula = [f for f in formula if f]
-
-        def apply_formula_recursively(fml, elems, elem_id=0):
-            if len(fml) == 1:
-                if fml[0].startswith('['):
-                    res = elems[fml[0][1:-1]]
-                else:
-                    res = eval(fml[0])
-            # apply pear operation (with one operator and two elements)
-            # example [Load_1] x 5
-            elif len(fml) == 3 and fml[1] in signs:
-                op_sign = fml.pop(1)
-                for i, f in enumerate(fml):
-                    if f.startswith('['):
-                        fml[i] = elems[f[1:-1]]
-                    else:
-                        fml[i] = eval(f)
-                for operation, sign in zip(operations, signs):
-                    if op_sign == sign:
-                        res = self.apply_operation(fml[0], fml[1], operation)
-            else:
-                # recursively apply formula on group in parenthesis
-                if '(' in fml:
-                    for i, f in enumerate(fml):
-                        if f == '(':
-                            start = i
-                        elif f == ')':
-                            end = i + 1
-                            break
-                    sub_fml = fml[start+1:end-1]
-
-                # recursively apply formula on prioritary pear operations
-                else:
-                    for sign in signs:
-                        if sign in fml:
-                            start = fml.index(sign) - 1
-                            end = fml.index(sign) + 2
-                            break
-                    sub_fml = fml[start:end]
-
-                # do recusrsivity
-                name = "_ID{}".format(elem_id)
-                elem_id += 1
-                res, elem_id = apply_formula_recursively(sub_fml, elems, elem_id)
-                elems[name] = res
-                fml = fml[:start] + ["[{}]".format(name)] + fml[end:]
-                res, elem_id = apply_formula_recursively(fml, elems, elem_id)
-            return res, elem_id
-
-        result, _ = apply_formula_recursively(formula, elements)
-        return result
-
-    def apply_threshold(self, im, threshold, reverse=False, thresholdInPercentage=False):
+    def apply_threshold(
+        self,
+        im: np.ndarray,
+        threshold: float,
+        reverse: bool = False,
+        thresholdInPercentage: bool = False,
+    ) -> np.ndarray:
         """
         Apply binary threshold on the input image
 

@@ -3,13 +3,15 @@ import os
 import traceback
 
 import numpy as np
+import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5.QtWidgets import QAbstractButton, QMessageBox, QWidget
 
 from src import RSC_DIR
 from src.view import utils
 
 
-def setButtonIcon(button, img, append=False):
+def setButtonIcon(button: QAbstractButton, img: str, append: bool = False):
     """
     set image to the specified button
     """
@@ -26,13 +28,18 @@ def setButtonIcon(button, img, append=False):
     button.setCursor(QtCore.Qt.PointingHandCursor)
 
 
-def showError(level, error):
+def showError(level, error: TypeError):
     """
     level: {NoIcon, Qestion, Information, Warning, Critical}
     """
     msg = "{0}\n{1}".format(type(error).__name__, error)
+    icon = {
+        "warning": QMessageBox.Warning,
+        "info": QMessageBox.Information,
+        "error": QMessageBox.Critical,
+    }.get(level)
     dialog = QtWidgets.QMessageBox(
-        eval("QtWidgets.QMessageBox." + level),
+        icon,
         level,
         msg,
         QtWidgets.QMessageBox.Ok,
@@ -91,7 +98,7 @@ class QTypeForm(QtWidgets.QWidget):
         self.setLayout(self.form)
         self.rows = {}
 
-    def addRow(self, name):
+    def addRow(self, name: str):
         row = uic.loadUi(
             os.path.join(RSC_DIR, "ui", "modules", "bricks", "formatLine.ui")
         )
@@ -102,11 +109,11 @@ class QTypeForm(QtWidgets.QWidget):
         self.form.addRow(name, row)
         self.rows[name] = row
 
-    def addRows(self, names):
+    def addRows(self, names: list[str]):
         for name in names:
             self.addRow(name)
 
-    def hideDetails(self, row, txt):
+    def hideDetails(self, row, txt: str):
         row.format.hide()
         row.unit.hide()
         if txt == "datetime":
@@ -129,7 +136,7 @@ class QGridButtonGroup(QtWidgets.QWidget):
         if self.group.buttons():
             self.group.buttons()[0].setChecked(True)
 
-    def checkAll(self, state=True):
+    def checkAll(self, state: bool = True):
         for b in self.group.buttons():
             b.setChecked(state)
 
@@ -138,14 +145,14 @@ class QGridButtonGroup(QtWidgets.QWidget):
         if checked_button:
             return checked_button.text()
 
-    def checkedButtonsText(self):
+    def checkedButtonsText(self) -> list[QAbstractButton]:
         checked_buttons = []
         for b in self.group.buttons():
             if b.isChecked():
                 checked_buttons.append(b.text())
         return checked_buttons
 
-    def computePositions(self, n):
+    def computePositions(self, n: int) -> tuple[float, float]:
         if self.max_row is None and self.max_col is None:
             return np.ceil(np.sqrt(n)), np.ceil(np.sqrt(n))
         elif self.max_row is not None:
@@ -153,7 +160,7 @@ class QGridButtonGroup(QtWidgets.QWidget):
         elif self.max_col is not None:
             return np.ceil(n / self.max_col), self.max_col
 
-    def addWidgets(self, widget_type, names, checkable=True):
+    def addWidgets(self, widget_type, names: list[str], checkable: bool = True):
         if widget_type in [QtWidgets.QPushButton, QtWidgets.QCheckBox]:
             self.group.setExclusive(False)
         positions = self.computePositions(len(names))
@@ -183,13 +190,13 @@ class QCustomTableWidget(QtWidgets.QWidget):
         if data is not None:
             self.setData(data)
 
-    def updateVheader(self, index):
+    def updateVheader(self, index: int):
         model = PandasModel(self.data, index - 1)
         proxyModel = QtCore.QSortFilterProxyModel()
         proxyModel.setSourceModel(model)
         self.table.setModel(proxyModel)
 
-    def setData(self, data):
+    def setData(self, data: pd.DataFrame):
         try:
             self.Vheader.addItems([""] + list(data.columns.astype(str)))
         except TypeError:
@@ -206,7 +213,7 @@ class QCustomTableWidget(QtWidgets.QWidget):
 class QImageRenderer(QtWidgets.QLabel):
     syncSignal = QtCore.pyqtSignal()
 
-    def __init__(self, img, parent):
+    def __init__(self, img: np.ndarray, parent):
         QtWidgets.QWidget.__init__(self)
         self.img = self.formatImage(img)
 
@@ -216,7 +223,7 @@ class QImageRenderer(QtWidgets.QLabel):
         self._parent = parent
         self.updateSnap()
 
-    def formatImage(self, img):
+    def formatImage(self, img: np.ndarray) -> np.ndarray:
         img = img.astype(np.float64) if img.dtype != np.float64 else copy.copy(img)
         img[np.isinf(img)] = np.nan
 
@@ -246,7 +253,7 @@ class QImageRenderer(QtWidgets.QLabel):
         self.updateSnap()
         self.syncSignal.emit()
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event=None):
         """
         update image axis on double click above image view
         """
@@ -274,7 +281,7 @@ class QImageRenderer(QtWidgets.QLabel):
             self.axis = 0
             self.currentSlice = None
 
-    def getSliceParams(self):
+    def getSliceParams(self) -> tuple[np.ndarray, int, int, int]:
         if self.img.ndim == 2:
             return self.img, self.img.shape[1], self.img.shape[0], self.img.shape[1]
         elif self.img.ndim == 3:
@@ -367,7 +374,7 @@ class QMultiWidget(QtWidgets.QWidget):
         for widget, name in zip(widgets, names):
             self.addWidget(widget, name)
 
-    def addWidget(self, widget, name):
+    def addWidget(self, widget: QWidget, name: str) -> QWidget:
         self.tab.addTab(widget, name)
         self.tab.setCurrentIndex(0)
         self.widgets[name] = widget

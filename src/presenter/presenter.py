@@ -3,8 +3,13 @@ import shutil
 
 import numpy as np
 from PyQt5 import QtWidgets
+
 from src import RSC_DIR, TMP_DIR
+from src.model.model import Model
 from src.presenter import utils
+from src.presenter.utils import ThreadMode
+from src.view.graph_bricks import QGraphicsModule
+from src.view.view import View
 
 
 class Presenter:
@@ -21,7 +26,7 @@ class Presenter:
 
     """
 
-    def __init__(self, view, model=None, threading_enabled=True):
+    def __init__(self, view: View, model: Model = None, threading_enabled: bool = True):
         self._model = model
         self._view = view
         self.threading_enabled = True
@@ -48,7 +53,9 @@ class Presenter:
                     module.runner.terminate()
 
     # --------------------- PRIOR  AND POST FUNCTION CALL ---------------------#
-    def prior_manager(self, module, thread_mode=0):
+    def prior_manager(
+        self, module: QGraphicsModule, thread_mode: ThreadMode = 0
+    ) -> bool:
         """
         This method is called by the manager before the model method process
 
@@ -78,7 +85,7 @@ class Presenter:
                 return False
         return True
 
-    def post_manager(self, module, output):
+    def post_manager(self, module: QGraphicsModule, output):
         """
         This method is called by the manager after the model method process
         It manage the output of the model method based on the output type
@@ -106,7 +113,7 @@ class Presenter:
             module.propagation_child = None
 
     # ------------------------------ CONNECTIONS ------------------------------#
-    def init_module_connections(self, module):
+    def init_module_connections(self, module: QGraphicsModule):
         """
         initialize module parameters if necessary
         connect play, pause and stop buttons to model method handling
@@ -143,7 +150,7 @@ class Presenter:
 
         self.init_module_custom_connections(module)
 
-    def init_module_custom_connections(self, module):
+    def init_module_custom_connections(self, module: QGraphicsModule):
         """
         initialize connections between module widgets and custom functions
         initialize widgets updating if necessary
@@ -164,7 +171,9 @@ class Presenter:
         elif module.type == "Calculator":
             for i, name in enumerate(module.get_parent_names()):
                 button = QtWidgets.QPushButton(name)
-                button.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
+                button.setSizePolicy(
+                    QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred
+                )
                 module.parameters.grid.addWidget(button, 0, i)
                 module.parameters.__dict__["[{}]".format(name)] = button
 
@@ -175,7 +184,9 @@ class Presenter:
                 elif txt == "C":
                     button.clicked.connect(lambda: formula.setText(""))
                 else:
-                    button.clicked.connect(lambda: formula.setText(formula.text() + txt))
+                    button.clicked.connect(
+                        lambda: formula.setText(formula.text() + txt)
+                    )
 
             for name, button in module.parameters.__dict__.items():
                 if isinstance(button, QtWidgets.QToolButton):
@@ -208,7 +219,7 @@ class Presenter:
         module.setSettings(module.graph.settings.get(module.name))
 
     # ----------------------------- utils -------------------------------------#
-    def browse_savepath(self, module):
+    def browse_savepath(self, module: QGraphicsModule):
         """
         open a browse window to define the data save path based on the parent
         data type. Any type of data can be saved as .pkl
@@ -251,7 +262,7 @@ class Presenter:
             module.parameters.path.setText(filename)
             module.parameters.path.setToolTip(filename)
 
-    def browse_path(self, module):
+    def browse_path(self, module: QGraphicsModule):
         """
         open a browse window to select a file and update path widget
         """
@@ -268,7 +279,7 @@ class Presenter:
 
     # ----------------------------- MODEL CALL --------------------------------#
     @utils.manager(2)
-    def call_save(self, module):
+    def call_save(self, module: QGraphicsModule):
         """
         save the parent image as nifti file at specified path
         """
@@ -281,7 +292,7 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_load(self, module):
+    def call_load(self, module: QGraphicsModule):
         """
         load any type of data
         """
@@ -296,8 +307,10 @@ class Presenter:
         """
         parent_name = module.get_parent_name()
         function = self._model.extract_channel
-        args = {"im": module.getData(parent_name),
-                "channel": utils.get_checked(module.parameters, ['red', 'green', 'blue'])}
+        args = {
+            "im": module.getData(parent_name),
+            "channel": utils.get_checked(module.parameters, ["red", "green", "blue"]),
+        }
         return function, args
 
     @utils.manager(2)
@@ -315,7 +328,7 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_apply_threshold(self, module):
+    def call_apply_threshold(self, module: QGraphicsModule):
         """
         compute 3d thresholding on the parent image
         and store the thresholded image into image stack dictionnaries
@@ -332,7 +345,7 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_apply_operation(self, module):
+    def call_apply_operation(self, module: QGraphicsModule):
         """
         compute operations between multiple images
         """
@@ -351,7 +364,7 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_apply_simple_operation(self, module):
+    def call_apply_simple_operation(self, module: QGraphicsModule):
         """
         compute simple operations between an image and a float
         """
@@ -374,8 +387,10 @@ class Presenter:
         """
         parent_names = module.get_parent_names()
         function = self._model.apply_formula
-        args = {"formula": module.parameters.formula.text(),
-                "elements": {name: module.getData(name) for name in parent_names}}
+        args = {
+            "formula": module.parameters.formula.text(),
+            "elements": {name: module.getData(name) for name in parent_names},
+        }
         return function, args
 
     @utils.manager(2)

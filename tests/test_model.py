@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pytest
+
 from src.model.model import Model
 
 mdl = Model()
@@ -26,22 +27,27 @@ def grey_scale():
     return np.array([[i] * 10 for i in range(10)])
 
 
-@pytest.fixture(params=[
-    os.path.join(os.getcwd(), 'resources/data/cvs_avg35_inMNI152.nii.gz'),
-    os.path.join(os.getcwd(), 'resources/data/Lena.png'),
-    os.path.join(os.getcwd(), 'resources/data/lena_mean.pkl'),
-    os.path.join(os.getcwd(), 'resources/data/simple_text.txt')
-])
+@pytest.fixture(
+    params=[
+        os.path.join(os.getcwd(), "resources/data/cvs_avg35_inMNI152.nii.gz"),
+        os.path.join(os.getcwd(), "resources/data/Lena.png"),
+        os.path.join(os.getcwd(), "resources/data/lena_mean.pkl"),
+        os.path.join(os.getcwd(), "resources/data/simple_text.txt"),
+    ]
+)
 def test_file_path(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=[
-    os.path.join(os.getcwd(), 'resources/data/out/saved_image.nii'),
-    os.path.join(os.getcwd(), 'resources/data/out/saved_image.png'),
-    os.path.join(os.getcwd(), 'resources/data/out/saved_pickle.pkl'),
-    os.path.join(os.getcwd(), 'resources/data/out/saved_text.txt')
-    ])
+@pytest.fixture(
+    scope="module",
+    params=[
+        os.path.join(os.getcwd(), "resources/data/out/saved_image.nii"),
+        os.path.join(os.getcwd(), "resources/data/out/saved_image.png"),
+        os.path.join(os.getcwd(), "resources/data/out/saved_pickle.pkl"),
+        os.path.join(os.getcwd(), "resources/data/out/saved_text.txt"),
+    ],
+)
 def test_file_write_path(request):
     if os.path.exists(request.param):
         os.remove(request.param)
@@ -49,7 +55,7 @@ def test_file_write_path(request):
 
 
 def test_load_file(test_file_path):
-    if test_file_path.endswith('.txt'):
+    if test_file_path.endswith(".txt"):
         assert mdl.load(test_file_path) == "Hello there!\n"
     else:
         assert isinstance(mdl.load(test_file_path).shape, tuple)
@@ -59,7 +65,7 @@ def test_save_file(test_file_path, test_file_write_path):
     data = mdl.load(test_file_path)
     mdl.save(data, test_file_write_path)
     root, ext = os.path.splitext(test_file_write_path)
-    if ext == '.png' and test_file_path.endswith('.nii.gz'):
+    if ext == ".png" and test_file_path.endswith(".nii.gz"):
         assert os.path.exists(root)
         assert os.path.exists(os.path.join(root, "saved_image0.png"))
     elif test_file_path.endswith(ext):
@@ -71,13 +77,26 @@ def test_get_img_infos(square):
 
 
 def test_erode(cube, square):
-    assert np.sum(mdl.apply_basic_morpho(cube, 0, 'erosion', round_shape=False)) == 6**3
-    assert np.sum(mdl.apply_basic_morpho(cube, 1, 'erosion', round_shape=False)) == 4**3
-    assert np.sum(mdl.apply_basic_morpho(cube, 2, 'erosion', round_shape=False)) == 2**3
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 0, "erosion", round_shape=False)) == 6**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 1, "erosion", round_shape=False)) == 4**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 2, "erosion", round_shape=False)) == 2**3
+    )
 
-    assert np.sum(mdl.apply_basic_morpho(square, 0, 'erosion', round_shape=False)) == 6**2
-    assert np.sum(mdl.apply_basic_morpho(square, 1, 'erosion', round_shape=True)) == 4**2
-    assert np.sum(mdl.apply_basic_morpho(square, 2, 'erosion', round_shape=True)) == 2**2
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 0, "erosion", round_shape=False))
+        == 6**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True)) == 4**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 2, "erosion", round_shape=True)) == 2**2
+    )
 
     assert np.array_equal(
         mdl.apply_basic_morpho(square, 1, "erosion", round_shape=True),
@@ -96,16 +115,35 @@ def test_erode(cube, square):
 
 
 def test_dilation(cube, square):
-    assert np.sum(mdl.apply_basic_morpho(cube, 0, 'dilation', round_shape=False)) == 6**3
-    assert np.sum(mdl.apply_basic_morpho(cube, 1, 'dilation', round_shape=False)) == 8**3
-    assert np.sum(mdl.apply_basic_morpho(cube, 2, 'dilation', round_shape=False)) == 10**3
-    assert np.sum(mdl.apply_basic_morpho(cube, 1, 'dilation', round_shape=True)) == 432
-    assert np.sum(mdl.apply_basic_morpho(cube, 2, 'dilation', round_shape=True)) == 728
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 0, "dilation", round_shape=False)) == 6**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=False)) == 8**3
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=False))
+        == 10**3
+    )
+    assert np.sum(mdl.apply_basic_morpho(cube, 1, "dilation", round_shape=True)) == 432
+    assert np.sum(mdl.apply_basic_morpho(cube, 2, "dilation", round_shape=True)) == 728
 
-    assert np.sum(mdl.apply_basic_morpho(square, 0, 'dilation', round_shape=False)) == 6**2
-    assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=False)) == 8**2
-    assert np.sum(mdl.apply_basic_morpho(square, 2, 'dilation', round_shape=False)) == 10**2
-    assert np.sum(mdl.apply_basic_morpho(square, 1, 'dilation', round_shape=True)) == 8**2 - 4
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 0, "dilation", round_shape=False))
+        == 6**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=False))
+        == 8**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 2, "dilation", round_shape=False))
+        == 10**2
+    )
+    assert (
+        np.sum(mdl.apply_basic_morpho(square, 1, "dilation", round_shape=True))
+        == 8**2 - 4
+    )
 
     assert np.array_equal(
         mdl.apply_basic_morpho(
@@ -119,13 +157,21 @@ def test_dilation(cube, square):
 
 
 def test_threshold(grey_scale):
-    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 4, True) > 0) == 4*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 50, thresholdInPercentage=True) > 0) == 5*10
-    assert np.sum(mdl.apply_threshold(grey_scale, 50, True, thresholdInPercentage=True) > 0) == 5*10
+    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 2) > 0) == 7 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 5) > 0) == 4 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 4, True) > 0) == 4 * 10
+    assert np.sum(mdl.apply_threshold(grey_scale, 7, True) > 0) == 7 * 10
+    assert (
+        np.sum(mdl.apply_threshold(grey_scale, 50, thresholdInPercentage=True) > 0)
+        == 5 * 10
+    )
+    assert (
+        np.sum(
+            mdl.apply_threshold(grey_scale, 50, True, thresholdInPercentage=True) > 0
+        )
+        == 5 * 10
+    )
 
 
 def test_add_value(cube, square):

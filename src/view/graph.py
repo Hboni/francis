@@ -4,9 +4,10 @@ import os
 from datetime import datetime
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from src import DEFAULT, RSC_DIR
 from src.view.graph_bricks import QGraphicsLink, QGraphicsModule
-from src.view.utils import menu_from_dict
+from src.view.utils import GraphOrientation, menu_from_dict
 
 # stack under, raise, show
 
@@ -26,9 +27,9 @@ class QGraph(QtWidgets.QGraphicsView):
 
     """
 
-    def __init__(self, mainwin, direction="vertical"):
+    def __init__(self, view, direction: GraphOrientation = "vertical"):
         super().__init__()
-        self._view = mainwin
+        self._view = view
         self.direction = direction
         self.setWindowState(QtCore.Qt.WindowMaximized)
         self.scene = QtWidgets.QGraphicsScene()
@@ -69,7 +70,7 @@ class QGraph(QtWidgets.QGraphicsView):
         child.links.append(link)
         self.scene.addItem(link)
 
-    def setEnabledScroll(self, enable_scroll=True):
+    def setEnabledScroll(self, enable_scroll: bool = True):
         """
         enable/disable view scrolling
 
@@ -80,7 +81,9 @@ class QGraph(QtWidgets.QGraphicsView):
         self.verticalScrollBar().setEnabled(enable_scroll)
         self.horizontalScrollBar().setEnabled(enable_scroll)
 
-    def getSelectedModules(self, exceptions=[]):
+    def getSelectedModules(
+        self, exceptions: list[QGraphicsModule] = []
+    ) -> list[QGraphicsModule]:
         """
         get all selected modules (with ctrl+click shortcut)
 
@@ -125,13 +128,15 @@ class QGraph(QtWidgets.QGraphicsView):
         for module in self.modules.values():
             module.selected.setChecked(False)
 
-    def selectModules(self, modules=None):
+    def selectModules(self, modules: dict[str, QGraphicsModule] = None):
         if modules is None:
             modules = self.modules
         for module in modules.values():
             module.selected.setChecked(True)
 
-    def getUniqueName(self, name, exception=None, dic=None):
+    def getUniqueName(
+        self, name: str, exception: str = None, dic: dict[str, QGraphicsModule] = None
+    ) -> str:
         """
         find an unused name by adding _n at the end of the name
 
@@ -157,7 +162,7 @@ class QGraph(QtWidgets.QGraphicsView):
             i += 1
         return new_name
 
-    def openMenu(self, module=None):
+    def openMenu(self, module: QGraphicsModule = None):
         """
         open menu on right-clic at clicked position
 
@@ -171,26 +176,25 @@ class QGraph(QtWidgets.QGraphicsView):
         parents = []
 
         def activate(action):
-            type = action._type
-            if type in ["delete", "delete all"]:
+            if action._type in ["delete", "delete all"]:
                 for p in parents:
                     self.deleteBranch(p)
-            elif type == "rename":
+            elif action._type == "rename":
                 self.renameModule(self.lastFocus)
-            elif type == "changeColor":
+            elif action._type == "changeColor":
                 self.colorizeModule(self.lastFocus)
-            elif type == "colorBackground":
+            elif action._type == "colorBackground":
                 self._view.colorizeBackground()
             else:
-                nparents = self._view.getParameters(type).get("nparents")
+                nparents = self._view.getParameters(action._type).get("nparents")
                 if not parents:
-                    self.addModule(type)
+                    self.addModule(action._type)
                 else:
                     if parents and nparents in [1, None]:
                         for p in parents:
-                            self.addModule(type, [p])
+                            self.addModule(action._type, [p])
                     elif nparents == -1 or nparents == len(parents):
-                        self.addModule(type, parents)
+                        self.addModule(action._type, parents)
                     else:
                         self._view.setStatusTip(
                             "This module must have {0} \
@@ -212,7 +216,7 @@ class QGraph(QtWidgets.QGraphicsView):
         self._mouse_position = self.mapToScene(self.mapFromGlobal(pos))
         menu.exec_(QtGui.QCursor.pos())
 
-    def renameModule(self, module, new_name=None):
+    def renameModule(self, module: QGraphicsModule, new_name: str = None):
         if new_name is None:
             new_name, valid = QtWidgets.QInputDialog.getText(
                 self, "user input", "new name", QtWidgets.QLineEdit.Normal, module.name
@@ -225,11 +229,11 @@ class QGraph(QtWidgets.QGraphicsView):
             self.resultStack[new_name] = self.resultStack.pop(module.name)
         module.rename(new_name)
 
-    def releaseData(self, module):
+    def releaseData(self, module: QGraphicsModule):
         if module.name in self.resultStack:
             del self.resultStack[module.name]
 
-    def colorizeModule(self, module, new_color=None):
+    def colorizeModule(self, module: QGraphicsModule, new_color=None):
         if new_color is None:
             new_color = QtWidgets.QColorDialog.getColor(module.color)
         if isinstance(new_color, list) or new_color.isValid():
@@ -239,7 +243,7 @@ class QGraph(QtWidgets.QGraphicsView):
         while self.modules:
             self.deleteBranch(list(self.modules.values())[0])
 
-    def deleteBranch(self, parent, childs_only=False):
+    def deleteBranch(self, parent: QGraphicsModule, childs_only: bool = False):
         """
         delete module, its children and the associated data recursively
 
@@ -266,42 +270,42 @@ class QGraph(QtWidgets.QGraphicsView):
         parent.delete()
         del self.modules[parent.name]
 
-    def getData(self, name):
+    def getData(self, name: str):
         if isinstance(name, list):
             return [self.getData(n) for n in name]
         else:
             return copy.copy(self.resultStack.get(name))
 
-    def storeData(self, name, data):
+    def storeData(self, name: str, data):
         self.resultStack[name] = data
 
     def addModule(
         self,
-        type,
-        parents=None,
-        parentNames=None,
-        position=None,
-        width=None,
+        moduleType: str,
+        parents: list[QGraphicsModule] = None,
+        parentNames: list[str] = None,
+        position: tuple[float, float] = None,
+        width: float = None,
         color=None,
-        name=None,
-    ):
+        name: str = None,
+    ) -> QGraphicsModule:
         """
         create a module with specified parent modules
 
         Parameters
         ----------
-        type: str
+        module_type: str
             type of module
         parents: list of QGraphicsModule or QGraphicsModule
 
         """
         # initialize
         if name is None:
-            name = self.getUniqueName(type)
+            name = self.getUniqueName(moduleType)
         if width is None:
             width = DEFAULT["module_width"]
         if color is None:
-            color = self._view.getParameters(type).get("color")
+            color = self._view.getParameters(moduleType).get("color")
 
         if parents is None:
             if parentNames is not None:
@@ -312,7 +316,7 @@ class QGraph(QtWidgets.QGraphicsView):
             parents = [parents]
 
         # create module
-        module = QGraphicsModule(self, type, name, parents)
+        module = QGraphicsModule(self, moduleType, name, parents)
         module.addToScene(self.scene)
 
         # bind module to parents and find best position
@@ -374,7 +378,7 @@ class QGraph(QtWidgets.QGraphicsView):
         module.modified.emit()
         return module
 
-    def setSettings(self, settings):
+    def setSettings(self, settings: dict) -> dict:
         """
         restore graph architecture and module parameters
 
@@ -384,20 +388,19 @@ class QGraph(QtWidgets.QGraphicsView):
             the dict-like description of the graph
 
         """
-        for name, values in settings.items():
+        for values in settings.values():
             module = self.addModule(**values.get("state"))
             if not isinstance(module, Exception):
                 module.setSettings(values)
         return settings
 
-    def getSettings(self):
+    def getSettings(self) -> dict:
         """
         get graph architecture and module parameters
 
         Return
         ------
         settings: dict
-
         """
         settings = {}
         orderedModules = []
@@ -411,20 +414,20 @@ class QGraph(QtWidgets.QGraphicsView):
                 modules.append(module)
         return settings
 
-    def getDateName(self):
+    def getDateName(self) -> str:
         return "graph_{}.iag".format(datetime.now().strftime("%d%m%Y %Hh%Mm%S"))
 
-    def getSavePath(self):
+    def getSavePath(self) -> str:
         return os.path.join(self.saveDir, self.saveName)
 
-    def getDefaultPath(self):
+    def getDefaultPath(self) -> str:
         if self.saveName.startswith("# not saved"):
             saveName = self.getDateName()
         else:
             saveName = self.saveName
         return os.path.join(self.saveDir, saveName)
 
-    def updateName(self, isSaved=True):
+    def updateName(self, isSaved: bool = True):
         """
         update the name of the graph based on the save name
         """
@@ -449,7 +452,7 @@ class QGraph(QtWidgets.QGraphicsView):
                 "save file", "Do you want to save the current file ?"
             )
 
-    def restore(self, filename):
+    def restore(self, filename: str):
         """
         restore graph modules, name and save path
         """
@@ -462,7 +465,7 @@ class QGraph(QtWidgets.QGraphicsView):
         self.savePathIsSet = True
         self.updateName()
 
-    def saveFile(self, filename=None):
+    def saveFile(self, filename: str = None):
         """
         save graph modules as save path
         """
@@ -478,7 +481,7 @@ class QGraph(QtWidgets.QGraphicsView):
         else:
             self.saveAsFile(False)
 
-    def saveAsFile(self, findNewName=True):
+    def saveAsFile(self, findNewName: bool = True):
         if findNewName or not self.saveName:
             self.saveName = self.getDateName()
         filename = self._view.browseFile("w")

@@ -1,16 +1,18 @@
 import functools
 import os
 import pickle
-import traceback
 from datetime import datetime
+from enum import Enum
 from multiprocessing import Process
 
 import psutil
 from PyQt5 import QtCore
+from PyQt5.QtWidgets import QWidget
+
 from src import TMP_DIR
 
 
-def call_target(target, args, tmp_path=None):
+def call_target(target, args: dict, tmp_path: str = None):
     """
     call a function with arguments, if an error occurs return the exception
 
@@ -51,7 +53,7 @@ class Runner(QtCore.QThread):
 
     """
 
-    def __init__(self, target, args, in_process=False):
+    def __init__(self, target, args: dict, in_process: bool = False):
         super().__init__()
         self.target = target
         self.args = args
@@ -107,7 +109,13 @@ def delete_runner(module):
     module.runner = None
 
 
-def manager(thread_mode=0):
+class ThreadMode(Enum):
+    NO_THREAD_NO_SUBPROCESS = 0
+    THREAD = 1
+    SUBPROCESS = 2
+
+
+def manager(thread_mode: ThreadMode = 0):
     """
     this decorator manage threading
 
@@ -148,7 +156,9 @@ def manager(thread_mode=0):
     return decorator
 
 
-def get_checked(widget, names=None, first_only=True):
+def get_checked(
+    widget: QWidget, names: list[str] = None, first_only: bool = True
+) -> bool:
     """
     get checked childs of a widget
 
