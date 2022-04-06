@@ -222,7 +222,7 @@ class Model:
             arr = function(arr, element, dtype=np.float64)
         return arr
 
-    def _apply_formula_recursively(fml, elems, elem_id=0):
+    def _apply_formula_recursively(self, fml, elems, elem_id=0):
         if len(fml) == 1:
             if fml[0].startswith("["):
                 res = elems[fml[0][1:-1]]
@@ -263,10 +263,10 @@ class Model:
             # do recusrsivity
             name = "_ID{}".format(elem_id)
             elem_id += 1
-            res, elem_id = _apply_formula_recursively(sub_fml, elems, elem_id)
+            res, elem_id = self._apply_formula_recursively(sub_fml, elems, elem_id)
             elems[name] = res
             fml = fml[:start] + ["[{}]".format(name)] + fml[end:]
-            res, elem_id = _apply_formula_recursively(fml, elems, elem_id)
+            res, elem_id = self._apply_formula_recursively(fml, elems, elem_id)
         return res, elem_id
 
     def apply_formula(self, formula: str, elements: dict):
@@ -320,7 +320,7 @@ class Model:
         formula = formula.split(" ")
         formula = [f for f in formula if f]
 
-        result, _ = _apply_formula_recursively(formula, elements)
+        result, _ = self._apply_formula_recursively(formula, elements)
         return result
 
     def apply_threshold(
