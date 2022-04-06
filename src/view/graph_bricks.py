@@ -438,7 +438,7 @@ class QGraphicsModule(QtWidgets.QWidget):
                 print(e)
 
     def synchronizeImages(self):
-        for node in self.getBranch():
+        for node in self.getBranch([]):
             res = node.result
             if isinstance(res, ui.QImageRenderer):
                 if res.currentSlice != self.result.currentSlice:
