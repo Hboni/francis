@@ -269,6 +269,17 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
+    def call_extract_channel(self, module):
+        """
+        extract channel from image
+        """
+        parent_name = module.get_parent_name()
+        function = self._model.extract_channel
+        args = {"im": module.getData(parent_name),
+                "channel": utils.get_checked(module.parameters, ['red', 'green', 'blue'])}
+        return function, args
+
+    @utils.manager(2)
     def call_get_img_infos(self, module):
         """
         get image info
