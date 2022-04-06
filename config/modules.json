@@ -12,6 +12,11 @@
     },
 
     "secondary": {
+        "ExtractChannels": {
+            "label": "extraire des canaux",
+            "function": "call_extract_channel",
+            "color": [255, 255, 255, 0]
+        },
         "seuillage": {
             "ThresholdImage": {
                 "label": "standard",
