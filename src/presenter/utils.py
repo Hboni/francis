@@ -32,6 +32,7 @@ def call_target(target, args: dict, tmp_path: str = None):
         res = target(**args)
     except Exception as e:
         res = e
+        print("".join(traceback.format_tb(res.__traceback__)[1:]))
     if tmp_path is not None:
         with open(tmp_path, "wb") as f:
             pickle.dump(res, f)

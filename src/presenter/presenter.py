@@ -168,6 +168,28 @@ class Presenter:
         elif module.type == "Load":
             module.parameters.browse.clicked.connect(lambda: self.browse_path(module))
 
+        elif module.type == "Calculator":
+            for i, name in enumerate(module.get_parent_names()):
+                button = QtWidgets.QPushButton(name)
+                button.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
+                module.parameters.grid.addWidget(button, 0, i)
+                module.parameters.__dict__["[{}]".format(name)] = button
+
+            def fill_formula(button, txt):
+                formula = module.parameters.formula
+                if txt == "🠔":
+                    button.clicked.connect(lambda: formula.setText(formula.text()[:-1]))
+                elif txt == "C":
+                    button.clicked.connect(lambda: formula.setText(""))
+                else:
+                    button.clicked.connect(lambda: formula.setText(formula.text() + txt))
+
+            for name, button in module.parameters.__dict__.items():
+                if isinstance(button, QtWidgets.QToolButton):
+                    fill_formula(button, button.text())
+                if isinstance(button, QtWidgets.QPushButton):
+                    fill_formula(button, name)
+
         elif module.type == "Operation":
             for rb in [module.parameters.add, module.parameters.multiply]:
                 rb.clicked.connect(
@@ -275,7 +297,18 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_get_img_infos(self, module: QGraphicsModule):
+    def call_extract_channel(self, module):
+        """
+        extract channel from image
+        """
+        parent_name = module.get_parent_name()
+        function = self._model.extract_channel
+        args = {"im": module.getData(parent_name),
+                "channel": utils.get_checked(module.parameters, ['red', 'green', 'blue'])}
+        return function, args
+
+    @utils.manager(2)
+    def call_get_img_infos(self, module):
         """
         get image info
         """
@@ -342,7 +375,18 @@ class Presenter:
         return function, args
 
     @utils.manager(2)
-    def call_apply_basic_morpho(self, module: QGraphicsModule):
+    def call_apply_formula(self, module):
+        """
+        compute formula between images and float
+        """
+        parent_names = module.get_parent_names()
+        function = self._model.apply_formula
+        args = {"formula": module.parameters.formula.text(),
+                "elements": {name: module.getData(name) for name in parent_names}}
+        return function, args
+
+    @utils.manager(2)
+    def call_apply_basic_morpho(self, module):
         """
         compute 3d morphological operation on the parent image
         and store the modified image into image stack dictionnaries
