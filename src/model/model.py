@@ -49,8 +49,11 @@ class Model:
                 if data.shape[2] == 4:
                     data = data[:, :, :3]
                 # convert to gray if same value everywhere in each r, g, b canal
-                if data.shape[2] == 3 and (data[:, :, 0] == data[:, :, 1]).all() \
-                        and (data[:, :, 1] == data[:, :, 2]).all():
+                if (
+                    data.shape[2] == 3
+                    and (data[:, :, 0] == data[:, :, 1]).all()
+                    and (data[:, :, 1] == data[:, :, 2]).all()
+                ):
                     data = data[:, :, 0]
         else:
             raise TypeError("{} not handle yet".format(ext))
@@ -102,7 +105,7 @@ class Model:
                 imageio.imwrite(path, data)
         return "saved as {}".format(path)
 
-    def extract_channel(self, im, channel='red'):
+    def extract_channel(self, im, channel="red"):
         """
         extract channel from image
 
@@ -117,11 +120,13 @@ class Model:
 
         """
         if im.ndim != 3 or im.shape[2] != 3:
-            raise Exception("You cannot extract red, green or blue channel from this image")
-        idx = ['red', 'green', 'blue'].index(channel)
+            raise Exception(
+                "You cannot extract red, green or blue channel from this image"
+            )
+        idx = ["red", "green", "blue"].index(channel)
         return im[:, :, idx]
 
-    def get_img_infos(self, im, info='max'):
+    def get_img_infos(self, im, info="max"):
         """
         get info of the input image
 

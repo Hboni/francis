@@ -534,7 +534,6 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
                 return intersection_point
         return QPointF()
 
-
     def delete(self):
         """
         delete connection between link and parent/child
@@ -543,7 +542,6 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         self._child.positionChanged.disconnect(self.updatePos)
         self._parent.links.remove(self)
         self._child.links.remove(self)
-
 
     def updatePos(self):
         """
@@ -582,7 +580,9 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         p2 = child_intersection - unit * self.space[1]
         p12 = p1 - normal * self.width
         p22 = p2 - normal * self.width - unit * self.arrowLen
-        if np.sign((p22 - p12).x()) != np.sign(unit.x()) or np.sign((p22 - p12).y()) != np.sign(unit.y()):
+        if np.sign((p22 - p12).x()) != np.sign(unit.x()) or np.sign(
+            (p22 - p12).y()
+        ) != np.sign(unit.y()):
             self.setPolygon(QtGui.QPolygonF())
             return
         p11 = p1 + normal * self.width
@@ -590,4 +590,3 @@ class QGraphicsLink(QtWidgets.QGraphicsPolygonItem):
         p23 = p2 + normal * self.arrowWidth - unit * self.arrowLen
         p24 = p2 - normal * self.arrowWidth - unit * self.arrowLen
         self.setPolygon(QtGui.QPolygonF([p11, p21, p23, p2, p24, p22, p12, p11]))
-
