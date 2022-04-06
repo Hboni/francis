@@ -12,6 +12,11 @@
     },
 
     "secondary": {
+        "ExtractChannels": {
+            "label": "extraire des canaux",
+            "function": "call_extract_channel",
+            "color": [255, 255, 255, 0]
+        },
         "seuillage": {
             "ThresholdImage": {
                 "label": "standard",
@@ -28,6 +33,12 @@
             "Operation": {
                 "label": "inter-images",
                 "function": "call_apply_operation",
+                "nparents": -1,
+                "color": [255, 255, 255, 0]
+            },
+            "Calculator": {
+                "label": "calculatrice",
+                "function": "call_apply_formula",
                 "nparents": -1,
                 "color": [255, 255, 255, 0]
             }
